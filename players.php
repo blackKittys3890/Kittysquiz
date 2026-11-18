@@ -1,0 +1,52 @@
+<?php
+// Version 2.0
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/db.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+if (!isset($_SESSION['discord_user'])) {
+    http_response_code(401);
+    echo '[]';
+    exit;
+}
+
+$code = strtoupper($_GET['code'] ?? '');
+$me   = $_SESSION['discord_user']['id'];
+
+$stmt = db()->prepare('SELECT id, host_id FROM kr_rooms WHERE code = ?');
+$stmt->execute([$code]);
+$room = $stmt->fetch();
+
+if (!$room) {
+    http_response_code(404);
+    echo '[]';
+    exit;
+}
+
+// Heartbeat: eigenen Eintrag als "zuletzt gesehen" markieren
+db()->prepare('UPDATE kr_room_players SET last_seen = NOW() WHERE room_id = ? AND discord_id = ?')
+    ->execute([$room['id'], $me]);
+
+// Nur Spieler anzeigen, die in den letzten 10 Sekunden aktiv waren
+$stmt = db()->prepare('
+    SELECT p.discord_id, p.username, p.avatar, p.team_id, t.name AS team_name, t.color AS team_color
+    FROM kr_room_players p
+    LEFT JOIN kr_teams t ON t.id = p.team_id
+    WHERE p.room_id = ? AND p.last_seen > NOW() - INTERVAL 10 SECOND
+    ORDER BY p.joined_at
+');
+$stmt->execute([$room['id']]);
+
+$players = array_map(fn($p) => [
+    'discord_id' => $p['discord_id'],
+    'username'   => $p['username'],
+    'avatar_url' => getAvatarUrl(['id' => $p['discord_id'], 'avatar' => $p['avatar']]),
+    'team_id'    => $p['team_id'] !== null ? (int)$p['team_id'] : null,
+    'team_name'  => $p['team_name'],
+    'team_color' => $p['team_color'],
+    'is_host'    => $p['discord_id'] === $room['host_id'],
+], $stmt->fetchAll());
+
+echo json_encode($players);
+// Version 2.0
