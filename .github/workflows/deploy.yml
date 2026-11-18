@@ -1,4 +1,4 @@
-# Version 1.0
+# Version 1.1
 name: Deploy
 
 on:
@@ -9,7 +9,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Code holen
+        uses: actions/checkout@v4
 
       - name: Per FTP hochladen
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -18,9 +19,9 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
-          local-dir: public_html/
+          local-dir: ./public_html/
           server-dir: ./
           exclude: |
             **/.git*
             **/config.local.php
-# Version 1.0
+# Version 1.1
