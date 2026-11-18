@@ -100,9 +100,15 @@ $players = array_map(fn($p) => [
     'name'   => $p['username'],
     'avatar' => getAvatarUrl(['id' => $p['discord_id'], 'avatar' => $p['avatar']]),
     'isMe'   => $p['discord_id'] === $me,
-], q('SELECT discord_id, username, avatar FROM kr_room_players WHERE room_id = ? AND discord_id <> ? ORDER BY joined_at, discord_id',
+    'cam'    => (bool)$p['cam_on'],
+    'mic'    => (bool)$p['mic_on'],
+], q('SELECT discord_id, username, avatar, cam_on, mic_on
+      FROM kr_room_players
+      WHERE room_id = ?
+        AND discord_id <> ?
+        AND last_seen > NOW() - INTERVAL 10 SECOND
+      ORDER BY joined_at, discord_id',
      [$rid, $room['host_id']])->fetchAll());
-
 echo json_encode([
     'isHost'     => $isHost,
     'phase'      => $phase,

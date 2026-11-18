@@ -45,6 +45,7 @@ db()->prepare('
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dumm drauf – <?= htmlspecialchars($code) ?></title>
     <style>
+        .pl .status { font-size: 14px; opacity: .8; margin-top: 2px; }
         body { margin: 0; padding: 22px; min-height: 100vh; font-family: system-ui, sans-serif; color: #fff;
             background: linear-gradient(160deg, #1d1b3a, #2c1046 60%, #14233b); }
         a { color: #9ff0ff; }
@@ -185,7 +186,8 @@ db()->prepare('
             for (const p of S.players) {
                 const box = el('div', 'pl' + (p.isMe ? ' me' : ''));
                 const img = el('img'); img.src = p.avatar; img.alt = '';
-                box.append(img, el('div', '', p.name));
+                const status = el('div', 'status', (p.cam ? '📹' : '🚫') + ' ' + (p.mic ? '🎤' : '🔇'));
+                box.append(img, el('div', '', p.name), status);
                 pl.append(box);
             }
         }
