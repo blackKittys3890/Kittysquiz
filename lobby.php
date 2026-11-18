@@ -1,5 +1,5 @@
 <?php
-// Version 2.0
+// Version 2.1
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -84,5 +84,7 @@ $myRooms = $stmt->fetchAll();
     </div>
 
     <p><a href="fragen.php">Kategorien & Fragen verwalten</a> | <a href="verfuegbarkeit.php">Verfügbarkeit planen</a> | <a href="logout.php">Ausloggen</a></p>
+<footer style="text-align:center;margin:30px 0 10px;font-size:14px;opacity:.8;"><a href="/impressum.php" style="color:#9ff0ff;">Impressum</a> · <a href="/datenschutz.php" style="color:#9ff0ff;">Datenschutz</a></footer>
 </body>
 </html>
+<!-- Version 2.1 -->
