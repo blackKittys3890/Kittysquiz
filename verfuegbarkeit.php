@@ -410,7 +410,7 @@ $times = timeOptions();
                 </div>
             <?php endforeach; ?>
         </div>
-
+<footer style="text-align:center;margin:30px 0 10px;font-size:14px;opacity:.8;"><a href="/impressum.php" style="color:#9ff0ff;">Impressum</a> · <a href="/datenschutz.php" style="color:#9ff0ff;">Datenschutz</a></footer>
         <p><a href="verfuegbarkeit.php">← Andere Umfrage öffnen oder neue erstellen</a></p>
     <?php endif; ?>
 </body>

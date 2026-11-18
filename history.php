@@ -67,6 +67,7 @@ $rows = $stmt->fetchAll();
             </table>
         </div>
     <?php endforeach; ?>
+    <footer style="text-align:center;margin:30px 0 10px;font-size:14px;opacity:.8;"><a href="/impressum.php" style="color:#9ff0ff;">Impressum</a> · <a href="/datenschutz.php" style="color:#9ff0ff;">Datenschutz</a></footer>
 </body>
 </html>
 <!-- Version 1.0 -->
