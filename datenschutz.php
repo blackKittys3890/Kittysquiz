@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -17,7 +17,6 @@
         h3 { font-size: 15px; margin-top: 16px; color: #9ff0ff; }
         ul { padding-left: 20px; }
         li { margin-bottom: 6px; }
-        .platzhalter { background: #ffd23f; color: #2a1b00; padding: 0 4px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -29,8 +28,7 @@
         <h2>1. Datenschutz auf einen Blick</h2>
         <p>
             Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten
-            passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie
-            persönlich identifiziert werden können.
+            passiert, wenn Sie diese Website besuchen.
         </p>
 
         <h2>2. Verantwortliche Stelle</h2>
@@ -45,74 +43,50 @@
             E-Mail: <a href="mailto:eliah@sudi.de">eliah@sudi.de</a>
         </p>
 
-        <h2>3. Datenerfassung auf dieser Website</h2>
-
-        <h3>Server-Log-Dateien</h3>
+        <h2>3. Hosting bei Hetzner</h2>
         <p>
-            Der Provider der Seiten (<span class="platzhalter">Name deines Hosters, z. B. Netcup / IONOS / Strato</span>)
-            erhebt und speichert automatisch Informationen in sogenannten Server-Log-Dateien, die Ihr Browser
-            automatisch übermittelt. Dies sind:
+            Diese Website wird bei der <strong>Hetzner Online GmbH</strong> (Industriestr. 25, 91710 Gunzenhausen) gehostet. 
+            Wenn Sie unsere Website besuchen, erfasst Hetzner verschiedene Server-Log-Dateien (u. a. IP-Adresse, Browser, Uhrzeit). 
+            Details entnehmen Sie der Datenschutzerklärung von Hetzner: 
+            <a href="https://www.hetzner.com/de/legal/privacy-policy/" target="_blank" rel="noopener">https://www.hetzner.com/de/legal/privacy-policy/</a>.
+            Die Verwendung des Hosters erfolgt zum Zwecke der Vertragserfüllung gegenüber unseren Nutzern und im Interesse einer 
+            sicheren, schnellen und effizienten Bereitstellung unseres Online-Angebots (Art. 6 Abs. 1 lit. f DSGVO).
         </p>
-        <ul>
-            <li>Browsertyp und Browserversion</li>
-            <li>Verwendetes Betriebssystem</li>
-            <li>Referrer URL</li>
-            <li>Hostname des zugreifenden Rechners</li>
-            <li>Uhrzeit der Serveranfrage</li>
-            <li>IP-Adresse</li>
-        </ul>
+
+        <h2>4. Datenerfassung auf dieser Website</h2>
+
+        <h3>Anmeldung / Login (Google &amp; Discord)</h3>
         <p>
-            Eine Zusammenführung dieser Daten mit anderen Datenquellen wird nicht vorgenommen.
-            Grundlage für die Datenverarbeitung ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der technisch
-            fehlerfreien Darstellung und Sicherheit der Website).
+            Sofern Sie sich auf dieser Website via externer Dienste (wie z. B. Google-Login / OpenID Connect oder Discord) 
+            registrieren oder anmelden, wird eine Verbindung zu den Servern des jeweiligen Anbieters hergestellt. Dabei übermittelt 
+            der Anbieter (z. B. Google LLC oder Discord Inc.) bestimmte Profilinformationen (wie E-Mail-Adresse und Benutzername) an uns, 
+            um Ihr Benutzerkonto zu verifizieren und zu erstellen. 
+        </p>
+        <p>
+            Die Datenverarbeitung erfolgt auf Grundlage Ihrer Einwilligung bzw. zur Durchführung von Nutzerfunktionen (Art. 6 Abs. 1 lit. b und lit. a DSGVO). 
+            Die Nutzung externer Logins ist freiwillig.
         </p>
 
         <h3>Cookies &amp; Local Storage</h3>
         <p>
-            Diese Website verwendet technisch notwendige Cookies bzw. den Local Storage Ihres Browsers, um
-            Spielfortschritte, Einstellungen oder Sitzungsdaten (Sessions) zu speichern. Diese sind für den Betrieb
-            der Seite erforderlich (Art. 6 Abs. 1 lit. f DSGVO / § 25 Abs. 2 TDDDG). Es werden keine Tracking- oder
-            Werbe-Cookies eingesetzt.
+            Diese Website verwendet technisch notwendige Cookies bzw. den Local Storage Ihres Browsers, um 
+            Sitzungsdaten (Sessions) oder Spielstände zu speichern. Diese sind für den Betrieb der Seite erforderlich 
+            (Art. 6 Abs. 1 lit. f DSGVO / § 25 Abs. 2 TDDDG).
         </p>
 
         <h3>Kontaktaufnahme per E-Mail</h3>
         <p>
-            Wenn Sie mir per E-Mail Anfragen zukommen lassen, werden Ihre Angaben inklusive der von Ihnen dort
-            angegebenen Kontaktdaten zwecks Bearbeitung der Anfrage und für den Fall von Anschlussfragen gespeichert.
-            Diese Daten gebe ich nicht ohne Ihre Einwilligung weiter (Art. 6 Abs. 1 lit. b bzw. lit. f DSGVO).
+            Wenn Sie mir per E-Mail Anfragen zukommen lassen, werden Ihre Angaben inklusive der Kontaktdaten 
+            zwecks Bearbeitung der Anfrage gespeichert (Art. 6 Abs. 1 lit. b bzw. lit. f DSGVO).
         </p>
 
-        <!-- Optional: Falls du ein Login / Registrierung / Datenbank für Spielstände hast, drinlassen, sonst löschen -->
-        <h3>Registrierung / Benutzerkonten &amp; Spielstände</h3>
+        <h2>5. Ihre Rechte als betroffene Person</h2>
         <p>
-            Sofern Sie auf dieser Website ein Benutzerkonto anlegen oder Spielstände speichern, werden die dabei
-            eingegebenen Daten (z. B. Benutzername, Passwort-Hash, Spielfortschritt) in einer Datenbank gespeichert,
-            um Ihnen die Funktionen von KittysRätsel bereitzustellen (Art. 6 Abs. 1 lit. b DSGVO).
-        </p>
-
-        <h2>4. Ihre Rechte als betroffene Person</h2>
-        <p>
-            Sie haben im Rahmen der geltenden gesetzlichen Bestimmungen jederzeit das Recht auf:
-        </p>
-        <ul>
-            <li><strong>Auskunft</strong> über Ihre gespeicherten personenbezogenen Daten (Art. 15 DSGVO)</li>
-            <li><strong>Berichtigung</strong> unrichtiger Daten (Art. 16 DSGVO)</li>
-            <li><strong>Löschung</strong> Ihrer gespeicherten Daten (Art. 17 DSGVO)</li>
-            <li><strong>Einschränkung</strong> der Datenverarbeitung (Art. 18 DSGVO)</li>
-            <li><strong>Datenübertragbarkeit</strong> (Art. 20 DSGVO)</li>
-            <li><strong>Widerspruch</strong> gegen die Verarbeitung (Art. 21 DSGVO)</li>
-        </ul>
-        <p>
-            Zudem steht Ihnen ein Beschwerderecht bei der zuständigen Aufsichtsbehörde zu (in Baden-Württemberg:
-            Der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg).
-        </p>
-
-        <h2>5. SSL- bzw. TLS-Verschlüsselung</h2>
-        <p>
-            Diese Seite nutzt aus Sicherheitsgründen eine SSL- bzw. TLS-Verschlüsselung (erkennbar an „https://“ in der
-            Adresszeile Ihres Browsers), damit übermittelte Daten nicht von Dritten mitgelesen werden können.
+            Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, 
+            deren Herkunft und Empfänger und den Zweck der Datenverarbeitung sowie ein Recht auf Berichtigung oder Löschung dieser Daten. 
+            Wenden Sie sich dazu einfach an die oben genannte verantwortliche Person.
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->
