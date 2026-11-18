@@ -1,5 +1,5 @@
 <?php
-// Version 1.4
+// Version 1.5
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -108,7 +108,9 @@ db()->prepare('
 
         async function load() {
             try {
-                const res = await fetch('dd_api.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+                // Kamera/Mikro-Status kommt aus window.krCam / window.krMic (wird von der LiveKit-Verbindung gesetzt)
+                const camQ = window.krCam ? 1 : 0, micQ = window.krMic ? 1 : 0;
+                const res = await fetch('dd_api.php?code=' + encodeURIComponent(code) + '&cam=' + camQ + '&mic=' + micQ, { cache: 'no-store' });
                 if (res.ok) { S = await res.json(); draw(); }
                 else { document.getElementById('card').textContent = 'Serverfehler beim Laden (HTTP ' + res.status + ').'; }
             } catch (e) {
@@ -221,4 +223,4 @@ db()->prepare('
 </script>
 </body>
 </html>
-<!-- Version 1.4 -->
+<!-- Version 1.5 -->
