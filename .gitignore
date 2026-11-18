@@ -1,0 +1,12 @@
+# Geheime Zugangsdaten
+config.php
+db.php
+
+# Hochgeladene Dateien und lokale Ordner
+/uploads/
+.vscode/
+.idea/
+
+# Systemdateien
+.DS_Store
+Thumbs.db
