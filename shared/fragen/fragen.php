@@ -1,11 +1,11 @@
 <?php
 // Version 1.2
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 
 $user = $_SESSION['discord_user'] ?? null;
 if (!$user) {
-    header('Location: index.php');
+    header('Location: /index.php');
     exit;
 }
 $me = $user['id'];
@@ -180,7 +180,7 @@ $isOwner = $selected && $selected['owner_id'] === $me;
     </style>
 </head>
 <body>
-    <p><a href="lobby.php">← Zur Lobby</a></p>
+    <p><a href="/lobby.php">← Zur Lobby</a></p>
     <h1>Kategorien & Fragen</h1>
 
     <?php if ($msg): ?><p class="msg"><?= htmlspecialchars($msg) ?></p><?php endif; ?>

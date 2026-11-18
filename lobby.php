@@ -14,7 +14,7 @@ $me = $user['id'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create') {
     $code = strtoupper(substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 6));
     db()->prepare('INSERT INTO kr_rooms (code, host_id) VALUES (?, ?)')->execute([$code, $me]);
-    header('Location: board.php?code=' . $code);
+    header('Location: /modes/punkte/board.php?code=' . $code);
     exit;
 }
 
@@ -57,7 +57,7 @@ $myRooms = $stmt->fetchAll();
 
     <div class="panel">
         <h2>Raum beitreten</h2>
-        <form method="get" action="board.php">
+        <form method="get" action="/modes/punkte/board.php">
             <input type="text" name="code" placeholder="Raum-Code (z.B. AB12CD)" maxlength="8" style="text-transform:uppercase;" required>
             <button type="submit" class="btn">Beitreten</button>
         </form>
@@ -75,7 +75,7 @@ $myRooms = $stmt->fetchAll();
                         <td class="code"><?= htmlspecialchars($r['code']) ?></td>
                         <td><?= date('d.m.Y H:i', strtotime($r['created_at'])) ?></td>
                         <td>
-                            <a href="board.php?code=<?= htmlspecialchars($r['code']) ?>" class="btn small">Öffnen</a>
+                            <a href="/modes/punkte/board.php?code=<?= htmlspecialchars($r['code']) ?>" class="btn small">Öffnen</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

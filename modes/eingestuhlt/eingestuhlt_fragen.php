@@ -3,12 +3,12 @@ ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
 // Version 1.1
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 
 $user = $_SESSION['discord_user'] ?? null;
 if (!$user) {
-    header('Location: index.php');
+    header('Location: /index.php');
     exit;
 }
 $me = $user['id'];
@@ -117,7 +117,7 @@ $fragen = $stmt->fetchAll();
     </style>
 </head>
 <body>
-    <p><a href="lobby.php">← Lobby</a></p>
+    <p><a href="/lobby.php">← Lobby</a></p>
     <h1>Eingeschult – Fragen eintragen</h1>
 
     <div class="nav panel">

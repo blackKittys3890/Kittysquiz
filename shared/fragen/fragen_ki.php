@@ -1,11 +1,11 @@
 <?php
 // Version 1.0
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/fragen_tools.php';
 
 $user = $_SESSION['discord_user'] ?? null;
-if (!$user) { header('Location: index.php'); exit; }
+if (!$user) { header('Location: /index.php'); exit; }
 $me = $user['id'];
 
 $msg = '';
@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-    <p><a href="lobby.php">← Lobby</a> · <a href="fragen_import.php">Datei hochladen</a> · <a href="fragen.php">Fragen verwalten</a></p>
+    <p><a href="/lobby.php">← Lobby</a> · <a href="fragen_import.php">Datei hochladen</a> · <a href="fragen.php">Fragen verwalten</a></p>
     <h1>Fragen mit KI erstellen (Grok)</h1>
 
     <?php if ($msg): ?><p class="msg"><?= htmlspecialchars($msg) ?></p><?php endif; ?>

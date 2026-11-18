@@ -17,6 +17,6 @@ if (!$stmt->fetch()) {
 }
 
 // Direkt aufs Spielfeld, dort wird der Spieler eingetragen
-header('Location: board.php?code=' . urlencode($code));
+header('Location: /modes/punkte/board.php?code=' . urlencode($code));
 exit;
 // Version 4.0

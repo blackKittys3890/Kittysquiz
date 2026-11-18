@@ -347,7 +347,7 @@
 
     async function poll() {
         try {
-            const res = await fetch('board_api.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+            const res = await fetch('/modes/punkte/board_api.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
             if (res.ok) handle(await res.json());
         } catch (e) {
             // nächster Durchlauf versucht es erneut

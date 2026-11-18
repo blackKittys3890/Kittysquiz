@@ -10,7 +10,7 @@ $code = strtoupper($_GET['code'] ?? $_POST['code'] ?? '');
 $st = db()->prepare('SELECT id, code, host_id, mode FROM kr_rooms WHERE code = ?');
 $st->execute([$code]);
 $room = $st->fetch();
-if (!$room) die('Raum nicht gefunden. <a href="lobby.php">Zurück</a>');
+if (!$room) die('Raum nicht gefunden. <a href="/lobby.php">Zurück</a>');
 $isHost = $room['host_id'] === $user['id'];
 $currentMode = $room['mode'] ?? 'points';
 
@@ -83,7 +83,7 @@ db()->prepare('
     <?php require dirname(__DIR__, 2) . '/modus_auswahl.php'; ?>
 
     <div class="top" style="margin-top: 50px;">
-        <div><a href="lobby.php">← Lobby</a> · <b>Hau drauf</b> · Raum <?= htmlspecialchars($code) ?></div>
+        <div><a href="/lobby.php">← Lobby</a> · <b>Hau drauf</b> · Raum <?= htmlspecialchars($code) ?></div>
         <div class="score" id="score"></div>
     </div>
 

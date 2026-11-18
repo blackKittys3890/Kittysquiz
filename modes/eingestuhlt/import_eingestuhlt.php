@@ -2,8 +2,8 @@
 // Version 1.0
 // Importiert eine Fragen-CSV (Trennzeichen ;) in die Kategorien und Fragen.
 // Aufruf: import_eingestuhlt.php?datei=eingestuhlt_fragen_klasse1.csv  (nur eingeloggt)
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 
 $user = $_SESSION['discord_user'] ?? null;
 if (!$user) {

@@ -1,7 +1,7 @@
 <?php
 // Version 7.8
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/teams.php';
 
 header('Content-Type: application/json; charset=utf-8');

@@ -1,16 +1,16 @@
 <?php
 // Version 1.13
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 
 $user = $_SESSION['discord_user'] ?? null;
-if (!$user) { header('Location: index.php'); exit; }
+if (!$user) { header('Location: /index.php'); exit; }
 
 $code = strtoupper($_GET['code'] ?? $_POST['code'] ?? '');
 $st = db()->prepare('SELECT id, code, host_id, mode FROM kr_rooms WHERE code = ?');
 $st->execute([$code]);
 $room = $st->fetch();
-if (!$room) die('Raum nicht gefunden. <a href="lobby.php">Zurück</a>');
+if (!$room) die('Raum nicht gefunden. <a href="/lobby.php">Zurück</a>');
 $isHost = $room['host_id'] === $user['id'];
 $currentMode = $room['mode'] ?? 'points';
 
@@ -19,17 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['switch_mode'])) {
     $newMode = $_POST['switch_mode'];
     if ($isHost && in_array($newMode, ['points', 'hearts', 'eingestuhlt', 'dumm_drauf'], true)) {
         db()->prepare('UPDATE kr_rooms SET mode = ? WHERE code = ?')->execute([$newMode, $code]);
-        if ($newMode === 'points') { header('Location: board.php?code=' . $code); exit; }
-        elseif ($newMode === 'hearts') { header('Location: herzen.php?code=' . $code); exit; }
-        elseif ($newMode === 'dumm_drauf') { header('Location: dumm_drauf.php?code=' . $code); exit; }
-        else { header('Location: eingestuhlt.php?code=' . $code); exit; }
+        if ($newMode === 'points') { header('Location: /modes/punkte/board.php?code=' . $code); exit; }
+        elseif ($newMode === 'hearts') { header('Location: /modes/herzen/herzen.php?code=' . $code); exit; }
+        elseif ($newMode === 'dumm_drauf') { header('Location: /modes/hau_drauf/dumm_drauf.php?code=' . $code); exit; }
+        else { header('Location: /modes/eingestuhlt/eingestuhlt.php?code=' . $code); exit; }
     }
 }
 
 if ($currentMode !== 'eingestuhlt') {
-    if ($currentMode === 'hearts') { header('Location: herzen.php?code=' . urlencode($code)); exit; }
-    elseif ($currentMode === 'dumm_drauf') { header('Location: dumm_drauf.php?code=' . urlencode($code)); exit; }
-    else { header('Location: board.php?code=' . urlencode($code)); exit; }
+    if ($currentMode === 'hearts') { header('Location: /modes/herzen/herzen.php?code=' . urlencode($code)); exit; }
+    elseif ($currentMode === 'dumm_drauf') { header('Location: /modes/hau_drauf/dumm_drauf.php?code=' . urlencode($code)); exit; }
+    else { header('Location: /modes/punkte/board.php?code=' . urlencode($code)); exit; }
 }
 
 db()->prepare('
@@ -106,7 +106,7 @@ db()->prepare('
     </style>
 </head>
 <body>
-<?php require __DIR__ . '/modus_auswahl.php'; ?>
+<?php require dirname(__DIR__, 2) . '/modus_auswahl.php'; ?>
 <div class="planes" aria-hidden="true"></div>
 <div class="failOv" id="fail"><div class="big">DURCHGEFALLEN</div><div class="sub" id="failSub">Schade. Setz dich hin.</div></div>
 <div class="board" style="margin-top: 50px;">
@@ -583,7 +583,7 @@ function drawCams() {
 
 async function refreshRoomPlayers() {
     try {
-        const res = await fetch('players.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+        const res = await fetch('/players.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
         if (res.ok) roomPlayers = await res.json();
     } catch (e) {}
     drawCams();
@@ -600,7 +600,7 @@ async function connectLiveKit() {
     if (room) { room.disconnect(); room = null; }
     setStatus('verbinde …');
     try {
-        const res = await fetch('livekit_token.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+        const res = await fetch('/livekit_token.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok || !data.token) throw new Error(data.error || 'kein Zugang');
 
@@ -758,11 +758,11 @@ connectLiveKit();
 // Alle Spieler im Raum folgen dem Moduswechsel des Hosts
 (function () {
     const CUR = 'eingestuhlt';
-    const PAGES = { points: 'board.php', hearts: 'herzen.php', dumm_drauf: 'dumm_drauf.php', eingestuhlt: 'eingestuhlt.php' };
+    const PAGES = { points: '/modes/punkte/board.php', hearts: '/modes/herzen/herzen.php', dumm_drauf: '/modes/hau_drauf/dumm_drauf.php', eingestuhlt: '/modes/eingestuhlt/eingestuhlt.php' };
     const code = new URLSearchParams(location.search).get('code') || '';
     async function checkMode() {
         try {
-            const res = await fetch('room_mode.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+            const res = await fetch('/room_mode.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
             if (res.ok) {
                 const j = await res.json();
                 if (j.mode && j.mode !== CUR && PAGES[j.mode]) {

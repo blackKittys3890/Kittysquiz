@@ -1,6 +1,6 @@
 <?php
 // Version 1.0
-require_once __DIR__ . '/db.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 
 // Legt zwei Standardteams an, falls der Raum noch keine hat
 function ensureTeams(int $roomId): void

@@ -1,11 +1,11 @@
 <?php
 // Version 1.2
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/fragen_tools.php';
 
 $user = $_SESSION['discord_user'] ?? null;
-if (!$user) { header('Location: index.php'); exit; }
+if (!$user) { header('Location: /index.php'); exit; }
 $me = $user['id'];
 
 // Vorlage herunterladen
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['datei'])) {
     </style>
 </head>
 <body>
-    <p><a href="lobby.php">← Lobby</a> · <a href="fragen_ki.php">KI-Fragen erstellen</a> · <a href="fragen.php">Fragen verwalten</a></p>
+    <p><a href="/lobby.php">← Lobby</a> · <a href="fragen_ki.php">KI-Fragen erstellen</a> · <a href="fragen.php">Fragen verwalten</a></p>
     <h1>Fragen per Datei hochladen</h1>
 
     <div class="panel">
