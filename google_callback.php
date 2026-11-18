@@ -51,10 +51,12 @@ $name = mb_substr($info['name'] ?? ($info['email'] ?? 'Spieler'), 0, 60);
 
 session_regenerate_id(true);
 $_SESSION['discord_user'] = [
-    'id'       => 'google_' . $info['sub'],
-    'name'     => $name,
-    'username' => $name,
-    'avatar'   => $info['picture'] ?? null, // Profilbild als fertige URL
+    'id'         => 'google_' . $info['sub'],
+    'name'       => $name,
+    'username'   => $name,
+    'avatar'     => $info['picture'] ?? null,
+    'premium'    => 0,
+    'decoration' => null,
 ];
 
 header('Location: lobby.php');

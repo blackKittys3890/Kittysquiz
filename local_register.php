@@ -57,10 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = db()->lastInsertId();
         session_regenerate_id(true);
         $_SESSION['discord_user'] = [
-            'id'       => 'local_' . $id,
-            'name'     => $username,
-            'username' => $username,
-            'avatar'   => $avatarName,
+            'id'         => 'local_' . $id,
+            'name'       => $username,
+            'username'   => $username,
+            'avatar'     => $avatarName,
+            'premium'    => 0,
+            'decoration' => null,
         ];
 
         header('Location: lobby.php');

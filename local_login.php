@@ -23,10 +23,12 @@ if (!$row || !password_verify($password, $row['password_hash'])) {
 
 session_regenerate_id(true);
 $_SESSION['discord_user'] = [
-    'id'       => 'local_' . $row['id'],
-    'name'     => $row['username'],
-    'username' => $row['username'],
-    'avatar'   => $row['avatar'],
+    'id'         => 'local_' . $row['id'],
+    'name'       => $row['username'],
+    'username'   => $row['username'],
+    'avatar'     => $row['avatar'],
+    'premium'    => 0,
+    'decoration' => null,
 ];
 
 header('Location: lobby.php');

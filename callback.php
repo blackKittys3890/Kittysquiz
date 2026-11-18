@@ -1,5 +1,5 @@
 <?php
-// Version 1.3
+// Version 1.5
 require_once __DIR__ . '/config.php';
 
 // 1. State prüfen (Schutz gegen CSRF)
@@ -34,7 +34,7 @@ if (empty($tokenData['access_token'])) {
     die('Token konnte nicht abgerufen werden.');
 }
 
-// 3. Benutzerdaten abrufen
+// 3. Benutzerdaten abrufen (inkl. Nitro-Status und Avatar-Deko)
 $ch = curl_init('https://discord.com/api/users/@me');
 curl_setopt_array($ch, [
     CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $tokenData['access_token']],
@@ -47,16 +47,30 @@ if (empty($discordUser['id'])) {
     die('Benutzerdaten konnten nicht geladen werden.');
 }
 
+// Anzeigename: der Discord-Anzeigename, sonst der Benutzername
+$displayName = mb_substr($discordUser['global_name'] ?? $discordUser['username'], 0, 60);
+
+// Nitro: 0 = kein Nitro, 1/2/3 = Nitro-Varianten
+$premium = (int)($discordUser['premium_type'] ?? 0);
+
+// Avatar-Deko als fertige Bild-URL
+$decorationAsset = $discordUser['avatar_decoration_data']['asset'] ?? null;
+$decoration = $decorationAsset
+    ? 'https://cdn.discordapp.com/avatar-decoration-presets/' . $decorationAsset . '.png'
+    : null;
+
 // 4. Session setzen (Session-ID nach Login erneuern)
 session_regenerate_id(true);
 $_SESSION['discord_user'] = [
-    'id'       => $discordUser['id'],
-    'name'     => $discordUser['global_name'] ?? $discordUser['username'],
-    'username' => $discordUser['username'],
-    'avatar'   => $discordUser['avatar'] ?? null,
+    'id'         => $discordUser['id'],
+    'name'       => $displayName,
+    'username'   => $displayName,
+    'avatar'     => $discordUser['avatar'] ?? null,
+    'premium'    => $premium,
+    'decoration' => $decoration,
 ];
 
 // 5. Nach dem Login direkt zur Lobby
 header('Location: lobby.php');
 exit;
-// Version 1.3
+// Version 1.5

@@ -1,5 +1,5 @@
 <?php
-// Version 2.0
+// Version 2.2
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -30,7 +30,9 @@ db()->prepare('UPDATE kr_room_players SET last_seen = NOW() WHERE room_id = ? AN
 
 // Nur Spieler anzeigen, die in den letzten 10 Sekunden aktiv waren
 $stmt = db()->prepare('
-    SELECT p.discord_id, p.username, p.avatar, p.team_id, t.name AS team_name, t.color AS team_color
+    SELECT p.discord_id, p.username, p.avatar, p.team_id, p.cam_on, p.mic_on,
+           p.premium, p.decoration,
+           t.name AS team_name, t.color AS team_color
     FROM kr_room_players p
     LEFT JOIN kr_teams t ON t.id = p.team_id
     WHERE p.room_id = ? AND p.last_seen > NOW() - INTERVAL 10 SECOND
@@ -39,14 +41,18 @@ $stmt = db()->prepare('
 $stmt->execute([$room['id']]);
 
 $players = array_map(fn($p) => [
-    'discord_id' => $p['discord_id'],
-    'username'   => $p['username'],
-    'avatar_url' => getAvatarUrl(['id' => $p['discord_id'], 'avatar' => $p['avatar']]),
-    'team_id'    => $p['team_id'] !== null ? (int)$p['team_id'] : null,
-    'team_name'  => $p['team_name'],
-    'team_color' => $p['team_color'],
-    'is_host'    => $p['discord_id'] === $room['host_id'],
+    'discord_id'     => $p['discord_id'],
+    'username'       => $p['username'],
+    'avatar_url'     => getAvatarUrl(['id' => $p['discord_id'], 'avatar' => $p['avatar']]),
+    'team_id'        => $p['team_id'] !== null ? (int)$p['team_id'] : null,
+    'team_name'      => $p['team_name'],
+    'team_color'     => $p['team_color'],
+    'is_host'        => $p['discord_id'] === $room['host_id'],
+    'cam_on'         => (bool)$p['cam_on'],
+    'mic_on'         => (bool)$p['mic_on'],
+    'premium'        => (int)$p['premium'],
+    'decoration_url' => $p['decoration'] ?: null,
 ], $stmt->fetchAll());
 
 echo json_encode($players);
-// Version 2.0
+// Version 2.2

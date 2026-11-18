@@ -1,5 +1,8 @@
 <?php
-// Version 4.1
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+// Version 8.1
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/teams.php';
@@ -10,8 +13,8 @@ if (!$user) {
     exit;
 }
 
-$code = strtoupper($_GET['code'] ?? '');
-$stmt = db()->prepare('SELECT id, host_id FROM kr_rooms WHERE code = ?');
+$code = strtoupper($_GET['code'] ?? $_POST['code'] ?? '');
+$stmt = db()->prepare('SELECT id, code, host_id, mode FROM kr_rooms WHERE code = ?');
 $stmt->execute([$code]);
 $room = $stmt->fetch();
 if (!$room) {
@@ -19,15 +22,35 @@ if (!$room) {
 }
 $roomId = (int)$room['id'];
 $isHost = $room['host_id'] === $user['id'];
+$currentMode = $room['mode'] ?? 'points';
+
+// --- MODUS WECHSELN (Muss VOR der Weiterleitung stehen!) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['switch_mode'])) {
+    $newMode = $_POST['switch_mode'];
+    if ($isHost && in_array($newMode, ['points', 'hearts', 'eingestuhlt', 'dumm_drauf'], true)) {
+        db()->prepare('UPDATE kr_rooms SET mode = ? WHERE code = ?')->execute([$newMode, $code]);
+        if ($newMode === 'hearts') { header('Location: herzen.php?code=' . $code); exit; }
+        elseif ($newMode === 'eingestuhlt') { header('Location: eingestuhlt.php?code=' . $code); exit; }
+        elseif ($newMode === 'dumm_drauf') { header('Location: dumm_drauf.php?code=' . $code); exit; }
+        else { header('Location: board.php?code=' . $code); exit; }
+    }
+}
+
+// Normale Weiterleitung, falls falscher Modus aufgerufen wurde
+if ($currentMode === 'hearts') { header('Location: herzen.php?code=' . urlencode($code)); exit; }
+elseif ($currentMode === 'eingestuhlt') { header('Location: eingestuhlt.php?code=' . urlencode($code)); exit; }
+elseif ($currentMode === 'dumm_drauf') { header('Location: dumm_drauf.php?code=' . urlencode($code)); exit; }
 
 ensureTeams($roomId);
 
-// Spieler eintragen oder wieder sichtbar machen. Das Team bleibt beim erneuten Betreten erhalten.
 db()->prepare('
-    INSERT INTO kr_room_players (room_id, discord_id, username, avatar, team_id, last_seen)
-    VALUES (?, ?, ?, ?, NULL, NOW())
-    ON DUPLICATE KEY UPDATE username = VALUES(username), avatar = VALUES(avatar), last_seen = NOW()
-')->execute([$roomId, $user['id'], $user['username'], $user['avatar']]);
+    INSERT INTO kr_room_players (room_id, discord_id, username, avatar, premium, decoration, team_id, last_seen)
+    VALUES (?, ?, ?, ?, ?, ?, NULL, NOW())
+    ON DUPLICATE KEY UPDATE username = VALUES(username), avatar = VALUES(avatar), premium = VALUES(premium), decoration = VALUES(decoration), last_seen = NOW()
+')->execute([
+    $roomId, $user['id'], $user['name'] ?? $user['username'], $user['avatar'], 
+    $user['premium'] ?? 0, $user['decoration'] ?? null
+]);
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -49,19 +72,26 @@ db()->prepare('
         .btn:hover:not(:disabled) { filter: brightness(1.1); }
         .btn:disabled { opacity: .4; cursor: default; }
         .btn.danger { background: #ff3b5c; }
-        .btn.grey   { background: #444; }
+        .btn.grey { background: #444; }
         .btn.camBtn { background: #3ddbc4; color: #1f1438; }
         .btn.camBtn.active { background: #ff3ea5; color: #fff; }
         .btn.hostBtn { background: #f5b400; color: #1f1438; }
-        .btn.block  { display: block; width: 100%; margin-top: 8px; box-sizing: border-box; }
-        .btn.small  { padding: 6px 10px; font-size: 13px; }
+        .btn.block { display: block; width: 100%; margin-top: 8px; box-sizing: border-box; }
+        .btn.small { padding: 6px 10px; font-size: 13px; }
+        .btn.buzz { background: #ff3ea5; font-size: 22px; padding: 18px 40px; min-width: 260px; }
+        .btn.sel { outline: 3px solid #fff; }
+        select.btn { background: #3b2a6b; }
+        .buzzInfo { font-size: 22px; font-weight: bold; color: #f5d000; width: 100%; text-align: center; }
 
-        .scores { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0 24px; }
-        .score {
-            flex: 1 1 180px; padding: 14px 18px; border-radius: 14px; font-weight: bold; font-size: 18px;
-            color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.5); box-shadow: 0 6px 16px rgba(0,0,0,.3);
+        .turnBar {
+            display: none; margin-top: 14px; padding: 10px 16px; border-radius: 12px;
+            font-weight: bold; color: #fff; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,.5);
         }
 
+        .boardInfo { margin-top: 14px; font-size: 16px; opacity: .85; text-align: center; }
+        .boardInfo b { color: #f5d000; }
+
+        .boardWrap { width: 100%; margin-top: 10px; }
         .board { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
         .head {
             background: linear-gradient(180deg, #ff3b5c, #b0123a);
@@ -72,50 +102,78 @@ db()->prepare('
         .head.clickable:hover { filter: brightness(1.15); }
 
         .pts {
-            background: #2c1d52; border-radius: 10px; padding: 18px 8px; text-align: center;
-            font-style: italic; font-weight: bold; color: #c9b8ff; min-height: 58px;
+            background: #2c1d52; border-radius: 10px; padding: 16px 8px; text-align: center;
+            font-style: italic; font-weight: bold; color: #c9b8ff; min-height: 56px;
             display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
         }
-        .pts.clickable { cursor: pointer; background: #3b2a6b; }
         .pts.clickable:hover { filter: brightness(1.2); }
         .pts.open { outline: 3px solid #3ddbc4; }
-        .pts.played { background: #120b22; color: #3ddbc4; font-style: normal; font-size: 22px; }
+        .pts.played { background: #120b22; color: #3ddbc4; font-style: normal; font-size: 22px; cursor: default; }
+        .pts.error-missing { background: #7a1f2c !important; color: #fff; font-style: normal; font-size: 13px; }
 
-        .camBar { display: flex; align-items: center; gap: 14px; margin-top: 26px; }
-        .strip { display: flex; gap: 12px; overflow-x: auto; padding: 8px 2px 14px; margin-top: 10px; }
-        .stile {
-            position: relative; flex: 0 0 220px; aspect-ratio: 4 / 3;
-            background: #2c1d52; border-radius: 14px; overflow: hidden; border: 3px solid #666;
+        .camBar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 22px; }
+        .lkStatus { font-size: 14px; opacity: .8; }
+
+        .arena {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 8px;
+            margin-top: 16px;
         }
-        .sbadge {
-            position: absolute; top: 8px; left: 8px; z-index: 2;
-            padding: 3px 8px; border-radius: 7px; font-size: 11px; font-weight: bold; color: #fff;
-            background: #555; max-width: calc(100% - 16px); overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+        .pcard {
+            position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden;
+            border: 3px solid #666; background: #1a1030; cursor: pointer;
         }
-        .sbadge.host { background: #f5b400; color: #1f1438; }
-        .scam {
+        .pcam {
             position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(circle at top, #3b2a6b, #1a1030);
+            background: radial-gradient(circle at top, #3b2a6b, #120b22);
         }
-        .scam video { width: 100%; height: 100%; object-fit: cover; }
-        .scam .placeholder { width: 64px; height: 64px; border-radius: 50%; opacity: .85; }
-        .spill {
-            position: absolute; left: 8px; right: 8px; bottom: 8px; height: 40px;
-            display: flex; align-items: center; gap: 8px; padding-right: 10px;
-            border-radius: 20px; background: linear-gradient(90deg, #ff3ea5, #7b2ff7);
-        }
-        .spill img {
-            width: 42px; height: 42px; border-radius: 50%;
-            border: 2px solid #3ddbc4; margin-left: -4px; flex-shrink: 0; background: #1a1030;
-        }
-        .spill .name {
-            font-weight: bold; font-size: 14px; color: #fff;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .pcam video { width: 100%; height: 100%; object-fit: cover; }
+        .pph { width: 42%; aspect-ratio: 1; border-radius: 50%; opacity: .9; }
 
-        .spill .mic { margin-left: auto; font-size: 14px; flex-shrink: 0; }
+        .pscore {
+            position: absolute; top: 8px; left: 8px; z-index: 2;
+            padding: 3px 10px; border-radius: 12px; font-weight: bold; font-size: 13px; color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,.5);
+        }
+        .pscoreHost { background: #f5b400; color: #1f1438; text-shadow: none; }
+        .pmic {
+            position: absolute; top: 8px; right: 8px; z-index: 2; width: 28px; height: 28px;
+            border-radius: 50%; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center;
+            font-size: 15px;
+        }
+        .pstate {
+            position: absolute; bottom: 14px; left: 8px; z-index: 2; width: 14px; height: 14px; border-radius: 50%;
+        }
+        .pstate.on { background: #38d26b; box-shadow: 0 0 6px #38d26b; }
+        .pstate.off { background: #f5a623; color: #1f1438; font-size: 10px; line-height: 14px; text-align: center; font-weight: bold; }
 
-        /* Modale Fenster */
+        .pname {
+            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 2;
+            display: flex; align-items: center; gap: 6px; padding: 3px 12px 3px 3px; border-radius: 20px;
+            color: #fff; font-weight: bold; font-size: 13px; max-width: 90%; box-sizing: border-box;
+        }
+        .pavwrap { position: relative; width: 22px; height: 22px; flex-shrink: 0; }
+        .pav {
+            width: 22px; height: 22px; border-radius: 50%; background: #1a1030; display: block;
+            border: 1px solid rgba(255,255,255,.6); box-sizing: border-box;
+        }
+        .pdeco { position: absolute; left: -17%; top: -17%; width: 134%; height: 134%; pointer-events: none; }
+        .pnametext { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+        .zoom {
+            position: fixed; inset: 0; background: rgba(0,0,0,.85);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px; padding: 20px; z-index: 50; box-sizing: border-box;
+        }
+        .zoomBox { width: min(92vw, 960px); }
+        .zoomBox .pcard { width: 100%; cursor: default; }
+        .zoomBox .pph { width: 30%; }
+        .zoomBox .pname { font-size: 18px; }
+        .zoomBox .pav { width: 36px; height: 36px; }
+        .zoomBox .pavwrap { width: 36px; height: 36px; }
+
         .modal {
             position: fixed; inset: 0; background: rgba(0,0,0,.6);
             display: none; align-items: center; justify-content: center; padding: 20px; z-index: 40;
@@ -130,26 +188,38 @@ db()->prepare('
             display: flex; align-items: center; justify-content: space-between; gap: 10px;
             padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.1);
         }
-        .pbtns { display: flex; gap: 6px; flex-wrap: wrap; }
         .swatch { width: 18px; height: 18px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
         .tsel { padding: 6px 8px; border-radius: 8px; border: none; background: #3b2a6b; color: #fff; }
         .addTeam { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
         .addTeam input[type=text] { flex: 1; min-width: 140px; padding: 10px; border: none; border-radius: 10px; }
         .addTeam input[type=color] { width: 52px; height: 42px; border: none; background: none; padding: 0; }
-        .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
 
-        /* Frage für alle */
         .question {
-            position: fixed; inset: 0; background: rgba(10,5,25,.93);
+            position: fixed; inset: 0; background: rgba(10,5,25,.75); pointer-events: none;
             display: none; align-items: center; justify-content: center; padding: 30px; z-index: 30;
         }
         .qbox {
+            pointer-events: auto;
             background: linear-gradient(160deg, #2c1d52, #1a1030);
             border: 3px solid #3ddbc4; border-radius: 20px; padding: 36px;
             width: min(900px, 100%); text-align: center; box-sizing: border-box;
         }
         .qCategory { font-size: 18px; opacity: .85; margin-bottom: 14px; }
         .qText { font-size: 32px; font-weight: bold; white-space: pre-wrap; line-height: 1.3; }
+        
+        .qImage { 
+            display: block; 
+            margin: 16px auto; 
+            max-width: 100%; 
+            max-height: 300px; 
+            border-radius: 12px; 
+            object-fit: contain; 
+            cursor: zoom-in;
+            transition: transform 0.2s;
+        }
+        .qImage:hover { transform: scale(1.02); }
+
         .qPreview { margin-top: 16px; font-size: 14px; opacity: .7; }
         .qAnswer {
             margin-top: 24px; padding: 14px; border-radius: 12px;
@@ -159,34 +229,96 @@ db()->prepare('
         .qWait { margin-top: 24px; opacity: .7; font-size: 18px; }
         .qButtons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 28px; }
         .qButtons .btn { min-width: 170px; }
+        .resolve { width: 100%; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+        .rlabel { font-weight: bold; opacity: .85; margin-top: 6px; }
+
+        .image-zoom {
+            position: fixed; inset: 0; background: rgba(0,0,0,.95);
+            display: none; align-items: center; justify-content: center;
+            z-index: 100; cursor: zoom-out; padding: 20px; box-sizing: border-box;
+        }
+        .image-zoom img {
+            max-width: 100%; max-height: 100%; border-radius: 8px;
+            object-fit: contain; box-shadow: 0 0 40px rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 14px; }
+            h1 { font-size: 20px; }
+            .topbar { gap: 10px; margin-top: 50px; }
+
+            .boardWrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 10px -14px 0;
+                padding: 0 14px 8px;
+            }
+            .board { grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 6px; min-width: 760px; }
+            .head { font-size: 13px; padding: 10px 6px; min-height: 44px; }
+            .pts { font-size: 16px; min-height: 44px; padding: 10px 4px; }
+            .pts.played { font-size: 18px; }
+
+            .camBar { gap: 8px; }
+            .camBar .btn { flex: 1 1 auto; padding: 10px 12px; font-size: 14px; }
+
+            .arena { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+            .pname { font-size: 11px; }
+
+            .modal .box { padding: 16px; }
+            .qbox { padding: 20px; }
+            .qText { font-size: 22px; }
+            .qAnswer { font-size: 16px; }
+            .qButtons .btn { min-width: 0; flex: 1 1 45%; }
+        }
+        .pcard.speaking { box-shadow: 0 0 0 3px #38d26b, 0 0 18px #38d26b; border-color: #38d26b !important; }
+        .volRow { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; color: #fff; }
+        .volRow input { width: min(360px, 80%); }
+        .btn.active { outline: 3px solid #fff; }
     </style>
 </head>
 <body>
-    <div class="topbar">
+    <?php require __DIR__ . '/modus_auswahl.php'; ?>
+
+    <div class="topbar" style="margin-top: 50px;">
         <?php if ($isHost): ?>
             <button class="btn hostBtn" id="hostBtn" type="button">☰ Host-Menü</button>
+            <button class="btn grey" id="undoBtn" type="button" style="display:none">↶ Rückgängig</button>
+            <select id="roundSel" class="btn">
+                <option value="1">Board 1</option>
+                <option value="2">Board 2 (höhere Punkte)</option>
+            </select>
         <?php endif; ?>
         <a href="lobby.php">← Lobby</a>
     </div>
 
     <h1>Spielfeld – Raum <?= htmlspecialchars($code) ?></h1>
 
-    <div class="scores" id="scores"></div>
+    <div class="turnBar" id="turnBar"></div>
+    <div class="boardInfo" id="boardInfo"></div>
 
-    <div class="board" id="board"></div>
+    <div class="boardWrap">
+        <div class="board" id="board"></div>
+    </div>
 
     <div class="camBar">
         <button class="btn camBtn" id="camBtn" type="button">Kamera an</button>
         <button class="btn camBtn" id="micBtn" type="button">Mikrofon an</button>
-        <span class="muted">Alle Spieler im Raum</span>
+        <button class="btn camBtn" id="fullBtn" type="button">Full Mute</button>
+        <span class="lkStatus" id="lkStatus"></span>
     </div>
-    <div class="strip" id="strip"></div>
 
-    <!-- Offene Frage -->
+    <div class="arena" id="arena"></div>
+
+    <div class="zoom" id="zoom">
+        <div class="zoomBox" id="zoomBox"></div>
+        <button class="btn grey" id="zoomClose" type="button">✕ Schließen</button>
+    </div>
+
     <div class="question" id="questionOverlay">
         <div class="qbox">
             <div class="qCategory" id="qCategory"></div>
             <div class="qText" id="qText"></div>
+            <img id="qImage" class="qImage" style="display:none" alt="Frage Bild" onclick="openImageZoom(this.src)">
             <div class="qPreview" id="qPreview" style="display:none">Vorschau – nur du siehst die Frage, bis du sie anzeigst.</div>
             <div class="qAnswer" id="qAnswer" style="display:none"></div>
             <div class="qButtons" id="qButtons" style="display:none"></div>
@@ -194,11 +326,13 @@ db()->prepare('
         </div>
     </div>
 
-    <!-- Host-Menü -->
+    <div class="image-zoom" id="imageZoom" onclick="closeImageZoom()">
+        <img id="imageZoomSrc" src="" alt="Großansicht">
+    </div>
+
     <div class="modal" id="hostModal">
         <div class="box">
             <h3>Host-Menü</h3>
-
             <div class="section">
                 <strong>Teams</strong>
                 <div id="hostTeams"></div>
@@ -208,23 +342,19 @@ db()->prepare('
                     <button class="btn small" type="submit">Team hinzufügen</button>
                 </form>
             </div>
-
             <div class="section">
                 <strong>Spieler zuordnen</strong>
                 <div id="hostPlayers"></div>
             </div>
-
             <div class="section">
-                <strong>Punkte testen</strong>
+                <strong>Punkte korrigieren</strong>
                 <div id="hostScores"></div>
                 <div class="row"><button class="btn danger small" id="resetBtn" type="button">Punkte aller Teams auf 0</button></div>
             </div>
-
             <button class="btn block grey" id="hostClose" type="button">Schließen</button>
         </div>
     </div>
 
-    <!-- Kategorie-Auswahl -->
     <div class="modal" id="picker">
         <div class="box">
             <h3 id="pickerTitle"></h3>
@@ -233,7 +363,6 @@ db()->prepare('
         </div>
     </div>
 
-    <!-- Punkte-Entscheidung beim Tausch -->
     <div class="modal" id="keepDialog">
         <div class="box">
             <h3>Punkte behalten?</h3>
@@ -244,54 +373,82 @@ db()->prepare('
         </div>
     </div>
 
-    <script src="kr-cams.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js"></script>
     <script>
         const roomCode = <?= json_encode($code) ?>;
         const myId = <?= json_encode($user['id']) ?>;
+        const myName = <?= json_encode($user['name'] ?? $user['username']) ?>;
         const isHost = <?= json_encode($isHost) ?>;
-        const POINTS = [100, 200, 300, 500];
+        
+        const POINTS_BOARD_1 = [100, 200, 300, 500];
+        const POINTS_BOARD_2 = [200, 400, 600, 1000];
+        
+        const LK = window.LivekitClient;
+        const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
         const ERRORS = {
             busy: 'Es ist gerade schon eine Frage offen.',
             played: 'Dieses Feld wurde schon gespielt.',
             slot: 'Für diese Spalte ist noch keine Kategorie gesetzt.',
-            noquestion: 'In dieser Kategorie gibt es für diesen Punktwert noch keine Frage.',
+            noquestion: 'FEHLER: In dieser Kategorie fehlt eine Frage für diesen Punktwert! Bitte in fragen.php anlegen.',
             noactive: 'Es ist gerade keine Frage offen.',
             input: 'Ungültige Eingabe.',
             host: 'Nur der Host darf das.',
-            host_no_team: 'Der Host hat kein Team.',
+            turn: 'Nur das Team, das gerade dran ist, darf die Frage wählen.',
             login: 'Bitte neu einloggen.',
             room: 'Raum nicht gefunden.',
             team_name: 'Teamname: 1 bis 40 Zeichen.',
             color: 'Ungültige Farbe.',
             team_max: 'Maximal 8 Teams sind möglich.',
             team_last: 'Mindestens ein Team muss bestehen bleiben.',
+            no_joker: 'Dieses Team hat seinen Joker bereits verbraucht.',
         };
 
         const boardEl = document.getElementById('board');
-        const scoresEl = document.getElementById('scores');
+        const boardInfo = document.getElementById('boardInfo');
+        const turnBar = document.getElementById('turnBar');
         const picker = document.getElementById('picker');
         const pickerTitle = document.getElementById('pickerTitle');
         const pickerList = document.getElementById('pickerList');
         const keepDialog = document.getElementById('keepDialog');
         const overlay = document.getElementById('questionOverlay');
         const qButtons = document.getElementById('qButtons');
-        const stripEl = document.getElementById('strip');
+        const arena = document.getElementById('arena');
+        const zoom = document.getElementById('zoom');
+        const zoomBox = document.getElementById('zoomBox');
         const camBtn = document.getElementById('camBtn');
         const micBtn = document.getElementById('micBtn');
+        const lkStatus = document.getElementById('lkStatus');
         const hostModal = document.getElementById('hostModal');
         const hostTeams = document.getElementById('hostTeams');
         const hostPlayers = document.getElementById('hostPlayers');
         const hostScores = document.getElementById('hostScores');
 
-        let state = null;
+        let state = null;          
+        let players = [];          
         let lastSig = '';
         let lastCamSig = '';
-        let latestPlayers = [];
         let pending = null;
         let hostSig = '';
+        let zoomId = null;
 
-        // ---------- Hilfsfunktionen ----------
+        let buzzKey = '';
+        let buzzWinner = null;       
+        let resolveMain = null;      
+        let resolveSteal = 'none';   
+        let resolveStealTeam = null; 
+        let autoPassTriggered = false;
+
+        function openImageZoom(src) {
+            if (!src) return;
+            document.getElementById('imageZoomSrc').src = src;
+            document.getElementById('imageZoom').style.display = 'flex';
+        }
+
+        function closeImageZoom() {
+            document.getElementById('imageZoom').style.display = 'none';
+            document.getElementById('imageZoomSrc').src = '';
+        }
 
         function el(tag, cls = '', text = '') {
             const e = document.createElement(tag);
@@ -307,7 +464,24 @@ db()->prepare('
             return b;
         }
 
-        // ---------- Netzwerk ----------
+        function choiceBtn(label, cls, selected, onClick) {
+            return makeBtn(label, cls + (selected ? ' sel' : ''), onClick);
+        }
+
+        function rememberFlag(name, on) {
+            try {
+                if (on) sessionStorage.setItem(name, '1');
+                else sessionStorage.removeItem(name);
+            } catch (e) {}
+        }
+
+        function wasFlagOn(name) {
+            try {
+                return sessionStorage.getItem(name) === '1';
+            } catch (e) {
+                return false;
+            }
+        }
 
         async function api(action, data = {}) {
             const body = new URLSearchParams({ code: roomCode, action, ...data });
@@ -315,7 +489,7 @@ db()->prepare('
                 const res = await fetch('board_api.php', { method: 'POST', body, cache: 'no-store' });
                 if (res.ok) return { ok: true };
                 const json = await res.json().catch(() => ({}));
-                return { ok: false, error: ERRORS[json.error] || 'Fehler beim Speichern.' };
+                return { ok: false, error: ERRORS[json.error] || 'Fehler beim Speichern.', code: json.error };
             } catch (e) {
                 return { ok: false, error: 'Netzwerkfehler.' };
             }
@@ -325,75 +499,155 @@ db()->prepare('
             try {
                 const res = await fetch('board_api.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
                 if (res.ok) {
-                    state = await res.json();
-                    render();
+                    const text = await res.text();
+                    try {
+                        state = JSON.parse(text);
+                        render();
+                    } catch (err) {
+                        console.error("API JSON Fehler:", text);
+                        if (!state) {
+                            state = { round: 1, teams: [], played: [], active: null, board: [], categories: [] };
+                            render();
+                        }
+                    }
                 }
-            } catch (e) {
-                // nächster Durchlauf versucht es erneut
-            }
+            } catch (e) {}
         }
 
-        // ---------- Darstellung ----------
+        async function refreshPlayers() {
+            try {
+                const res = await fetch('players.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
+                if (res.ok) {
+                    players = await res.json();
+                    drawCams();
+                    maybeRenderHostMenu();
+                }
+            } catch (e) {}
+            setTimeout(refreshPlayers, 2000);
+        }
+
+        function renderUndo() {
+            const b = document.getElementById('undoBtn');
+            if (b) b.style.display = state.canUndo && !state.active ? '' : 'none';
+        }
+
+        if (isHost) {
+            document.getElementById('undoBtn').addEventListener('click', async () => {
+                if (!confirm('Letzte Auflösung rückgängig machen? Punkte und Zug werden zurückgesetzt.')) return;
+                const r = await api('undo');
+                if (!r.ok) alert(r.error);
+                refresh();
+            });
+        }
 
         function render() {
-            const sig = JSON.stringify(state);
-            if (sig === lastSig) return;
-            lastSig = sig;
-
-            renderScores();
+            if (!state) return;
+            
+            renderTurn();
+            renderBoardInfo();
+            renderUndo();
             renderBoard();
             renderQuestion();
             maybeRenderHostMenu();
+            drawCams();
         }
 
-        function renderScores() {
-            scoresEl.innerHTML = '';
-            for (const t of state.teams) {
-                const card = el('div', 'score', `${t.name}: ${t.points}`);
-                card.style.background = t.color;
-                scoresEl.append(card);
+        function renderTurn() {
+            if (!state.teams) return;
+            const t = state.teams.find(x => x.id === state.turnTeamId);
+            if (!t) {
+                turnBar.style.display = 'none';
+                return;
+            }
+            turnBar.style.display = 'block';
+            turnBar.style.background = t.color;
+            let text = `🎯 Dran: ${t.name}`;
+            if (state.active && state.active.jokerActive) {
+                text += ` 🃏 (Joker aktiv: ${state.active.points} Punkte)`;
+            } else if (!isHost && state.canPick) {
+                text += ' – das seid ihr, wählt eine Frage';
+            } else if (isHost && state.canPick) {
+                 text += ' (Wähle eine Frage)';
+            }
+            turnBar.textContent = text;
+        }
+
+        function renderBoardInfo() {
+            if (!state) return;
+            let text = `Board ${state.round || 1}`;
+            boardInfo.innerHTML = '';
+            boardInfo.append(el('b', '', text));
+            if (isHost) {
+                const roundSel = document.getElementById('roundSel');
+                if (roundSel) roundSel.value = String(state.round);
             }
         }
 
         function renderBoard() {
             boardEl.innerHTML = '';
+            if (!state || !state.round) {
+                boardEl.innerHTML = '<p style="color:red">Lade Spieldaten...</p>';
+                return;
+            }
+
+            const boardData = state.board || [];
+            const playedData = state.played || [];
 
             for (let slot = 0; slot < 6; slot++) {
-                const entry = state.board.find(b => b.slot === slot) || null;
+                const entry = boardData.find(b => b.slot === slot) || null;
                 const head = el('div', 'head' + (isHost ? ' clickable' : ''),
                     entry ? entry.name : (isHost ? '+ Kategorie wählen' : '—'));
                 if (isHost) head.addEventListener('click', () => openPicker(slot, entry));
                 boardEl.append(head);
             }
-
-            const playedKeys = new Set(state.played.map(p => p.slot + ':' + p.points));
-            for (const pts of POINTS) {
+            
+            const currentPoints = state.round === 1 ? POINTS_BOARD_1 : POINTS_BOARD_2;
+            const playedKeys = new Set(playedData.map(p => p.slot + ':' + p.points));
+            
+            for (const base of currentPoints) {
                 for (let slot = 0; slot < 6; slot++) {
-                    const entry = state.board.find(b => b.slot === slot) || null;
-                    const done = playedKeys.has(slot + ':' + pts);
-                    const isOpen = !!state.active && state.active.slot === slot && state.active.points === pts;
-                    const canOpen = isHost && entry && !done && !state.active;
+                    const entry = boardData.find(b => b.slot === slot) || null;
+                    const done = playedKeys.has(slot + ':' + base);
+                    const isOpen = !!state.active && state.active.slot === slot && state.active.base === base;
+                    
+                    const canOpen = state.canPick && entry && !done && !state.active;
                     const canUnplay = isHost && done;
 
                     const cell = el('div', 'pts'
                         + (done ? ' played' : '')
                         + (isOpen ? ' open' : '')
                         + (canOpen || canUnplay ? ' clickable' : ''),
-                        done ? '✓' : String(pts));
-                    if (canOpen) cell.addEventListener('click', () => openQuestion(slot, pts));
+                        done ? '✓' : String(base));
+                    
+                    if (canOpen) {
+                        cell.addEventListener('click', () => openQuestion(slot, base, cell));
+                    }
                     if (canUnplay) {
                         cell.title = 'Klicken, um das Feld für eine Wiederholung freizugeben';
-                        cell.addEventListener('click', () => unplayField(slot, pts));
+                        cell.addEventListener('click', () => unplayField(slot, base));
                     }
                     boardEl.append(cell);
                 }
             }
         }
 
+        function qKey() {
+            const a = state && state.active;
+            return a ? a.slot + ':' + a.points + ':' + a.category : '';
+        }
+
         function renderQuestion() {
             const a = state.active;
+            const key = qKey();
+            if (key !== buzzKey) {
+                buzzKey = key;
+                buzzWinner = null;
+                resolveMain = null;
+                resolveSteal = 'none';
+                resolveStealTeam = null;
+                autoPassTriggered = false;
+            }
 
-            // Nicht-Hosts sehen die Frage erst, wenn der Host sie anzeigt
             if (!a || (!isHost && !a.revealed)) {
                 overlay.style.display = 'none';
                 return;
@@ -402,6 +656,38 @@ db()->prepare('
             overlay.style.display = 'flex';
             document.getElementById('qCategory').textContent = `${a.category} · ${a.points} Punkte`;
             document.getElementById('qText').textContent = a.question || '';
+
+            const img = document.getElementById('qImage');
+            const oldMedia = document.getElementById('qMedia');
+            if (oldMedia) oldMedia.remove();
+            img.style.display = 'none';
+            img.src = '';
+            const url = (a.image_url || '').trim();
+            const ext = url.split('?')[0].split('.').pop().toLowerCase();
+            if (url !== '') {
+                if (['mp4', 'webm'].includes(ext)) {
+                    const v = document.createElement('video');
+                    v.id = 'qMedia';
+                    v.src = url;
+                    v.controls = true;
+                    v.autoplay = true;
+                    v.playsInline = true;
+                    v.style.cssText = 'max-height:40vh;max-width:100%;border-radius:12px;margin-top:16px;';
+                    img.after(v);
+                } else if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) {
+                    const au = document.createElement('audio');
+                    au.id = 'qMedia';
+                    au.src = url;
+                    au.controls = true;
+                    au.autoplay = true;
+                    au.style.cssText = 'width:100%;margin-top:16px;';
+                    img.after(au);
+                } else {
+                    img.onerror = function() { this.style.display = 'none'; };
+                    img.src = url;
+                    img.style.display = 'block';
+                }
+            }
 
             const ans = document.getElementById('qAnswer');
             if (isHost && a.answer) {
@@ -413,38 +699,203 @@ db()->prepare('
 
             const showPreview = isHost && !a.revealed;
             document.getElementById('qPreview').style.display = showPreview ? '' : 'none';
-            document.getElementById('qWait').style.display = isHost ? 'none' : '';
+            document.getElementById('qWait').style.display = 'none';
 
             qButtons.innerHTML = '';
+            qButtons.style.display = 'flex';
+
             if (isHost) {
-                qButtons.style.display = 'flex';
                 if (!a.revealed) {
                     qButtons.append(makeBtn('Für alle anzeigen', 'btn', revealQuestion));
                 } else {
-                    for (const t of state.teams) {
-                        const b = makeBtn(`${t.name} war richtig`, 'btn', () => resolveQuestion(t.id));
-                        b.style.background = t.color;
-                        qButtons.append(b);
+                    if (!a.timer_started_at && !a.timerPaused) {
+                        qButtons.append(makeBtn('⏱ 20s Timer starten', 'btn hostBtn', startTimer));
+                    } else if (a.timerPaused) {
+                        qButtons.append(makeBtn('▶ Timer weiter', 'btn hostBtn', () => timerAction('timer_resume')));
+                    } else {
+                        qButtons.append(makeBtn('⏸ Timer pausieren', 'btn grey', () => timerAction('timer_pause')));
                     }
-                    qButtons.append(makeBtn('Niemand', 'btn grey', () => resolveQuestion(0)));
+                    qButtons.append(makeBtn(hostHearAll ? '🎧 Nur Dran-Team hören' : '🎧 Alle Teams hören', 'btn grey', () => { hostHearAll = !hostHearAll; applyAudio(); renderQuestion(); }));
+                    const bz = makeBtn(a.buzzOpen ? '🔔 Buzzer läuft' : '🔔 Buzzer freigeben', 'btn hostBtn', openBuzzer);
+                    bz.disabled = !!a.buzzOpen;
+                    qButtons.append(bz);
+                    qButtons.append(makeBtn('🙈 Frage verbergen', 'btn grey', hideQuestion));
+                    qButtons.append(buildResolvePanel(a));
                 }
                 qButtons.append(makeBtn('Abbrechen', 'btn grey', cancelQuestion));
             } else {
-                qButtons.style.display = 'none';
+                if (buzzWinner) {
+                    const text = buzzWinner.id === myId
+                        ? '🔔 Du hast zuerst gedrückt!'
+                        : `🔔 ${buzzWinner.name} (${buzzWinner.team}) hat zuerst gedrückt`;
+                    qButtons.append(el('div', 'buzzInfo', text));
+                } else if (canBuzz()) {
+                    qButtons.append(makeBtn('🔔 BUZZER', 'btn buzz', sendBuzz));
+                } else if (state.myTeamId && state.myTeamId === state.turnTeamId) {
+                    qButtons.append(el('div', 'buzzInfo', 'Ihr seid dran – beantwortet die Frage laut.'));
+                    if (!state.jokerActive && state.myJokerAvailable) {
+                        qButtons.append(makeBtn('🃏 Joker spielen (Punkte verdoppeln)', 'btn hostBtn', playJoker));
+                    }
+                } else {
+                    qButtons.append(el('div', 'buzzInfo', a.buzzOpen ? 'Warte auf die Auflösung …' : 'Warte, bis der Host den Buzzer freigibt …'));
+                }
             }
         }
 
-        // ---------- Frage öffnen, anzeigen und auflösen (Host) ----------
+        function buildResolvePanel(a) {
+            const wrap = el('div', 'resolve');
+            const turn = state.teams.find(t => t.id === state.turnTeamId);
+            const lose = Math.floor(a.points / 2);
+            const half = Math.floor(a.points / 2);
 
-        async function openQuestion(slot, points) {
-            const r = await api('open_question', { slot, points });
+            wrap.append(el('div', 'rlabel', `Team dran: ${turn ? turn.name : '–'}`));
+            const r1 = el('div', 'row');
+            r1.style.justifyContent = 'center';
+            r1.append(
+                choiceBtn(`✓ richtig +${a.points}`, 'btn', resolveMain === 'right', () => { resolveMain = 'right'; renderQuestion(); }),
+                choiceBtn(`✗ falsch −${lose}`, 'btn danger', resolveMain === 'wrong', () => { resolveMain = 'wrong'; renderQuestion(); }),
+                choiceBtn('keine Antwort', 'btn grey', resolveMain === 'none', () => { resolveMain = 'none'; renderQuestion(); }),
+            );
+            wrap.append(r1);
+
+            const others = state.teams.filter(t => t.id !== state.turnTeamId);
+            const defaultSteal = buzzWinner && buzzWinner.team_id && buzzWinner.team_id !== state.turnTeamId
+                ? buzzWinner.team_id : 0;
+            const stealId = resolveStealTeam !== null ? resolveStealTeam : defaultSteal;
+
+            if (others.length) {
+                wrap.append(el('div', 'rlabel', 'Klauen (Buzzer):'));
+                const r2 = el('div', 'row');
+                r2.style.justifyContent = 'center';
+
+                const sel = document.createElement('select');
+                sel.className = 'tsel';
+                sel.append(new Option('kein Team', '0'));
+                for (const t of others) {
+                    const label = t.name + (buzzWinner && buzzWinner.team_id === t.id ? ' 🔔' : '');
+                    sel.append(new Option(label, String(t.id)));
+                }
+                sel.value = String(stealId);
+                sel.addEventListener('change', () => {
+                    resolveStealTeam = Number(sel.value);
+                    renderQuestion();
+                });
+
+                r2.append(
+                    sel,
+                    choiceBtn(`✓ Klau +${half}`, 'btn', stealId && resolveSteal === 'right', () => {
+                        resolveSteal = 'right';
+                        renderQuestion();
+                    }),
+                    choiceBtn('✗ kein Abzug', 'btn grey', stealId && resolveSteal === 'none', () => {
+                        resolveSteal = 'none';
+                        renderQuestion();
+                    }),
+                );
+                wrap.append(r2);
+            }
+
+            const skipRow = el('div', 'row');
+            skipRow.style.justifyContent = 'center';
+            skipRow.append(makeBtn('Frage überspringen (keine Punkte)', 'btn grey', () => {
+                resolveMain = 'none';
+                resolveSteal = 'none';
+                resolveStealTeam = 0;
+                submitResolve(0);
+            }));
+            wrap.append(skipRow);
+
+            const go = makeBtn('Auflösen', 'btn', () => submitResolve(stealId));
+            go.disabled = resolveMain === null;
+            const rGo = el('div', 'row');
+            rGo.style.justifyContent = 'center';
+            rGo.append(go);
+            wrap.append(rGo);
+            return wrap;
+        }
+
+        async function submitResolve(stealId) {
+            const steal = stealId && stealId !== state.turnTeamId ? stealId : 0;
+            const r = await api('resolve', {
+                mode: resolveMain,
+                steal_team_id: steal,
+                steal_mode: steal ? resolveSteal : 'none',
+            });
+            if (!r.ok) alert(r.error);
+            resolveMain = null;
+            resolveSteal = 'none';
+            resolveStealTeam = null;
+            refresh();
+        }
+
+        async function playJoker() {
+            if (!confirm('Joker spielen? Punkte für diese Frage verdoppeln sich.')) return;
+            const r = await api('use_joker');
             if (!r.ok) alert(r.error);
             refresh();
         }
 
-        async function unplayField(slot, points) {
-            if (!confirm(`Feld ${points} wieder freigeben? Die Frage kann dann erneut gespielt werden.`)) return;
-            const r = await api('unplay', { slot, points });
+        function canBuzz() {
+            return !isHost && !!state.active && state.active.revealed && !!state.active.buzzOpen && !buzzWinner
+                && !!state.myTeamId && state.myTeamId !== state.turnTeamId;
+        }
+
+        function sendBuzz() {
+            if (!canBuzz() || !room) return;
+            const myTeam = state.teams.find(t => t.id === state.myTeamId);
+            const msg = {
+                t: 'buzz',
+                key: qKey(),
+                id: myId,
+                name: myName,
+                team_id: state.myTeamId,
+                team: myTeam ? myTeam.name : '',
+            };
+            room.localParticipant
+                .publishData(new TextEncoder().encode(JSON.stringify(msg)), { reliable: true })
+                .catch(() => {});
+            onBuzz(msg);
+        }
+
+        function onBuzz(msg) {
+            if (!state || msg.key !== qKey() || buzzWinner) return;
+            if (msg.team_id === state.turnTeamId) return;
+            buzzWinner = { id: msg.id, name: msg.name, team_id: msg.team_id, team: msg.team };
+            renderQuestion();
+        }
+
+        function onData(payload) {
+            try {
+                const msg = JSON.parse(new TextDecoder().decode(payload));
+                if (msg.t === 'buzz') onBuzz(msg);
+            } catch (e) {}
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code !== 'Space' || e.repeat || isHost) return;
+            const tag = (e.target.tagName || '').toUpperCase();
+            if (['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(tag)) return;
+            e.preventDefault();
+            sendBuzz();
+        });
+
+        async function openQuestion(slot, base, cellElement) {
+            const r = await api('open_question', { slot, points: base });
+            if (!r.ok) {
+                if (r.code === 'noquestion') {
+                    if (cellElement) {
+                        cellElement.classList.add('error-missing');
+                        cellElement.textContent = 'Keine Frage!';
+                    }
+                }
+                alert(r.error);
+            }
+            refresh();
+        }
+
+        async function unplayField(slot, base) {
+            if (!confirm(`Feld ${base} wieder freigeben? Die Frage kann dann erneut gespielt werden.`)) return;
+            const r = await api('unplay', { slot, points: base });
             if (!r.ok) alert(r.error);
             refresh();
         }
@@ -455,8 +906,8 @@ db()->prepare('
             refresh();
         }
 
-        async function resolveQuestion(teamId) {
-            const r = await api('resolve', { team_id: teamId });
+        async function startTimer() {
+            const r = await api('start_timer');
             if (!r.ok) alert(r.error);
             refresh();
         }
@@ -467,16 +918,14 @@ db()->prepare('
             refresh();
         }
 
-        // ---------- Kategorie wechseln (Host) ----------
-
         function openPicker(slot, entry) {
-            pickerTitle.textContent = 'Kategorie für Spalte ' + (slot + 1);
+            pickerTitle.textContent = 'Kategorie für Spalte ' + (slot + 1) + ' · Board ' + state.round;
             pickerList.innerHTML = '';
 
-            if (state.categories.length === 0) {
+            if (!state.categories || state.categories.length === 0) {
                 pickerList.innerHTML = '<p>Noch keine Kategorien vorhanden. Lege sie zuerst unter fragen.php an.</p>';
             }
-            for (const c of state.categories) {
+            for (const c of (state.categories || [])) {
                 const b = makeBtn(c.name + (entry && entry.category_id === c.id ? ' (aktuell)' : ''), 'btn block',
                     () => pick(slot, c.id, entry));
                 pickerList.append(b);
@@ -491,7 +940,6 @@ db()->prepare('
         function pick(slot, catId, entry) {
             closePicker();
             if (entry && entry.category_id === catId) return;
-
             if (!entry) {
                 setSlot(slot, catId, true);
                 return;
@@ -520,18 +968,15 @@ db()->prepare('
             keepDialog.style.display = 'none';
         });
 
-        // ---------- Host-Menü ----------
-
         function openHostMenu() {
             hostModal.style.display = 'flex';
             hostSig = '';
             maybeRenderHostMenu();
         }
 
-        // Nur neu aufbauen, wenn sich Teams, Punkte oder Spieler geändert haben
         function maybeRenderHostMenu() {
             if (!isHost || hostModal.style.display !== 'flex' || !state) return;
-            const sig = JSON.stringify([state.teams, latestPlayers.map(p => [p.discord_id, p.username, p.team_id])]);
+            const sig = JSON.stringify([state.teams, players.map(p => [p.discord_id, p.username, p.team_id])]);
             if (sig === hostSig) return;
             hostSig = sig;
             renderHostTeams();
@@ -558,12 +1003,11 @@ db()->prepare('
 
         function renderHostPlayers() {
             hostPlayers.innerHTML = '';
-            const others = latestPlayers.filter(p => !p.is_host);
+            const others = players.filter(p => !p.is_host);
             if (others.length === 0) {
                 hostPlayers.append(el('p', 'muted', 'Noch keine Mitspieler.'));
                 return;
             }
-
             for (const p of others) {
                 const row = el('div', 'prow');
                 row.append(el('span', '', p.username));
@@ -584,20 +1028,35 @@ db()->prepare('
 
         function renderHostScores() {
             hostScores.innerHTML = '';
+            const row = el('div', 'row');
+            row.style.alignItems = 'center';
+            const sel = document.createElement('select');
+            sel.className = 'tsel';
             for (const t of state.teams) {
-                const row = el('div', 'prow');
-                const name = el('span', '', `${t.name} (${t.points})`);
-                const btns = el('div', 'pbtns');
-                for (const d of [-100, 100, 200, 300]) {
-                    btns.append(makeBtn((d > 0 ? '+' : '') + d, 'btn small', async () => {
-                        await api('add_points', { team_id: t.id, delta: d });
-                        hostSig = '';
-                        refresh();
-                    }));
-                }
-                row.append(name, btns);
-                hostScores.append(row);
+                sel.append(new Option(`${t.name} (${t.points})`, String(t.id)));
             }
+            const amount = document.createElement('input');
+            amount.type = 'number';
+            amount.min = '1';
+            amount.max = '2000';
+            amount.value = '100';
+            amount.style.cssText = 'width:90px;padding:6px 8px;border-radius:8px;border:none;background:#3b2a6b;color:#fff;';
+
+            const change = async (sign) => {
+                const v = Math.max(1, Math.min(2000, parseInt(amount.value, 10) || 0));
+                const r = await api('add_points', { team_id: sel.value, delta: sign * v });
+                if (!r.ok) alert(r.error);
+                hostSig = '';
+                refresh();
+            };
+
+            row.append(
+                sel,
+                amount,
+                makeBtn('+ hinzufügen', 'btn small', () => change(1)),
+                makeBtn('− abziehen', 'btn danger small', () => change(-1)),
+            );
+            hostScores.append(row);
         }
 
         async function setTeam(discordId, teamId) {
@@ -614,8 +1073,7 @@ db()->prepare('
                 alert('Netzwerkfehler.');
                 return;
             }
-            // Sofort anzeigen, ohne auf den nächsten Abruf zu warten
-            const p = latestPlayers.find(x => x.discord_id === discordId);
+            const p = players.find(x => x.discord_id === discordId);
             if (p) {
                 const t = state.teams.find(x => x.id === teamId);
                 p.team_id = teamId || null;
@@ -623,7 +1081,9 @@ db()->prepare('
                 p.team_color = t ? t.color : null;
             }
             lastCamSig = '';
-            renderCams(latestPlayers);
+            drawCams();
+            hostSig = '';
+            maybeRenderHostMenu();
         }
 
         async function deleteTeam(teamId, name) {
@@ -631,6 +1091,13 @@ db()->prepare('
             const r = await api('delete_team', { team_id: teamId });
             if (!r.ok) alert(r.error);
             hostSig = '';
+            refresh();
+        }
+
+        async function finishGame() {
+            if (!confirm('Spiel beenden und Historie speichern? Punkte werden auf 0 gesetzt.')) return;
+            const r = await api('finish_game');
+            if (!r.ok) alert(r.error);
             refresh();
         }
 
@@ -660,101 +1127,405 @@ db()->prepare('
                 hostSig = '';
                 refresh();
             });
+
+            document.getElementById('roundSel').addEventListener('change', async (e) => {
+                const r = await api('set_round', { round: e.target.value });
+                if (!r.ok) alert(r.error);
+                refresh();
+            });
         }
 
-        // ---------- Kameraleiste ----------
+        let room = null;
 
-        function buildStripTile(p) {
-            const isMe = p.discord_id === myId;
-            const tile = el('div', 'stile');
+        function setStatus(text) {
+            lkStatus.textContent = text;
+        }
 
-            const badge = el('span', 'sbadge');
-            if (p.is_host) {
-                badge.classList.add('host');
-                badge.textContent = '👑 Host';
-                tile.style.borderColor = '#f5b400';
-            } else if (p.team_id) {
-                badge.textContent = p.team_name || 'Team';
-                badge.style.background = p.team_color || '#555';
-                tile.style.borderColor = p.team_color || '#666';
-            } else {
-                badge.textContent = 'KEIN TEAM';
-                tile.style.borderColor = '#666';
+        function participantFor(id) {
+            if (!room) return null;
+            if (id === myId) return room.localParticipant;
+            return room.remoteParticipants.get(id) || null;
+        }
+
+        function mediaFor(id) {
+            const p = participantFor(id);
+            if (!p) return { track: null, micOn: false };
+            const pub = p.getTrackPublication(LK.Track.Source.Camera);
+            const track = pub && pub.track && !pub.isMuted ? pub.track : null;
+            return { track, micOn: !!p.isMicrophoneEnabled };
+        }
+
+        const videoCache = new Map();
+
+        function dropVideo(id, art = null) {
+            for (const key of [...videoCache.keys()]) {
+                const [vid, vart] = key.split('|');
+                if (vid !== id) continue;
+                if (art && vart !== art) continue;
+                const c = videoCache.get(key);
+                c.track.detach(c.el);
+                videoCache.delete(key);
             }
-            tile.append(badge);
+        }
 
-            const cam = el('div', 'scam');
-            const video = KRCams.createVideo(p.discord_id, isMe);
+        function videoFor(id, track, mirror, art) {
+            const key = id + '|' + art;
+            if (!track) {
+                dropVideo(id, art);
+                return null;
+            }
+            const c = videoCache.get(key);
+            if (c && c.sid === track.sid) {
+                c.el.style.transform = mirror ? 'scaleX(-1)' : '';
+                return c.el;
+            }
+            dropVideo(id, art);
+            const v = track.attach();
+            v.playsInline = true;
+            v.muted = true;
+            v.style.width = '100%';
+            v.style.height = '100%';
+            v.style.objectFit = 'cover';
+            v.style.transform = mirror ? 'scaleX(-1)' : '';
+            videoCache.set(key, { sid: track.sid, el: v, track });
+            return v;
+        }
+
+        async function restoreMedia() {
+            if (wasFlagOn('kr_cam')) {
+                await room.localParticipant.setCameraEnabled(true).catch(() => {});
+            }
+            if (wasFlagOn('kr_mic')) {
+                await room.localParticipant.setMicrophoneEnabled(true).catch(() => {});
+            }
+        }
+
+        async function connectLiveKit() {
+            if (!LK) {
+                setStatus('LiveKit konnte nicht geladen werden. Internetverbindung prüfen.');
+                return;
+            }
+            if (room) {
+                room.disconnect();
+                room = null;
+            }
+            setStatus('verbinde …');
+
+            try {
+                const res = await fetch('livekit_token.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
+                const data = await res.json();
+                if (!res.ok || !data.token) throw new Error(data.error || 'kein Zugang');
+
+                room = new LK.Room({
+                    adaptiveStream: true,
+                    dynacast: true,
+                    videoCaptureDefaults: {
+                        resolution: IS_MOBILE ? { width: 320, height: 240, frameRate: 15 } : { width: 480, height: 360, frameRate: 20 },
+                    },
+                });
+
+                const E = LK.RoomEvent;
+                for (const ev of [
+                    E.ParticipantConnected, E.ParticipantDisconnected,
+                    E.TrackMuted, E.TrackUnmuted,
+                    E.LocalTrackPublished, E.LocalTrackUnpublished,
+                ]) {
+                    room.on(ev, () => drawCams());
+                }
+
+                room.on(E.TrackSubscribed, (track, pub, participant) => {
+                    if (track.kind === 'audio') {
+                        const a = track.attach();
+                        a.style.display = 'none';
+                        document.body.append(a);
+                        audioEls.set(participant.identity, a);
+                        applyAudio();
+                    }
+                    drawCams();
+                });
+
+                room.on(E.TrackUnsubscribed, (track, pub, participant) => {
+                    if (track.kind === 'audio') audioEls.delete(participant.identity);
+                    track.detach().forEach(a => a.remove());
+                    drawCams();
+                });
+
+                room.on(E.DataReceived, onData);
+                room.on(E.ActiveSpeakersChanged, (sp) => {
+                    speakingSet = new Set(sp.map(s => s.identity));
+                    drawCams();
+                });
+
+                room.on(E.Reconnecting, () => setStatus('Verbindung wird wiederhergestellt …'));
+                room.on(E.Reconnected, () => {
+                    setStatus('');
+                    drawCams();
+                });
+                room.on(E.Disconnected, () => setStatus('getrennt, bitte Seite neu laden'));
+
+                await room.connect(data.url, data.token);
+                setStatus('');
+                await restoreMedia();
+                drawCams();
+            } catch (e) {
+                setStatus('Verbindung fehlgeschlagen: ' + e.message);
+                setTimeout(connectLiveKit, 6000);
+            }
+        }
+
+        function syncButtons() {
+            const lp = room ? room.localParticipant : null;
+            const camOn = !!(lp && lp.isCameraEnabled);
+            const micOn = !!(lp && lp.isMicrophoneEnabled);
+            camBtn.textContent = camOn ? 'Kamera aus' : 'Kamera an';
+            camBtn.classList.toggle('active', camOn);
+            micBtn.textContent = micOn ? '🎤 Stumm schalten' : '🔇 Mikrofon an';
+            micBtn.classList.toggle('active', micOn);
+        }
+
+        camBtn.addEventListener('click', async () => {
+            if (!room) return;
+            try {
+                const on = room.localParticipant.isCameraEnabled;
+                await room.localParticipant.setCameraEnabled(!on);
+                rememberFlag('kr_cam', !on);
+            } catch (e) {
+                alert('Kamera konnte nicht gestartet werden: ' + e.message);
+            }
+            drawCams();
+        });
+
+        micBtn.addEventListener('click', async () => {
+            if (!room) return;
+            try {
+                const on = room.localParticipant.isMicrophoneEnabled;
+                await room.localParticipant.setMicrophoneEnabled(!on);
+                rememberFlag('kr_mic', !on);
+            } catch (e) {
+                alert('Mikrofon konnte nicht gestartet werden: ' + e.message);
+            }
+            drawCams();
+        });
+
+        document.addEventListener('click', () => {
+            if (room) room.startAudio().catch(() => {});
+        });
+
+        function buildCard(p, zoomed = false) {
+            const m = mediaFor(p.discord_id);
+            const isMe = p.discord_id === myId;
+            const team = p.team_id ? state.teams.find(t => t.id === p.team_id) : null;
+            const color = p.is_host ? '#f5b400' : (team ? team.color : '#777');
+
+            const card = el('div', 'pcard' + (speakingSet.has(p.discord_id) ? ' speaking' : ''));
+            card.dataset.team = p.team_id || '';
+            card.style.borderColor = color;
+            if (!zoomed) card.addEventListener('click', () => openZoom(p.discord_id));
+
+            const cam = el('div', 'pcam');
+            const video = videoFor(p.discord_id, m.track, isMe, zoomed ? 'gross' : 'kachel');
             if (video) {
                 cam.append(video);
             } else {
-                const img = el('img', 'placeholder');
+                const img = el('img', 'pph');
                 img.src = p.avatar_url;
                 img.alt = '';
                 cam.append(img);
             }
+            card.append(cam);
 
-            const pill = el('div', 'spill');
-            const avatar = el('img');
-            avatar.src = p.avatar_url;
-            avatar.alt = '';
-            const mic = el('span', 'mic', KRCams.isMicOn(p.discord_id) ? '🎤' : '🔇');
-            pill.append(avatar, el('span', 'name', p.username), mic);
+            if (team) {
+                const score = el('div', 'pscore', String(team.points));
+                score.style.background = color;
+                card.append(score);
+            } else if (p.is_host) {
+                card.append(el('div', 'pscore pscoreHost', '👑 Host'));
+            }
 
-            tile.append(cam, pill);
-            return tile;
+            if (m.micOn) card.append(el('div', 'pmic', '🎤'));
+
+            card.append(el('div', 'pstate ' + (video ? 'on' : 'off'), video ? '' : '✕'));
+
+            const pill = el('div', 'pname');
+            pill.style.background = color;
+            const avwrap = el('span', 'pavwrap');
+            const av = el('img', 'pav');
+            av.src = p.avatar_url;
+            av.alt = '';
+            avwrap.append(av);
+            if (p.decoration_url) {
+                const d = el('img', 'pdeco');
+                d.src = p.decoration_url;
+                d.alt = '';
+                avwrap.append(d);
+            }
+            pill.append(avwrap, el('span', 'pnametext', (p.premium ? '💎 ' : '') + p.username));
+            card.append(pill);
+
+            return card;
         }
 
-        function renderCams(players) {
-            latestPlayers = players;
-            maybeRenderHostMenu();
+        let speakingSet = new Set();
+        const audioEls = new Map();
+        let fullMute = false;
+        let hostHearAll = false;
+        let prefVol = {};
+        try { prefVol = JSON.parse(localStorage.getItem('kr_vol') || '{}'); } catch (e) { prefVol = {}; }
 
-            const sig = JSON.stringify(players.map(p => [
-                p.discord_id, p.username, p.avatar_url, p.team_id, p.team_name, p.team_color, p.is_host,
-                KRCams.showsVideo(p.discord_id), KRCams.isMicOn(p.discord_id),
-                KRCams.trackFor(p.discord_id)?.id || '',
-            ]));
+        function teamOf(id) {
+            const p = players.find(x => x.discord_id === id);
+            return p && p.team_id ? p.team_id : 0;
+        }
+
+        function canHear(id) {
+            if (fullMute) return false;
+            const a = state && state.active;
+            if (!a) return true;
+            const host = players.find(p => p.is_host);
+            if (host && id === host.discord_id) return true;
+            if (isHost) {
+                if (hostHearAll) return true;
+                const b = buzzWinner ? buzzWinner.team_id : 0;
+                return teamOf(id) === state.turnTeamId || (!!b && teamOf(id) === b);
+            }
+            return !!state.myTeamId && teamOf(id) === state.myTeamId;
+        }
+
+        function applyAudio() {
+            for (const [id, a] of audioEls) {
+                const pref = prefVol[id] ?? 1;
+                a.volume = canHear(id) ? pref : 0;
+            }
+            if (fullBtn) {
+                fullBtn.textContent = fullMute ? '🔊 Ton an' : 'Full Mute';
+                fullBtn.classList.toggle('active', fullMute);
+            }
+        }
+
+        const fullBtn = document.getElementById('fullBtn');
+        fullBtn.addEventListener('click', async () => {
+            fullMute = !fullMute;
+            if (fullMute && room && room.localParticipant.isMicrophoneEnabled) {
+                await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
+            }
+            applyAudio();
+            drawCams();
+        });
+
+        async function timerAction(action) {
+            const r = await api(action);
+            if (!r.ok) alert(r.error);
+            refresh();
+        }
+
+        async function hideQuestion() {
+            const r = await api('hide');
+            if (!r.ok) alert(r.error);
+            refresh();
+        }
+
+        async function openBuzzer() {
+            const r = await api('buzz_open');
+            if (!r.ok) alert(r.error);
+            refresh();
+        }
+
+        function drawCams() {
+            syncButtons();
+            applyAudio();
+            if (!state) return;
+
+            const sig = JSON.stringify([
+                state.teams.map(t => [t.id, t.name, t.color, t.points]),
+                players.map(p => {
+                    const m = mediaFor(p.discord_id);
+                    return [
+                        p.discord_id, p.username, p.avatar_url, p.team_id, p.is_host,
+                        p.premium, p.decoration_url, m.track ? m.track.sid : '', m.micOn, speakingSet.has(p.discord_id),
+                    ];
+                }),
+            ]);
             if (sig === lastCamSig) return;
             lastCamSig = sig;
 
-            stripEl.innerHTML = '';
-            players.forEach(p => stripEl.append(buildStripTile(p)));
+            for (const key of [...videoCache.keys()]) {
+                const id = key.split('|')[0];
+                if (!mediaFor(id).track) dropVideo(id);
+            }
+
+            const teamIndex = (id) => {
+                const i = state.teams.findIndex(t => t.id === id);
+                return i < 0 ? 999 : i;
+            };
+            const order = [];
+            const host = players.find(p => p.is_host);
+            if (host) order.push(host);
+            const rest = players.filter(p => !p.is_host)
+                .sort((a, b) => teamIndex(a.team_id) - teamIndex(b.team_id));
+            order.push(...rest);
+
+            arena.innerHTML = '';
+            for (const p of order) arena.append(buildCard(p));
+            drawZoom();
         }
 
-        camBtn.addEventListener('click', async () => {
-            try {
-                const on = await KRCams.toggle();
-                camBtn.textContent = on ? 'Kamera aus' : 'Kamera an';
-                camBtn.classList.toggle('active', on);
-            } catch (e) {
-                alert('Kamera konnte nicht gestartet werden: ' + e.message);
-            }
-        });
-
-        function updateMicBtn() {
-            const s = KRCams.micState();
-            micBtn.textContent = !s.started ? 'Mikrofon an' : (s.enabled ? '🎤 Stumm schalten' : '🔇 Ton einschalten');
-            micBtn.classList.toggle('active', s.started && !s.enabled);
+        function openZoom(id) {
+            zoomId = id;
+            zoom.style.display = 'flex';
+            drawZoom();
         }
 
-        micBtn.addEventListener('click', async () => {
-            try {
-                await KRCams.toggleMic();
-                updateMicBtn();
-            } catch (e) {
-                alert('Mikrofon konnte nicht gestartet werden: ' + e.message);
+        function closeZoom() {
+            if (zoomId) dropVideo(zoomId, 'gross');
+            zoomId = null;
+            zoom.style.display = 'none';
+            zoomBox.innerHTML = '';
+        }
+
+        function drawZoom() {
+            if (!zoomId) return;
+            const p = players.find(x => x.discord_id === zoomId);
+            if (!p) {
+                closeZoom();
+                return;
             }
+            zoomBox.innerHTML = '';
+            zoomBox.append(buildCard(p, true));
+        }
+
+        document.getElementById('zoomClose').addEventListener('click', closeZoom);
+        zoom.addEventListener('click', (e) => {
+            if (e.target === zoom) closeZoom();
         });
 
-        KRCams.init({
-            code: roomCode,
-            myId: myId,
-            onUpdate: renderCams,
-        });
-
+        // Start
         refresh();
-        setInterval(refresh, 2000);
+        refreshPlayers();
+        connectLiveKit();
     </script>
+    <script src="effects.js"></script>
+<script>
+// Alle Spieler im Raum folgen dem Moduswechsel des Hosts
+(function () {
+    const CUR = 'points';
+    const PAGES = { points: 'board.php', hearts: 'herzen.php', dumm_drauf: 'dumm_drauf.php', eingestuhlt: 'eingestuhlt.php' };
+    const code = new URLSearchParams(location.search).get('code') || '';
+    async function checkMode() {
+        try {
+            const res = await fetch('room_mode.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+            if (res.ok) {
+                const j = await res.json();
+                if (j.mode && j.mode !== CUR && PAGES[j.mode]) {
+                    location.href = PAGES[j.mode] + '?code=' + encodeURIComponent(code);
+                    return;
+                }
+            }
+        } catch (e) {}
+        setTimeout(checkMode, 2000);
+    }
+    checkMode();
+})();
+</script>
 </body>
 </html>
-<!-- Version 4.1 -->
+<!-- Version 8.1 -->
