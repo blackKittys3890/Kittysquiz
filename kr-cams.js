@@ -1,4 +1,4 @@
-// Version 2.0
+// Version 2.1
 // Gemeinsame Kamera-, Mikrofon- und Spielerlogik für raum.php und board.php
 const KRCams = (() => {
     const ICE_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
@@ -25,7 +25,7 @@ const KRCams = (() => {
             to: to,
             payload: JSON.stringify({ kind, data }),
         });
-        return fetch('signal.php', { method: 'POST', body }).catch(() => {});
+        return fetch('/signal.php', { method: 'POST', body }).catch(() => {});
     }
 
     function micOnNow() {
@@ -178,7 +178,7 @@ const KRCams = (() => {
 
     async function pollSignals() {
         try {
-            const res = await fetch('signal.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
+            const res = await fetch('/signal.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
             if (res.ok) {
                 const msgs = await res.json();
                 for (const m of msgs) {
@@ -210,7 +210,7 @@ const KRCams = (() => {
 
     async function pollPlayers() {
         try {
-            const res = await fetch('players.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
+            const res = await fetch('/players.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
             if (res.ok) {
                 players = await res.json();
                 syncPeers();
@@ -234,7 +234,7 @@ const KRCams = (() => {
             for (const e of peers.values()) e.pc.close();
             if (camStream) camStream.getTracks().forEach(t => t.stop());
             if (micStream) micStream.getTracks().forEach(t => t.stop());
-            navigator.sendBeacon('leave.php', new URLSearchParams({ code: roomCode }));
+            navigator.sendBeacon('/leave.php', new URLSearchParams({ code: roomCode }));
         });
     }
 
@@ -288,4 +288,4 @@ const KRCams = (() => {
         isCamOn: () => !!camStream,
     };
 })();
-// Version 2.0
+// Version 2.1

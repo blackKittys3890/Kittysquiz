@@ -1,4 +1,4 @@
-// Version 1.2
+// Version 1.3
 <?php
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
@@ -16,10 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['switch_mode'])) {
         $upd = db()->prepare('UPDATE kr_rooms SET mode = ? WHERE code = ?');
         $upd->execute([$newMode, $code]);
         
-        if ($newMode === 'points') { header('Location: board.php?code=' . $code); exit; }
-        elseif ($newMode === 'hearts') { header('Location: herzen.php?code=' . $code); exit; }
-        elseif ($newMode === 'eingestuhlt') { header('Location: eingestuhlt.php?code=' . $code); exit; }
-        elseif ($newMode === 'dumm_drauf') { header('Location: dumm_drauf.php?code=' . $code); exit; }
+        if ($newMode === 'points') { header('Location: /modes/punkte/board.php?code=' . $code); exit; }
+        elseif ($newMode === 'hearts') { header('Location: /modes/herzen/herzen.php?code=' . $code); exit; }
+        elseif ($newMode === 'eingestuhlt') { header('Location: /modes/eingestuhlt/eingestuhlt.php?code=' . $code); exit; }
+        elseif ($newMode === 'dumm_drauf') { header('Location: /modes/hau_drauf/dumm_drauf.php?code=' . $code); exit; }
     }
 }
 ?>
@@ -76,4 +76,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-// Version 1.2
+// Version 1.3

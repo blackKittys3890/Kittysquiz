@@ -1,7 +1,7 @@
 <?php
-// Version 1.2
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
+// Version 1.4
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -77,16 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// ---------- Status (GET = Herzschlag) ----------
-// Jeder Abruf markiert den Spieler als aktiv, optional mit Kamera- und Mikro-Status (?cam=1&mic=0)
-$cam = isset($_GET['cam']) ? (int)($_GET['cam'] === '1') : null;
-$mic = isset($_GET['mic']) ? (int)($_GET['mic'] === '1') : null;
-if ($cam !== null && $mic !== null) {
-    q('UPDATE kr_room_players SET last_seen = NOW(), cam_on = ?, mic_on = ? WHERE room_id = ? AND discord_id = ?', [$cam, $mic, $rid, $me]);
-} else {
-    q('UPDATE kr_room_players SET last_seen = NOW() WHERE room_id = ? AND discord_id = ?', [$rid, $me]);
-}
-
+// ---------- Status (Herzschlag) ----------
+q('UPDATE kr_room_players SET last_seen = NOW() WHERE room_id = ? AND discord_id = ?', [$rid, $me]);
 $g = game($rid);
 $phase = $g['phase'];
 $tipLevel = (int)$g['tip_level'];
@@ -107,12 +99,11 @@ if (!empty($g['term_id']) && in_array($phase, ['play', 'reveal'], true)) {
 
 // Nur Spieler, die in den letzten 10 Sekunden aktiv waren
 $players = array_map(fn($p) => [
+    'id'     => $p['discord_id'],
     'name'   => $p['username'],
     'avatar' => getAvatarUrl(['id' => $p['discord_id'], 'avatar' => $p['avatar']]),
     'isMe'   => $p['discord_id'] === $me,
-    'cam'    => (bool)$p['cam_on'],
-    'mic'    => (bool)$p['mic_on'],
-], q('SELECT discord_id, username, avatar, cam_on, mic_on
+], q('SELECT discord_id, username, avatar
       FROM kr_room_players
       WHERE room_id = ?
         AND discord_id <> ?
@@ -132,4 +123,4 @@ echo json_encode([
     'term'       => $term,
     'players'    => $players,
 ]);
-// Version 1.2
+// Version 1.4
