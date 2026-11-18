@@ -1,5 +1,5 @@
 <?php
-// Version 1.5
+// Version 2.1
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -43,7 +43,7 @@ db()->prepare('
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dumm drauf – <?= htmlspecialchars($code) ?></title>
+    <title>Hau drauf – <?= htmlspecialchars($code) ?></title>
     <style>
         body { margin: 0; padding: 22px; min-height: 100vh; font-family: system-ui, sans-serif; color: #fff;
             background: linear-gradient(160deg, #1d1b3a, #2c1046 60%, #14233b); }
@@ -66,33 +66,44 @@ db()->prepare('
         .btn.grey { background: #4a4a66; }
         .btn.red { background: #ff4d6d; }
         .btn:disabled { opacity: .4; cursor: default; }
+        .ctrl { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
         .players { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 10px; }
         .pl { text-align: center; font-size: 15px; }
         .pl img { width: 58px; height: 58px; border-radius: 50%; border: 3px solid #9ff0ff; display: block; margin: 0 auto 4px; background: #222; }
-        .pl.me img { border-color: #ffd23f; }
+        .pl .tile { width: 150px; height: 112px; object-fit: cover; border-radius: 14px; border: 3px solid #9ff0ff;
+            background: #000; display: block; margin: 0 auto 4px; }
+        .pl.me img, .pl.me .tile { border-color: #ffd23f; }
+        .pl .status { font-size: 14px; opacity: .8; margin-top: 2px; }
         .big { font-size: 34px; font-weight: 900; color: #ffd23f; margin: 16px 0; }
         .lobby { font-size: 22px; opacity: .85; }
         .flash { color: #ffd23f; min-height: 22px; margin-top: 8px; }
-        .pl .status { font-size: 14px; opacity: .8; margin-top: 2px; }
     </style>
 </head>
 <body>
     <?php require __DIR__ . '/modus_auswahl.php'; ?>
 
     <div class="top" style="margin-top: 50px;">
-        <div><a href="lobby.php">← Lobby</a> · <b>Dumm drauf</b> · Raum <?= htmlspecialchars($code) ?></div>
+        <div><a href="lobby.php">← Lobby</a> · <b>Hau drauf</b> · Raum <?= htmlspecialchars($code) ?></div>
         <div class="score" id="score"></div>
+    </div>
+
+    <div class="ctrl">
+        <button class="btn" id="camBtn" type="button">📷 Kamera an</button>
+        <button class="btn" id="micBtn" type="button">🎤 Mikro an</button>
     </div>
 
     <div class="card" id="card"></div>
 
     <div class="players" id="players"></div>
 
+    <script src="kr-cams.js"></script>
     <script>
         const code = <?= json_encode($code) ?>;
+        const myId = <?= json_encode((string)$user['id']) ?>;
         const isHost = <?= json_encode($isHost) ?>;
         let S = null;
         let lastSig = '';
+        let lastPl = '';
 
         function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
         function btn(label, cls, fn, disabled = false) { const b = el('button', 'btn ' + (cls || ''), label); b.type = 'button'; b.disabled = disabled; b.onclick = fn; return b; }
@@ -108,10 +119,8 @@ db()->prepare('
 
         async function load() {
             try {
-                // Kamera/Mikro-Status kommt aus window.krCam / window.krMic (wird von der LiveKit-Verbindung gesetzt)
-                const camQ = window.krCam ? 1 : 0, micQ = window.krMic ? 1 : 0;
-                const res = await fetch('dd_api.php?code=' + encodeURIComponent(code) + '&cam=' + camQ + '&mic=' + micQ, { cache: 'no-store' });
-                if (res.ok) { S = await res.json(); draw(); }
+                const res = await fetch('dd_api.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+                if (res.ok) { S = await res.json(); draw(); renderPlayers(); }
                 else { document.getElementById('card').textContent = 'Serverfehler beim Laden (HTTP ' + res.status + ').'; }
             } catch (e) {
                 document.getElementById('card').textContent = 'Verbindungsfehler beim Laden.';
@@ -130,7 +139,7 @@ db()->prepare('
             card.innerHTML = '';
 
             if (S.phase === 'lobby') {
-                card.append(el('div', 'lobby', 'Dumm drauf wartet auf den Start.'));
+                card.append(el('div', 'lobby', 'Hau drauf wartet auf den Start.'));
                 if (isHost) {
                     card.append(el('div', 'hint', 'Wie viele Begriffe sollen gespielt werden?'));
                     const sel = document.createElement('select');
@@ -150,7 +159,6 @@ db()->prepare('
 
                 for (let i = 0; i < S.term.tips.length; i++) {
                     const t = el('div', 'tip');
-                    t.innerHTML = '';
                     t.append(el('b', '', `Tipp ${i + 1}: `), document.createTextNode(S.term.tips[i]));
                     card.append(t);
                 }
@@ -185,42 +193,90 @@ db()->prepare('
                     card.append(btn('Spiel beenden', 'grey', () => { if (confirm('Spiel beenden?')) act('reset'); }));
                 }
             }
+        }
+
+        // Spielerkacheln: Video, wenn die Kamera läuft, sonst Profilbild
+        function renderPlayers() {
+            if (!S || !S.players) return;
+            const sig = JSON.stringify([KRCams.isCamOn(), S.players.map(p => [p.id, KRCams.showsVideo(p.id), KRCams.isMicOn(p.id)])]);
+            if (sig === lastPl) return;
+            lastPl = sig;
 
             const pl = document.getElementById('players');
             pl.innerHTML = '';
             for (const p of S.players) {
                 const box = el('div', 'pl' + (p.isMe ? ' me' : ''));
-                const img = el('img'); img.src = p.avatar; img.alt = '';
-                const status = el('div', 'status', (p.cam ? '📹' : '🚫') + ' ' + (p.mic ? '🎤' : '🔇'));
-                box.append(img, el('div', '', p.name), status);
+                const video = KRCams.createVideo(p.id, p.isMe);
+                if (video) {
+                    video.className = 'tile';
+                    box.append(video);
+                } else {
+                    const img = el('img'); img.src = p.avatar; img.alt = '';
+                    box.append(img);
+                }
+                box.append(el('div', '', p.name));
+                box.append(el('div', 'status',
+                    (KRCams.showsVideo(p.id) ? '📹' : '🚫') + ' ' + (KRCams.isMicOn(p.id) ? '🎤' : '🔇')));
                 pl.append(box);
             }
         }
 
+        // Kamera- und Mikro-Buttons
+        const camBtn = document.getElementById('camBtn');
+        const micBtn = document.getElementById('micBtn');
+
+        function updateButtons() {
+            camBtn.textContent = KRCams.isCamOn() ? '📷 Kamera aus' : '📷 Kamera an';
+            const m = KRCams.micState();
+            micBtn.textContent = (m.started && m.enabled) ? '🎤 Mikro aus' : '🎤 Mikro an';
+        }
+
+        camBtn.onclick = async () => {
+            try { await KRCams.toggle(); }
+            catch (e) { alert('Kamera konnte nicht gestartet werden: ' + e.message); }
+            updateButtons();
+            renderPlayers();
+        };
+
+        micBtn.onclick = async () => {
+            try { await KRCams.toggleMic(); }
+            catch (e) { alert('Mikrofon konnte nicht gestartet werden: ' + e.message); }
+            updateButtons();
+            renderPlayers();
+        };
+
+        // Verbindung zu den anderen Spielern starten
+        KRCams.init({
+            code: code,
+            myId: myId,
+            onUpdate: () => { updateButtons(); renderPlayers(); }
+        });
+        updateButtons();
+
         load();
     </script>
-<script>
-// Alle Spieler im Raum folgen dem Moduswechsel des Hosts
-(function () {
-    const CUR = 'dumm_drauf';
-    const PAGES = { points: 'board.php', hearts: 'herzen.php', dumm_drauf: 'dumm_drauf.php', eingestuhlt: 'eingestuhlt.php' };
-    const code = new URLSearchParams(location.search).get('code') || '';
-    async function checkMode() {
-        try {
-            const res = await fetch('room_mode.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
-            if (res.ok) {
-                const j = await res.json();
-                if (j.mode && j.mode !== CUR && PAGES[j.mode]) {
-                    location.href = PAGES[j.mode] + '?code=' + encodeURIComponent(code);
-                    return;
+    <script>
+    // Alle Spieler im Raum folgen dem Moduswechsel des Hosts
+    (function () {
+        const CUR = 'dumm_drauf';
+        const PAGES = { points: 'board.php', hearts: 'herzen.php', dumm_drauf: 'dumm_drauf.php', eingestuhlt: 'eingestuhlt.php' };
+        const code = new URLSearchParams(location.search).get('code') || '';
+        async function checkMode() {
+            try {
+                const res = await fetch('room_mode.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+                if (res.ok) {
+                    const j = await res.json();
+                    if (j.mode && j.mode !== CUR && PAGES[j.mode]) {
+                        location.href = PAGES[j.mode] + '?code=' + encodeURIComponent(code);
+                        return;
+                    }
                 }
-            }
-        } catch (e) {}
-        setTimeout(checkMode, 2000);
-    }
-    checkMode();
-})();
-</script>
+            } catch (e) {}
+            setTimeout(checkMode, 2000);
+        }
+        checkMode();
+    })();
+    </script>
 </body>
 </html>
-<!-- Version 1.5 -->
+<!-- Version 2.1 -->
