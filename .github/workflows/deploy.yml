@@ -1,4 +1,4 @@
-# Version 1.1
+# Version 1.2
 name: Deploy
 
 on:
@@ -19,9 +19,11 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
-          local-dir: ./public_html/
+          local-dir: ./
           server-dir: ./
           exclude: |
             **/.git*
+            **/.github/**
             **/config.local.php
-# Version 1.1
+            README.md
+# Version 1.2
