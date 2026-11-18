@@ -31,14 +31,14 @@ jobs:
             --exclude='uploads' \
             ./ deploy/
 
-      - name: Per SCP hochladen
-        uses: appleboy/scp-action@v0.1.7
+      - name: Per SFTP hochladen
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
+          server: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
-          key: ${{ secrets.SSH_KEY }}
-          source: "deploy/*"
-          target: "public_html"
-          strip_components: 1
+          ssh_private_key: ${{ secrets.SSH_KEY }}
+          local_path: "./deploy/*"
+          remote_path: "public_html"
+          sftp_only: true
 # Version 1.1
