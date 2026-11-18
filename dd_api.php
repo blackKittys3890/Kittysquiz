@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -96,6 +96,7 @@ if (!empty($g['term_id']) && in_array($phase, ['play', 'reveal'], true)) {
     }
 }
 
+// Nur Spieler, die in den letzten 10 Sekunden aktiv waren
 $players = array_map(fn($p) => [
     'name'   => $p['username'],
     'avatar' => getAvatarUrl(['id' => $p['discord_id'], 'avatar' => $p['avatar']]),
@@ -109,6 +110,7 @@ $players = array_map(fn($p) => [
         AND last_seen > NOW() - INTERVAL 10 SECOND
       ORDER BY joined_at, discord_id',
      [$rid, $room['host_id']])->fetchAll());
+
 echo json_encode([
     'isHost'     => $isHost,
     'phase'      => $phase,
@@ -121,4 +123,4 @@ echo json_encode([
     'term'       => $term,
     'players'    => $players,
 ]);
-// Version 1.0
+// Version 1.1

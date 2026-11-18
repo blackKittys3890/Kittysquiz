@@ -1,5 +1,5 @@
 <?php
-// Version 2.2
+// Version 2.3
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -24,9 +24,17 @@ if (!$room) {
     exit;
 }
 
-// Heartbeat: eigenen Eintrag als "zuletzt gesehen" markieren
-db()->prepare('UPDATE kr_room_players SET last_seen = NOW() WHERE room_id = ? AND discord_id = ?')
-    ->execute([$room['id'], $me]);
+// Heartbeat + Kamera/Mikro-Status in einem Aufruf
+$cam = isset($_GET['cam']) ? (int)($_GET['cam'] === '1') : null;
+$mic = isset($_GET['mic']) ? (int)($_GET['mic'] === '1') : null;
+
+if ($cam !== null && $mic !== null) {
+    db()->prepare('UPDATE kr_room_players SET last_seen = NOW(), cam_on = ?, mic_on = ? WHERE room_id = ? AND discord_id = ?')
+        ->execute([$cam, $mic, $room['id'], $me]);
+} else {
+    db()->prepare('UPDATE kr_room_players SET last_seen = NOW() WHERE room_id = ? AND discord_id = ?')
+        ->execute([$room['id'], $me]);
+}
 
 // Nur Spieler anzeigen, die in den letzten 10 Sekunden aktiv waren
 $stmt = db()->prepare('
@@ -55,4 +63,4 @@ $players = array_map(fn($p) => [
 ], $stmt->fetchAll());
 
 echo json_encode($players);
-// Version 2.2
+// Version 2.3

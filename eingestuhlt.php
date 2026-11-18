@@ -1,5 +1,5 @@
 <?php
-// Version 1.12
+// Version 1.13
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -43,7 +43,7 @@ db()->prepare('
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Eingestuhlt – <?= htmlspecialchars($code) ?></title>
+    <title>Eingeschult – <?= htmlspecialchars($code) ?></title>
     <style>
         body { margin: 0; padding: 20px; font-family: system-ui, sans-serif; color: #f2f2ee; min-height: 100vh;
             background: radial-gradient(ellipse at top, #3a4f3b, #243326 70%); }
@@ -111,7 +111,7 @@ db()->prepare('
 <div class="failOv" id="fail"><div class="big">DURCHGEFALLEN</div><div class="sub" id="failSub">Schade. Setz dich hin.</div></div>
 <div class="board" style="margin-top: 50px;">
     <div class="head">
-        <h1>Eingestuhlt <span class="muted" style="font-size:16px">Raum <?= htmlspecialchars($code) ?></span></h1>
+        <h1>Eingeschult <span class="muted" style="font-size:16px">Raum <?= htmlspecialchars($code) ?></span></h1>
         <div id="status" class="chalk"></div>
         <div class="timer" id="timer"></div>
     </div>
@@ -778,4 +778,4 @@ connectLiveKit();
 </script>
 </body>
 </html>
-<!-- Version 1.12 -->
+<!-- Version 1.13 -->

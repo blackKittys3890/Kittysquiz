@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/fragen_tools.php';
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['datei'])) {
     <div class="panel">
         <p>Lade eine Excel-Datei (.xlsx) oder eine CSV-Datei hoch. Die erste Zeile ist die Kopfzeile. Es gibt zwei Formate:</p>
         <p><b>Kategorie-Format:</b> <code>Kategorie</code> · <code>Punkte</code> · <code>Frage</code> · <code>Antwort</code></p>
-        <p><b>Klassen-Format (Eingestuhlt):</b> <code>Klasse</code> · <code>Fach</code> · <code>Punkte</code> · <code>Frage</code> · <code>Antwort</code>. Daraus wird die Kategorie „Kl. X · Fach“.</p>
+        <p><b>Klassen-Format (Eingeschult):</b> <code>Klasse</code> · <code>Fach</code> · <code>Punkte</code> · <code>Frage</code> · <code>Antwort</code>. Daraus wird die Kategorie „Kl. X · Fach“.</p>
         <p class="muted">Hat eine Spalte nur den Namen „Wert“ oder „Stufe“, erkennt das System Klasse (Zahlen 1 bis 13) und Punkte (größere Zahlen) an den Werten.</p>
         <ul>
             <li>Eine Zeile pro Frage. Gleiche Kategorie = gleiche Kategorie-Spalte.</li>
@@ -101,4 +101,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['datei'])) {
     </div>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.2 -->

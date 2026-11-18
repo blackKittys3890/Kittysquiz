@@ -1,5 +1,5 @@
 <?php
-// Version 1.3
+// Version 1.4
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -45,7 +45,6 @@ db()->prepare('
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dumm drauf – <?= htmlspecialchars($code) ?></title>
     <style>
-        .pl .status { font-size: 14px; opacity: .8; margin-top: 2px; }
         body { margin: 0; padding: 22px; min-height: 100vh; font-family: system-ui, sans-serif; color: #fff;
             background: linear-gradient(160deg, #1d1b3a, #2c1046 60%, #14233b); }
         a { color: #9ff0ff; }
@@ -74,6 +73,7 @@ db()->prepare('
         .big { font-size: 34px; font-weight: 900; color: #ffd23f; margin: 16px 0; }
         .lobby { font-size: 22px; opacity: .85; }
         .flash { color: #ffd23f; min-height: 22px; margin-top: 8px; }
+        .pl .status { font-size: 14px; opacity: .8; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -110,7 +110,10 @@ db()->prepare('
             try {
                 const res = await fetch('dd_api.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
                 if (res.ok) { S = await res.json(); draw(); }
-            } catch (e) {}
+                else { document.getElementById('card').textContent = 'Serverfehler beim Laden (HTTP ' + res.status + ').'; }
+            } catch (e) {
+                document.getElementById('card').textContent = 'Verbindungsfehler beim Laden.';
+            }
             setTimeout(load, 1000);
         }
 
@@ -218,4 +221,4 @@ db()->prepare('
 </script>
 </body>
 </html>
-<!-- Version 1.3 -->
+<!-- Version 1.4 -->

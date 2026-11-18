@@ -2,7 +2,7 @@
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-// Version 1.0
+// Version 1.1
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -95,7 +95,7 @@ $fragen = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Eingestuhlt – Fragen</title>
+    <title>Eingeschult – Fragen</title>
     <style>
         body { font-family: system-ui, sans-serif; background: #1f1438; color: #f5f0ff; margin: 0; padding: 24px; }
         a { color: #7fe7d9; }
@@ -118,7 +118,7 @@ $fragen = $stmt->fetchAll();
 </head>
 <body>
     <p><a href="lobby.php">← Lobby</a></p>
-    <h1>Eingestuhlt – Fragen eintragen</h1>
+    <h1>Eingeschult – Fragen eintragen</h1>
 
     <div class="nav panel">
         Klasse:
@@ -193,4 +193,4 @@ $fragen = $stmt->fetchAll();
     </div>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->

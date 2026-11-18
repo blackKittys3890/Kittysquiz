@@ -1,3 +1,4 @@
+// Version 1.1
 <?php
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
@@ -55,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['switch_mode'])) {
     <select name="switch_mode" id="globalModeSel">
         <option value="points" <?= $currentMode === 'points' ? 'selected' : '' ?>>Punkte-Board</option>
         <option value="hearts" <?= $currentMode === 'hearts' ? 'selected' : '' ?>>Der Dümmste Fliegt</option>
-        <option value="eingestuhlt" <?= $currentMode === 'eingestuhlt' ? 'selected' : '' ?>>Eingestuhlt</option>
+        <option value="eingestuhlt" <?= $currentMode === 'eingestuhlt' ? 'selected' : '' ?>>Eingeschult</option>
         <option value="dumm_drauf" <?= $currentMode === 'dumm_drauf' ? 'selected' : '' ?>>Dumm drauf</option>
     </select>
 </form>
@@ -75,3 +76,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+// Version 1.1
