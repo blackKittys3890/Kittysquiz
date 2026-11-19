@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -17,6 +17,7 @@
         h3 { font-size: 15px; margin-top: 16px; color: #9ff0ff; }
         ul { padding-left: 20px; }
         li { margin-bottom: 6px; }
+        .platzhalter { background: #ffd23f; color: #2a1b00; padding: 0 4px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -25,13 +26,7 @@
 
         <h1>Datenschutzerklärung</h1>
 
-        <h2>1. Datenschutz auf einen Blick</h2>
-        <p>
-            Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten
-            passiert, wenn Sie diese Website besuchen.
-        </p>
-
-        <h2>2. Verantwortliche Stelle</h2>
+        <h2>1. Verantwortliche Stelle</h2>
         <p>
             Verantwortlich für die Datenverarbeitung auf dieser Website ist:
         </p>
@@ -43,50 +38,127 @@
             E-Mail: <a href="mailto:eliah@sudi.de">eliah@sudi.de</a>
         </p>
 
-        <h2>3. Hosting bei Hetzner</h2>
+        <h2>2. Überblick</h2>
         <p>
-            Diese Website wird bei der <strong>Hetzner Online GmbH</strong> (Industriestr. 25, 91710 Gunzenhausen) gehostet. 
-            Wenn Sie unsere Website besuchen, erfasst Hetzner verschiedene Server-Log-Dateien (u. a. IP-Adresse, Browser, Uhrzeit). 
-            Details entnehmen Sie der Datenschutzerklärung von Hetzner: 
+            KittysRätsel ist ein Quiz- und Spielportal für Gruppen. Spieler melden sich an, treten Räumen bei und
+            spielen gemeinsam, optional mit Kamera und Mikrofon. Im Folgenden erfahren Sie, welche Daten dabei
+            verarbeitet werden, warum und wie lange.
+        </p>
+
+        <h2>3. Hosting und Server-Logdateien</h2>
+        <p>
+            Die Website wird bei der <strong>Hetzner Online GmbH</strong> (Industriestr. 25, 91710 Gunzenhausen) gehostet.
+            Beim Aufruf der Seiten erfasst der Server technisch notwendige Daten wie IP-Adresse, Datum und Uhrzeit,
+            aufgerufene Seite und Browser-Kennung. Details finden Sie in der Datenschutzerklärung von Hetzner:
             <a href="https://www.hetzner.com/de/legal/privacy-policy/" target="_blank" rel="noopener">https://www.hetzner.com/de/legal/privacy-policy/</a>.
-            Die Verwendung des Hosters erfolgt zum Zwecke der Vertragserfüllung gegenüber unseren Nutzern und im Interesse einer 
-            sicheren, schnellen und effizienten Bereitstellung unseres Online-Angebots (Art. 6 Abs. 1 lit. f DSGVO).
-        </p>
-
-        <h2>4. Datenerfassung auf dieser Website</h2>
-
-        <h3>Anmeldung / Login (Google &amp; Discord)</h3>
-        <p>
-            Sofern Sie sich auf dieser Website via externer Dienste (wie z. B. Google-Login / OpenID Connect oder Discord) 
-            registrieren oder anmelden, wird eine Verbindung zu den Servern des jeweiligen Anbieters hergestellt. Dabei übermittelt 
-            der Anbieter (z. B. Google LLC oder Discord Inc.) bestimmte Profilinformationen (wie E-Mail-Adresse und Benutzername) an uns, 
-            um Ihr Benutzerkonto zu verifizieren und zu erstellen. 
+            Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (sicherer und stabiler Betrieb der Website).
         </p>
         <p>
-            Die Datenverarbeitung erfolgt auf Grundlage Ihrer Einwilligung bzw. zur Durchführung von Nutzerfunktionen (Art. 6 Abs. 1 lit. b und lit. a DSGVO). 
-            Die Nutzung externer Logins ist freiwillig.
+            Die Spieldaten werden in einer Datenbank bei <span class="platzhalter">[ANBIETER DER DATENBANK]</span> gespeichert.
         </p>
 
-        <h3>Cookies &amp; Local Storage</h3>
+        <h2>4. Anmeldung</h2>
         <p>
-            Diese Website verwendet technisch notwendige Cookies bzw. den Local Storage Ihres Browsers, um 
-            Sitzungsdaten (Sessions) oder Spielstände zu speichern. Diese sind für den Betrieb der Seite erforderlich 
-            (Art. 6 Abs. 1 lit. f DSGVO / § 25 Abs. 2 TDDDG).
+            Sie können sich auf drei Wegen anmelden. Die Anmeldung ist freiwillig. Ohne Anmeldung können Sie nicht spielen.
         </p>
 
-        <h3>Kontaktaufnahme per E-Mail</h3>
+        <h3>a) Anmeldung mit Discord</h3>
         <p>
-            Wenn Sie mir per E-Mail Anfragen zukommen lassen, werden Ihre Angaben inklusive der Kontaktdaten 
-            zwecks Bearbeitung der Anfrage gespeichert (Art. 6 Abs. 1 lit. b bzw. lit. f DSGVO).
+            Bei der Anmeldung mit Discord übermittelt Discord (Discord Inc., USA) an uns Ihre Discord-ID, Ihren
+            Benutzernamen, Ihr Profilbild und, falls vorhanden, Ihre Profil-Dekoration. Wir speichern diese Angaben,
+            um Ihr Spielerprofil im Raum anzuzeigen. Eine E-Mail-Adresse speichern wir dabei nicht.
         </p>
 
-        <h2>5. Ihre Rechte als betroffene Person</h2>
+        <h3>b) Anmeldung mit Google</h3>
         <p>
-            Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, 
-            deren Herkunft und Empfänger und den Zweck der Datenverarbeitung sowie ein Recht auf Berichtigung oder Löschung dieser Daten. 
-            Wenden Sie sich dazu einfach an die oben genannte verantwortliche Person.
+            Bei der Anmeldung mit Google übermittelt Google LLC (USA) Ihren Namen und Ihr Profilbild an uns. Wir speichern
+            diese Angaben, um Ihr Spielerprofil anzuzeigen. Die E-Mail-Adresse wird nicht dauerhaft gespeichert.
+        </p>
+
+        <h3>c) Lokales Konto</h3>
+        <p>
+            Bei einem lokalen Konto speichern wir Ihren gewählten Benutzernamen, Ihr Profilbild (eine Auswahl aus
+            vorgegebenen Bildern) und Ihr Passwort. Das Passwort wird nur als nicht umkehrbarer Hash (bcrypt-Verfahren
+            über PHP <code>password_hash</code>) gespeichert, nie im Klartext.
+        </p>
+
+        <p>
+            Rechtsgrundlage für die Anmeldung ist Art. 6 Abs. 1 lit. b DSGVO (Nutzung der Spielfunktionen).
+        </p>
+
+        <h2>5. Sitzung und Cookies</h2>
+        <p>
+            Nach der Anmeldung setzen wir ein Sitzungs-Cookie, damit Sie angemeldet bleiben. Dieses Cookie ist technisch
+            zwingend nötig und wird beim Abmelden bzw. nach Ende der Sitzung gelöscht. Im Browser speichern wir außerdem
+            kleine Einstellungen (z. B. den zuletzt besuchten Raum und die Ton-Einstellung). Diese liegen nur auf Ihrem
+            Gerät im sogenannten Local Storage und werden nicht an uns übertragen. Rechtsgrundlage ist § 25 Abs. 2 TDDDG
+            sowie Art. 6 Abs. 1 lit. f DSGVO.
+        </p>
+
+        <h2>6. Spielräume und Spieldaten</h2>
+        <p>
+            Wenn Sie einem Raum beitreten, speichern wir Ihre Discord-ID bzw. Kontokennung, Ihren Anzeigenamen,
+            Ihr Profilbild, Ihre Team-Zuordnung, Ihre Punkte und Spielergebnisse sowie den Zeitpunkt Ihrer letzten
+            Aktivität im Raum. Die Daten dienen allein dem Spielbetrieb.
+        </p>
+        <p>
+            <strong>Speicherdauer:</strong> Räume und die zugehörigen Spieldaten werden 30 Tage nach ihrer Erstellung
+            automatisch gelöscht. Benutzerkonten bleiben bestehen, bis Sie deren Löschung verlangen.
+            Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+        </p>
+
+        <h2>7. Kamera und Mikrofon</h2>
+        <p>
+            Im Spiel können Sie Ihre Kamera und Ihr Mikrofon aktivieren. Das geschieht nur auf Ihren Klick hin und Sie
+            können es jederzeit wieder ausschalten. Ihr Bild und Ton werden direkt zwischen den Teilnehmenden des Raums
+            übertragen (Peer-to-Peer-Verbindung über WebRTC). Wir speichern keine Bild- oder Tonaufnahmen.
+        </p>
+        <p>
+            Für den Verbindungsaufbau nutzt der Browser einen öffentlichen STUN-Server von Google (stun.l.google.com).
+            Dabei wird Ihre IP-Adresse an Google übermittelt. Rechtsgrundlage ist Ihre Einwilligung durch die Aktivierung
+            von Kamera oder Mikrofon (Art. 6 Abs. 1 lit. a DSGVO).
+        </p>
+
+        <h2>8. Videodienst LiveKit</h2>
+        <p>
+            Für die Videoverbindung nutzen wir den Dienst LiveKit Cloud der LiveKit Inc. (USA). Dabei erhält der Dienst
+            einen Verbindungs-Token, Ihre IP-Adresse und technische Verbindungsdaten. Der Server steht in
+            <span class="platzhalter">[REGION DES LIVEKIT-SERVERS]</span>. Mit dem Anbieter besteht ein Vertrag zur
+            Auftragsverarbeitung nach Art. 28 DSGVO. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b und lit. f DSGVO.
+        </p>
+
+        <h2>9. Externe Dienste im Browser</h2>
+        <p>
+            Die Seite lädt Profilbilder vom Discord-CDN (cdn.discordapp.com) und eine Bibliothek vom CDN jsDelivr
+            (cdn.jsdelivr.net). Beim Laden dieser Inhalte wird Ihre IP-Adresse an die jeweiligen Anbieter übermittelt.
+            Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (Darstellung und Funktion der Seite).
+        </p>
+
+        <h2>10. Weitergabe an Dritte</h2>
+        <p>
+            Eine Weitergabe Ihrer Daten erfolgt nur, soweit dies für den Betrieb der Seite nötig ist (Hosting, Datenbank,
+            Videodienst, Anmeldedienste) oder gesetzlich vorgeschrieben ist. Eine Weitergabe zu Werbezwecken findet nicht statt.
+        </p>
+
+        <h2>11. Ihre Rechte</h2>
+        <p>
+            Sie haben das Recht auf Auskunft über Ihre gespeicherten Daten, auf Berichtigung, Löschung und
+            Einschränkung der Verarbeitung sowie auf Datenübertragbarkeit. Erteilte Einwilligungen können Sie
+            jederzeit mit Wirkung für die Zukunft widerrufen. Außerdem können Sie der Verarbeitung auf Grundlage
+            berechtigter Interessen widersprechen.
+        </p>
+        <p>
+            Zur Ausübung Ihrer Rechte wenden Sie sich bitte an die oben genannte Kontaktadresse. Sie haben zudem das Recht,
+            sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Zuständig ist für Baden-Württemberg der
+            Landesbeauftragte für den Datenschutz und die Informationsfreiheit.
+        </p>
+
+        <h2>12. Stand</h2>
+        <p>
+            Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
+            Letze Änderung: 19. November 2026
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.1 -->
+<!-- Version 1.2 -->
