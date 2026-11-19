@@ -2,7 +2,7 @@
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-// Version 8.1
+// Version 8.2
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/teams.php';
@@ -1526,6 +1526,7 @@ db()->prepare('
     checkMode();
 })();
 </script>
+<script>(function(){try{var c=new URLSearchParams(location.search).get('code');if(c)localStorage.setItem('kr_last_room',JSON.stringify({code:c.toUpperCase(),t:Date.now()}));}catch(e){}})();</script>
 </body>
 </html>
-<!-- Version 8.1 -->
+<!-- Version 8.2 -->

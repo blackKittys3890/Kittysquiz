@@ -1,5 +1,5 @@
 <?php
-// Version 2.2
+// Version 2.3
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 
@@ -277,6 +277,7 @@ db()->prepare('
         checkMode();
     })();
     </script>
+<script>(function(){try{var c=new URLSearchParams(location.search).get('code');if(c)localStorage.setItem('kr_last_room',JSON.stringify({code:c.toUpperCase(),t:Date.now()}));}catch(e){}})();</script>
 </body>
 </html>
-<!-- Version 2.2 -->
+<!-- Version 2.3 -->

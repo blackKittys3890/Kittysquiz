@@ -1,4 +1,4 @@
-// Version 1.4
+// Version 1.6
 // Zusatzeffekte fürs Spielfeld: Countdown, Sounds, Endtafel
 (() => {
     const code = (new URLSearchParams(location.search).get('code') || '').toUpperCase();
@@ -30,7 +30,13 @@
     ['click', 'keydown', 'touchstart'].forEach(ev =>
         document.addEventListener(ev, audio, { passive: true }));
 
+    // Ton an/aus pro Gerät, gespeichert im Browser
+    function soundOff() {
+        try { return localStorage.getItem('kr_sound') === 'off'; } catch (e) { return false; }
+    }
+
     function beep(freq, dur = 0.15, type = 'sine', delay = 0, vol = 0.2) {
+        if (soundOff()) return;
         const c = audio();
         if (!c) return;
         const t = c.currentTime + delay;
@@ -96,6 +102,27 @@
         'background:rgba(10,5,25,.94)',
     ].join(';');
     document.body.append(endBox);
+
+    // ---------- Sound-Schalter ----------
+
+    const muteBtn = document.createElement('button');
+    muteBtn.type = 'button';
+    muteBtn.style.cssText = [
+        'position:fixed', 'left:12px', 'bottom:12px', 'z-index:65', 'padding:8px 12px',
+        'border-radius:12px', 'border:2px solid #f5b400', 'background:rgba(20,10,40,.92)',
+        'color:#fff', 'font:700 18px system-ui,sans-serif', 'cursor:pointer',
+    ].join(';');
+    function paintMute() {
+        const off = soundOff();
+        muteBtn.textContent = off ? '🔇' : '🔊';
+        muteBtn.title = off ? 'Ton einschalten' : 'Ton ausschalten';
+    }
+    muteBtn.onclick = () => {
+        try { localStorage.setItem('kr_sound', soundOff() ? 'on' : 'off'); } catch (e) {}
+        paintMute();
+    };
+    document.body.append(muteBtn);
+    paintMute();
 
     function showEnd(s) {
         endBox.innerHTML = '';
@@ -358,4 +385,4 @@
     setInterval(tick, 250);
     poll();
 })();
-// Version 1.1
+// Version 1.6

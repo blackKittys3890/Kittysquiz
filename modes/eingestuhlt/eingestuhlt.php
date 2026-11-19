@@ -1,5 +1,5 @@
 <?php
-// Version 1.13
+// Version 1.14
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 
@@ -776,6 +776,7 @@ connectLiveKit();
     checkMode();
 })();
 </script>
+<script>(function(){try{var c=new URLSearchParams(location.search).get('code');if(c)localStorage.setItem('kr_last_room',JSON.stringify({code:c.toUpperCase(),t:Date.now()}));}catch(e){}})();</script>
 </body>
 </html>
-<!-- Version 1.13 -->
+<!-- Version 1.14 -->
