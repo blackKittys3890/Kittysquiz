@@ -1,5 +1,5 @@
 <?php
-// Version 1.2
+// Version 1.3
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -54,7 +54,7 @@
             Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (sicherer und stabiler Betrieb der Website).
         </p>
         <p>
-            Die Spieldaten werden in einer Datenbank bei <span class="platzhalter">[ANBIETER DER DATENBANK]</span> gespeichert.
+            Die Spieldaten werden in einer Datenbank bei der Hetzner Online GmbH gespeichert. Die Datenbank-Server stehen in Deutschland.
         </p>
 
         <h2>4. Anmeldung</h2>
@@ -161,4 +161,4 @@
     </div>
 </body>
 </html>
-<!-- Version 1.2 -->
+<!-- Version 1.3 -->
