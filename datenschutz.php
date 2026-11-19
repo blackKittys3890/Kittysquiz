@@ -1,5 +1,5 @@
 <?php
-// Version 1.3
+// Version 1.4
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -123,7 +123,7 @@
         <p>
             Für die Videoverbindung nutzen wir den Dienst LiveKit Cloud der LiveKit Inc. (USA). Dabei erhält der Dienst
             einen Verbindungs-Token, Ihre IP-Adresse und technische Verbindungsdaten. Der Server steht in
-            <span class="platzhalter">[REGION DES LIVEKIT-SERVERS]</span>. Mit dem Anbieter besteht ein Vertrag zur
+            den Vereinigten Staaten von Amerika (USA). Mit dem Anbieter besteht ein Vertrag zur
             Auftragsverarbeitung nach Art. 28 DSGVO. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b und lit. f DSGVO.
         </p>
 
@@ -156,9 +156,8 @@
         <h2>12. Stand</h2>
         <p>
             Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
-            Letze Änderung: 19. November 2026
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.3 -->
+<!-- Version 1.4 -->
