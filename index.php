@@ -1,5 +1,5 @@
 <?php
-// Version 1.6
+// Version 1.7
 require_once __DIR__ . '/config.php';
 
 $user = $_SESSION['discord_user'] ?? null;
@@ -134,7 +134,7 @@ unset($_SESSION['login_error']);
             Mit Discord anmelden
         </a>
     </div>
-<footer style="text-align:center;margin:30px 0 10px;font-size:14px;opacity:.8;"><a href="/impressum.php" style="color:#9ff0ff;">Impressum</a> · <a href="/datenschutz.php" style="color:#9ff0ff;">Datenschutz</a></footer>
+<footer style="position:fixed;left:0;right:0;bottom:10px;text-align:center;font-size:14px;opacity:.8;z-index:5;"><a href="/impressum.php" style="color:#9ff0ff;">Impressum</a> · <a href="/datenschutz.php" style="color:#9ff0ff;">Datenschutz</a></footer>
 </body>
 </html>
-<!-- Version 1.6 -->
+<!-- Version 1.7 -->
