@@ -1,4 +1,7 @@
 <?php
+// Version 7.12 (mit Debug)
+
+// ---- DEBUG START ----
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
@@ -18,7 +21,11 @@ set_exception_handler(function($e) {
 set_error_handler(function($no, $str, $file, $line) {
     throw new ErrorException($str, 0, $no, $file, $line);
 });
-header('Content-Type: application/json; charset=utf-8');
+// ---- DEBUG END ----
+
+require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/db.php';
+require_once __DIR__ . '/teams.php';
 
 $me = $_SESSION['discord_user']['id'] ?? null;
 if (!$me) { http_response_code(401); echo json_encode(['error' => 'login']); exit; }
@@ -31,14 +38,13 @@ if (!$room) { http_response_code(404); echo json_encode(['error' => 'room']); ex
 
 $rid = (int)$room['id'];
 $isHost = $room['host_id'] === $me;
-// Runde 1 nutzt Slots 0-5, Runde 2 nutzt Slots 6-11 (damit sich beide Runden nicht überschreiben)
+// Runde 1 nutzt Slots 0-5, Runde 2 nutzt Slots 6-11
 $roundOff = (int)$room['board_round'] === 2 ? 6 : 0;
 $otherOff = $roundOff === 0 ? 6 : 0;
 
 function q(string $sql, array $p = []): PDOStatement { $s = db()->prepare($sql); $s->execute($p); return $s; }
 function fail(int $c, string $e): void { http_response_code($c); echo json_encode(['error' => $e]); exit; }
 
-// Hilfsfunktion, um zu prüfen, ob der Fragesteller dran ist
 function checkTurn(int $rid, string $me): void {
     $room = q('SELECT turn_team_id FROM kr_rooms WHERE id = ?', [$rid])->fetch();
     $turn = (int)$room['turn_team_id'];
@@ -67,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$isHost) fail(403, 'host');
         $round = (int)($_POST['round'] ?? 1) === 2 ? 2 : 1;
         q('UPDATE kr_rooms SET board_round = ? WHERE id = ?', [$round, $rid]);
-        q('DELETE FROM kr_active WHERE room_id = ?', [$rid]); // Aktive Frage abbrechen
+        q('DELETE FROM kr_active WHERE room_id = ?', [$rid]);
         echo json_encode(['ok' => true]);
         exit;
     }
@@ -80,25 +86,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $keepPoints = ($_POST['keep_points'] ?? '0') === '1';
 
         if ($slot < 0 || $slot > 5) fail(400, 'input');
-        
-        // Prüfen, ob Kategorie dem User gehört (oder öffentlich ist)
+
         $catOwner = q('SELECT owner_id FROM kr_categories WHERE id = ?', [$catId])->fetchColumn();
         if (!$catOwner) fail(400, 'input');
 
-        // Kategorie darf nicht schon in der anderen Runde vorkommen
         if (q('SELECT 1 FROM kr_board WHERE room_id = ? AND category_id = ? AND slot BETWEEN ? AND ?',
               [$rid, $catId, $otherOff, $otherOff + 5])->fetch()) fail(409, 'category_used');
 
         $slot += $roundOff;
         q('REPLACE INTO kr_board (room_id, slot, category_id) VALUES (?, ?, ?)', [$rid, $slot, $catId]);
-        
-        // Wenn Punkte nicht behalten werden sollen, Team-Punkte zurücksetzen und Historie löschen
+
         if (!$keepPoints) {
             q('UPDATE kr_teams SET points = 0 WHERE room_id = ?', [$rid]);
             q('DELETE FROM kr_played WHERE room_id = ? AND slot BETWEEN ? AND ?', [$rid, $roundOff, $roundOff + 5]);
         }
-        
-        // Wenn die aktuell offene Frage in diesem Slot war, abbrechen
+
         q('DELETE FROM kr_active WHERE room_id = ? AND slot = ?', [$rid, $slot]);
 
         echo json_encode(['ok' => true]);
@@ -112,22 +114,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($slot < 0 || $slot > 5 || !$points) fail(400, 'input');
         $slot += $roundOff;
 
-        if (!$isHost) checkTurn($rid, $me); // Spieler darf nur wählen, wenn er dran ist
+        if (!$isHost) checkTurn($rid, $me);
 
-        // Prüfen, ob schon eine Frage offen ist
         if (q('SELECT 1 FROM kr_active WHERE room_id = ?', [$rid])->fetch()) fail(409, 'busy');
-
-        // Prüfen, ob schon gespielt
         if (q('SELECT 1 FROM kr_played WHERE room_id = ? AND slot = ? AND points = ?', [$rid, $slot, $points])->fetch()) fail(409, 'played');
 
-        // Kategorie für den Slot holen
         $catId = q('SELECT category_id FROM kr_board WHERE room_id = ? AND slot = ?', [$rid, $slot])->fetchColumn();
         if (!$catId) fail(400, 'slot');
 
-        // FIX: Query korrigiert – kr_played hat keine question_id-Spalte.
-        // Stattdessen schließen wir Fragen aus, die aktuell in anderen Räumen aktiv sind
-        // (und die, die in diesem Raum schon als "played" markiert sind, sind ohnehin
-        // durch den played-Check oben abgedeckt).
         $qid = q('
             SELECT id FROM kr_questions 
             WHERE category_id = ? AND points = ? 
@@ -219,13 +213,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ', [$rid])->fetch();
         if (!$active) fail(400, 'noactive');
 
-        $mode = $_POST['mode'] ?? 'none'; // right, wrong, none
+        $mode = $_POST['mode'] ?? 'none';
         $stealTeamId = (int)($_POST['steal_team_id'] ?? 0);
-        $stealMode = $_POST['steal_mode'] ?? 'none'; // right, none
+        $stealMode = $_POST['steal_mode'] ?? 'none';
 
         $turnTeamId = (int)$room['turn_team_id'];
 
-        // Punkte berechnen
         if ($mode === 'right') {
             q('UPDATE kr_teams SET points = points + ? WHERE id = ?', [$active['points'], $turnTeamId]);
         } elseif ($mode === 'wrong') {
@@ -236,13 +229,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             q('UPDATE kr_teams SET points = points + ? WHERE id = ?', [floor($active['points'] / 2), $stealTeamId]);
         }
 
-        // Feld als gespielt markieren
         q('INSERT IGNORE INTO kr_played (room_id, slot, points) VALUES (?, ?, ?)', [$rid, $active['slot'], $active['points']]);
-
-        // Frage löschen
         q('DELETE FROM kr_active WHERE room_id = ?', [$rid]);
 
-        // Nächstes Team dran (einfache Rotation)
         $teamIds = q('SELECT id FROM kr_teams WHERE room_id = ? ORDER BY sort, id', [$rid])->fetchAll(PDO::FETCH_COLUMN);
         if (count($teamIds) > 1) {
             $currentIdx = array_search($turnTeamId, $teamIds);
@@ -257,7 +246,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // --- Joker spielen ---
     if ($action === 'use_joker') {
         if (!$isHost) checkTurn($rid, $me);
-        // Dummy-Implementierung: falls du Joker wirklich nutzen willst, fehlt hier die Logik für "joker_used" in kr_teams
         echo json_encode(['ok' => true]);
         exit;
     }
@@ -267,7 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$isHost) fail(403, 'host');
         $name = trim($_POST['name'] ?? '');
         $color = $_POST['color'] ?? '#3b82ff';
-        
+
         $count = q('SELECT COUNT(*) FROM kr_teams WHERE room_id = ?', [$rid])->fetchColumn();
         if ($count >= 8) fail(400, 'team_max');
         if (strlen($name) < 1 || strlen($name) > 40) fail(400, 'team_name');
@@ -307,7 +295,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // --- Undo (vereinfacht: setzt die letzte Aktion zurück) ---
+    // --- Undo (vereinfacht) ---
     if ($action === 'undo') {
         if (!$isHost) fail(403, 'host');
         $lastPlayed = q('SELECT slot, points FROM kr_played WHERE room_id = ? AND slot BETWEEN ? AND ? ORDER BY slot DESC LIMIT 1',
@@ -325,10 +313,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---------- GET Status ----------
 $round = (int)$room['board_round'] === 2 ? 2 : 1;
 
-// Teams laden
 $teams = q('SELECT id, name, color, points FROM kr_teams WHERE room_id = ? ORDER BY sort, id', [$rid])->fetchAll();
 
-// Board laden
 $board = q('
     SELECT b.slot - ? AS slot, b.category_id, c.name 
     FROM kr_board b 
@@ -336,10 +322,8 @@ $board = q('
     WHERE b.room_id = ? AND b.slot BETWEEN ? AND ?
 ', [$roundOff, $rid, $roundOff, $roundOff + 5])->fetchAll();
 
-// Gespielte Felder laden
 $played = q('SELECT slot - ? AS slot, points FROM kr_played WHERE room_id = ? AND slot BETWEEN ? AND ?', [$roundOff, $rid, $roundOff, $roundOff + 5])->fetchAll();
 
-// Aktive Frage laden
 $active = q('
     SELECT a.*, c.name AS category, q.question, q.answer, q.image_url, q.spotify_url 
     FROM kr_active a 
@@ -371,11 +355,9 @@ if ($active) {
     ];
 }
 
-// Kategorien für den Picker
 $categories = q('SELECT id, name FROM kr_categories WHERE id NOT IN (SELECT category_id FROM kr_board WHERE room_id = ? AND slot BETWEEN ? AND ?) ORDER BY name',
                 [$rid, $otherOff, $otherOff + 5])->fetchAll();
 
-// Darf ich wählen?
 $myTeamId = (int)q('SELECT team_id FROM kr_room_players WHERE room_id = ? AND discord_id = ?', [$rid, $me])->fetchColumn();
 $turnTeamId = (int)$room['turn_team_id'];
 $canPick = $isHost || ($myTeamId > 0 && $myTeamId === $turnTeamId);
@@ -393,4 +375,4 @@ echo json_encode([
     'myTeamId' => $myTeamId,
     'myJokerAvailable' => false,
 ]);
-// Version 7.11
+// Version 7.12
