@@ -2,7 +2,7 @@
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-// Version 8.5
+// Version 8.8
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/teams.php';
@@ -173,6 +173,7 @@ db()->prepare('
             .qButtons .btn { min-width: 0; flex: 1 1 45%; }
         }
         .pcard.speaking { box-shadow: 0 0 0 3px #38d26b, 0 0 18px #38d26b; border-color: #38d26b !important; }
+        .pcard { transition: box-shadow .12s ease, border-color .12s ease; }
         .volRow { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; color: #fff; }
         .volRow input { width: min(360px, 80%); }
         .btn.active { outline: 3px solid #fff; }
@@ -205,6 +206,9 @@ db()->prepare('
         <button class="btn camBtn" id="micBtn" type="button">Mikrofon an</button>
         <button class="btn camBtn" id="fullBtn" type="button">Full Mute</button>
         <button class="btn camBtn" id="shareAudioBtn" type="button" style="display:none">🔊 Song für alle teilen</button>
+        <select id="shareSrc" title="Audioquelle" style="display:none;max-width:260px;padding:6px;border-radius:8px;background:#3b2a6b;color:#fff;border:none;">
+            <option value="">Tab-Audio (Browser-Fenster wählen)</option>
+        </select>
         <span class="lkStatus" id="lkStatus"></span>
     </div>
 
@@ -329,6 +333,21 @@ db()->prepare('
         const fullBtn = document.getElementById('fullBtn');
 
         if (isHost && shareAudioBtn) shareAudioBtn.style.display = '';
+        async function fillShareSources() {
+            const sel = document.getElementById('shareSrc');
+            if (!sel || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+            const cur = sel.value;
+            const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+            sel.innerHTML = '';
+            sel.append(new Option('Tab-Audio (Browser-Fenster wählen)', ''));
+            for (const d of devs) sel.append(new Option(d.label || 'Audiogerät', d.deviceId));
+            sel.value = cur;
+        }
+        if (isHost && document.getElementById('shareSrc')) {
+            document.getElementById('shareSrc').style.display = '';
+            document.getElementById('shareSrc').addEventListener('focus', fillShareSources);
+            fillShareSources();
+        }
 
         let state = null;
         let players = [];
@@ -819,10 +838,21 @@ db()->prepare('
                 }
 
                 try {
-                    const stream = await navigator.mediaDevices.getDisplayMedia({
-                        video: true,
-                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-                    });
+                    const srcSel = document.getElementById('shareSrc');
+                    const deviceId = srcSel ? srcSel.value : '';
+                    let stream;
+                    if (deviceId) {
+                        // Ausgewähltes Audiogerät (z. B. virtueller Kabel-Ausgang) direkt übertragen
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            audio: { deviceId: { exact: deviceId }, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+                            video: false,
+                        });
+                    } else {
+                        stream = await navigator.mediaDevices.getDisplayMedia({
+                            video: true,
+                            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+                        });
+                    }
                     const audioTrack = stream.getAudioTracks()[0];
                     if (!audioTrack) {
                         stream.getTracks().forEach(t => t.stop());
@@ -832,6 +862,12 @@ db()->prepare('
                     stream.getVideoTracks().forEach(t => t.stop());
                     shareDisplayStream = stream;
                     shareAudioTrack = audioTrack;
+                    // Mikrofon aus, sonst nimmt es den Song von den Lautsprechern auf und die Runde hört ihn doppelt
+                    if (room.localParticipant.isMicrophoneEnabled) {
+                        await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
+                        rememberFlag('kr_mic', false);
+                        syncButtons();
+                    }
                     shareAudioPub = await room.localParticipant.publishTrack(audioTrack, {
                         name: 'shared-audio', source: LK.Track.Source.Unknown,
                     });
@@ -932,7 +968,7 @@ db()->prepare('
                     drawCams();
                 });
                 room.on(E.DataReceived, onData);
-                room.on(E.ActiveSpeakersChanged, (sp) => { speakingSet = new Set(sp.map(s => s.identity)); drawCams(); });
+                room.on(E.ActiveSpeakersChanged, (sp) => { speakingSet = new Set(sp.map(s => s.identity)); paintSpeaking(); });
                 room.on(E.Reconnecting, () => setStatus('Verbindung wird wiederhergestellt …'));
                 room.on(E.Reconnected, () => { setStatus(''); drawCams(); });
                 room.on(E.Disconnected, () => setStatus('getrennt, bitte Seite neu laden'));
@@ -983,6 +1019,7 @@ db()->prepare('
             const color = p.is_host ? '#f5b400' : (team ? team.color : '#777');
             const card = el('div', 'pcard' + (speakingSet.has(p.discord_id) ? ' speaking' : ''));
             card.dataset.team = p.team_id || '';
+            card.dataset.id = p.discord_id;
             card.style.borderColor = color;
             if (!zoomed) card.addEventListener('click', () => openZoom(p.discord_id));
             const cam = el('div', 'pcam');
@@ -1004,6 +1041,23 @@ db()->prepare('
             if (p.decoration_url) { const d = el('img', 'pdeco'); d.src = p.decoration_url; d.alt = ''; avwrap.append(d); }
             pill.append(avwrap, el('span', 'pnametext', (p.premium ? '💎 ' : '') + p.username));
             card.append(pill);
+            if (zoomed && !isMe) {
+                const row = el('div', 'pvol');
+                row.style.cssText = 'margin-top:10px;display:flex;align-items:center;gap:8px;justify-content:center;font-size:14px;';
+                row.append(el('span', '', '🔈'));
+                const slider = document.createElement('input');
+                slider.type = 'range'; slider.min = '0'; slider.max = '1'; slider.step = '0.05';
+                slider.value = String(prefVol[p.discord_id] ?? 1);
+                slider.style.width = '60%';
+                slider.addEventListener('click', (e) => e.stopPropagation());
+                slider.addEventListener('input', () => {
+                    prefVol[p.discord_id] = parseFloat(slider.value);
+                    try { localStorage.setItem('kr_vol', JSON.stringify(prefVol)); } catch (e) {}
+                    applyAudio();
+                });
+                row.append(slider);
+                card.append(row);
+            }
             return card;
         }
 
@@ -1057,7 +1111,7 @@ db()->prepare('
                 state.teams.map(t => [t.id, t.name, t.color, t.points]),
                 players.map(p => {
                     const m = mediaFor(p.discord_id);
-                    return [p.discord_id, p.username, p.avatar_url, p.team_id, p.is_host, p.premium, p.decoration_url, m.track ? m.track.sid : '', m.micOn, speakingSet.has(p.discord_id)];
+                    return [p.discord_id, p.username, p.avatar_url, p.team_id, p.is_host, p.premium, p.decoration_url, m.track ? m.track.sid : '', m.micOn];
                 }),
             ]);
             if (sig === lastCamSig) return;
@@ -1077,6 +1131,12 @@ db()->prepare('
             arena.innerHTML = '';
             for (const p of order) arena.append(buildCard(p));
             drawZoom();
+            paintSpeaking();
+        }
+        function paintSpeaking() {
+            document.querySelectorAll('.pcard[data-id]').forEach(c => {
+                c.classList.toggle('speaking', speakingSet.has(c.dataset.id));
+            });
         }
         function openZoom(id) { zoomId = id; zoom.style.display = 'flex'; drawZoom(); }
         function closeZoom() {
@@ -1127,4 +1187,4 @@ db()->prepare('
     </script>
 </body>
 </html>
-<!-- Version 8.5 -->
+<!-- Version 8.8 -->
