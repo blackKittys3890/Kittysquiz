@@ -2,7 +2,7 @@
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-// Version 8.4
+// Version 8.5
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/teams.php';
@@ -326,12 +326,12 @@ db()->prepare('
         const hostPlayers = document.getElementById('hostPlayers');
         const hostScores = document.getElementById('hostScores');
         const shareAudioBtn = document.getElementById('shareAudioBtn');
+        const fullBtn = document.getElementById('fullBtn');
 
         if (isHost && shareAudioBtn) shareAudioBtn.style.display = '';
 
         let state = null;
         let players = [];
-        let lastSig = '';
         let lastCamSig = '';
         let pending = null;
         let hostSig = '';
@@ -342,7 +342,6 @@ db()->prepare('
         let resolveMain = null;
         let resolveSteal = 'none';
         let resolveStealTeam = null;
-        let autoPassTriggered = false;
 
         function openImageZoom(src) {
             if (!src) return;
@@ -374,6 +373,7 @@ db()->prepare('
         }
         function wasFlagOn(name) { try { return sessionStorage.getItem(name) === '1'; } catch (e) { return false; } }
 
+        // ---- API: Host-Aktionen senden zusätzlich ein "refresh"-Signal an alle ----
         async function api(action, data = {}) {
             const body = new URLSearchParams({ code: roomCode, action, ...data });
             try {
@@ -384,6 +384,22 @@ db()->prepare('
             } catch (e) {
                 return { ok: false, error: 'Netzwerkfehler.' };
             }
+        }
+
+        // Broadcast an ALLE (LiveKit DataReceived)
+        function broadcast(payload) {
+            if (!room) return;
+            try {
+                room.localParticipant.publishData(
+                    new TextEncoder().encode(JSON.stringify(payload)),
+                    { reliable: true }
+                ).catch(() => {});
+            } catch (e) {}
+        }
+
+        // Triggert einen Refresh bei allen anderen Clients
+        function broadcastRefresh() {
+            broadcast({ t: 'refresh' });
         }
 
         async function refresh() {
@@ -416,7 +432,7 @@ db()->prepare('
                 if (!confirm('Letzte Auflösung rückgängig machen? Punkte und Zug werden zurückgesetzt.')) return;
                 const r = await api('undo');
                 if (!r.ok) alert(r.error);
-                refresh();
+                refresh(); broadcastRefresh();
             });
         }
 
@@ -480,7 +496,7 @@ db()->prepare('
         function renderQuestion() {
             const a = state.active;
             const key = qKey();
-            if (key !== buzzKey) { buzzKey = key; buzzWinner = null; resolveMain = null; resolveSteal = 'none'; resolveStealTeam = null; autoPassTriggered = false; }
+            if (key !== buzzKey) { buzzKey = key; buzzWinner = null; resolveMain = null; resolveSteal = 'none'; resolveStealTeam = null; }
 
             if (!a || (!isHost && !a.revealed)) { overlay.style.display = 'none'; return; }
 
@@ -605,12 +621,13 @@ db()->prepare('
             const r = await api('resolve', { mode: resolveMain, steal_team_id: steal, steal_mode: steal ? resolveSteal : 'none' });
             if (!r.ok) alert(r.error);
             resolveMain = null; resolveSteal = 'none'; resolveStealTeam = null;
+            broadcastRefresh();
             refresh();
         }
 
         async function playJoker() {
             if (!confirm('Joker spielen? Punkte für diese Frage verdoppeln sich.')) return;
-            const r = await api('use_joker'); if (!r.ok) alert(r.error); refresh();
+            const r = await api('use_joker'); if (!r.ok) alert(r.error); broadcastRefresh(); refresh();
         }
         function canBuzz() {
             return !isHost && !!state.active && state.active.revealed && !!state.active.buzzOpen && !buzzWinner && !!state.myTeamId && state.myTeamId !== state.turnTeamId;
@@ -628,9 +645,16 @@ db()->prepare('
             buzzWinner = { id: msg.id, name: msg.name, team_id: msg.team_id, team: msg.team };
             renderQuestion();
         }
+
+        // Datenempfang: Buzzer + Refresh-Signal
         function onData(payload) {
-            try { const msg = JSON.parse(new TextDecoder().decode(payload)); if (msg.t === 'buzz') onBuzz(msg); } catch (e) {}
+            try {
+                const msg = JSON.parse(new TextDecoder().decode(payload));
+                if (msg.t === 'buzz') onBuzz(msg);
+                else if (msg.t === 'refresh') refresh();
+            } catch (e) {}
         }
+
         document.addEventListener('keydown', (e) => {
             if (e.code !== 'Space' || e.repeat || isHost) return;
             const tag = (e.target.tagName || '').toUpperCase();
@@ -644,18 +668,23 @@ db()->prepare('
                 if (r.code === 'noquestion' && cellElement) { cellElement.classList.add('error-missing'); cellElement.textContent = 'Keine Frage!'; }
                 alert(r.error);
             }
+            broadcastRefresh();
             refresh();
         }
         async function unplayField(slot, base) {
             if (!confirm(`Feld ${base} wieder freigeben? Die Frage kann dann erneut gespielt werden.`)) return;
-            const r = await api('unplay', { slot, points: base }); if (!r.ok) alert(r.error); refresh();
+            const r = await api('unplay', { slot, points: base }); if (!r.ok) alert(r.error); broadcastRefresh(); refresh();
         }
-        async function revealQuestion() { const r = await api('reveal'); if (!r.ok) alert(r.error); refresh(); }
-        async function startTimer() { const r = await api('start_timer'); if (!r.ok) alert(r.error); refresh(); }
-        async function cancelQuestion() { const r = await api('cancel_question'); if (!r.ok) alert(r.error); refresh(); }
-        async function timerAction(action) { const r = await api(action); if (!r.ok) alert(r.error); refresh(); }
-        async function hideQuestion() { const r = await api('hide'); if (!r.ok) alert(r.error); refresh(); }
-        async function openBuzzer() { const r = await api('buzz_open'); if (!r.ok) alert(r.error); refresh(); }
+        async function revealQuestion() {
+            const r = await api('reveal'); if (!r.ok) alert(r.error);
+            broadcastRefresh();   // <-- WICHTIG: sagt allen anderen sofort "neu laden"
+            refresh();
+        }
+        async function startTimer() { const r = await api('start_timer'); if (!r.ok) alert(r.error); broadcastRefresh(); refresh(); }
+        async function cancelQuestion() { const r = await api('cancel_question'); if (!r.ok) alert(r.error); broadcastRefresh(); refresh(); }
+        async function timerAction(action) { const r = await api(action); if (!r.ok) alert(r.error); broadcastRefresh(); refresh(); }
+        async function hideQuestion() { const r = await api('hide'); if (!r.ok) alert(r.error); broadcastRefresh(); refresh(); }
+        async function openBuzzer() { const r = await api('buzz_open'); if (!r.ok) alert(r.error); broadcastRefresh(); refresh(); }
 
         function openPicker(slot, entry) {
             pickerTitle.textContent = 'Kategorie für Spalte ' + (slot + 1) + ' · Board ' + state.round;
@@ -675,7 +704,7 @@ db()->prepare('
         }
         async function setSlot(slot, catId, keep) {
             const r = await api('set_slot', { slot, category_id: catId, keep_points: keep ? '1' : '0' });
-            if (!r.ok) alert(r.error); refresh();
+            if (!r.ok) alert(r.error); broadcastRefresh(); refresh();
         }
         function finishPending(keep) { keepDialog.style.display = 'none'; if (pending) setSlot(pending.slot, pending.catId, keep); pending = null; }
         document.getElementById('pickerClose').addEventListener('click', closePicker);
@@ -729,7 +758,7 @@ db()->prepare('
                 const v = Math.max(1, Math.min(2000, parseInt(amount.value, 10) || 0));
                 const r = await api('add_points', { team_id: sel.value, delta: sign * v });
                 if (!r.ok) alert(r.error);
-                hostSig = ''; refresh();
+                hostSig = ''; broadcastRefresh(); refresh();
             };
             row.append(sel, amount, makeBtn('+ hinzufügen', 'btn small', () => change(1)), makeBtn('− abziehen', 'btn danger small', () => change(-1)));
             hostScores.append(row);
@@ -741,11 +770,11 @@ db()->prepare('
             } catch (e) { alert('Netzwerkfehler.'); return; }
             const p = players.find(x => x.discord_id === discordId);
             if (p) { const t = state.teams.find(x => x.id === teamId); p.team_id = teamId || null; p.team_name = t ? t.name : null; p.team_color = t ? t.color : null; }
-            lastCamSig = ''; drawCams(); hostSig = ''; maybeRenderHostMenu();
+            lastCamSig = ''; drawCams(); hostSig = ''; maybeRenderHostMenu(); broadcastRefresh();
         }
         async function deleteTeam(teamId, name) {
             if (!confirm(`Team "${name}" löschen? Seine Mitglieder landen ohne Team.`)) return;
-            const r = await api('delete_team', { team_id: teamId }); if (!r.ok) alert(r.error); hostSig = ''; refresh();
+            const r = await api('delete_team', { team_id: teamId }); if (!r.ok) alert(r.error); hostSig = ''; broadcastRefresh(); refresh();
         }
         if (isHost) {
             document.getElementById('hostBtn').addEventListener('click', openHostMenu);
@@ -756,30 +785,29 @@ db()->prepare('
                 const color = document.getElementById('newTeamColor').value;
                 const r = await api('add_team', { name, color });
                 if (!r.ok) alert(r.error); else document.getElementById('newTeamName').value = '';
-                hostSig = ''; refresh();
+                hostSig = ''; broadcastRefresh(); refresh();
             });
             document.getElementById('resetBtn').addEventListener('click', async () => {
                 if (!confirm('Punkte aller Teams auf 0 setzen?')) return;
-                await api('reset_scores'); hostSig = ''; refresh();
+                await api('reset_scores'); hostSig = ''; broadcastRefresh(); refresh();
             });
             document.getElementById('roundSel').addEventListener('change', async (e) => {
                 const r = await api('set_round', { round: e.target.value });
-                if (!r.ok) alert(r.error); refresh();
+                if (!r.ok) alert(r.error); broadcastRefresh(); refresh();
             });
         }
 
         // ============================================================
         // SONG FÜR ALLE TEILEN (Host teilt Tab-/System-Audio via LiveKit)
         // ============================================================
-        let shareAudioTrack = null;   // MediaStreamTrack
-        let shareAudioPub   = null;   // LiveKit Publication
+        let shareAudioTrack = null;
+        let shareAudioPub   = null;
         let shareDisplayStream = null;
 
         if (isHost && shareAudioBtn) {
             shareAudioBtn.addEventListener('click', async () => {
                 if (!room) { alert('Noch nicht mit LiveKit verbunden.'); return; }
 
-                // Beenden, falls schon aktiv
                 if (shareAudioTrack) {
                     try { await room.localParticipant.unpublishTrack(shareAudioTrack); } catch (e) {}
                     try { shareAudioTrack.stop(); } catch (e) {}
@@ -792,36 +820,24 @@ db()->prepare('
 
                 try {
                     const stream = await navigator.mediaDevices.getDisplayMedia({
-                        video: true, // Pflicht, damit Audio-Option im Dialog erscheint
-                        audio: {
-                            echoCancellation: false,
-                            noiseSuppression: false,
-                            autoGainControl: false,
-                        },
+                        video: true,
+                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
                     });
-
                     const audioTrack = stream.getAudioTracks()[0];
                     if (!audioTrack) {
                         stream.getTracks().forEach(t => t.stop());
-                        alert('Kein Audio im geteilten Stream. Bitte im Dialog "Audio teilen" aktivieren.\n\n' +
-                              'Tipp: Wenn du nur Audio (z. B. Spotify) teilen willst, wähle einen Tab oder ein Loopback-Gerät (VB-Cable/BlackHole).');
+                        alert('Kein Audio im geteilten Stream. Bitte im Dialog "Audio teilen" aktivieren.');
                         return;
                     }
-
-                    // Video-Track brauchen wir nicht – stoppen
                     stream.getVideoTracks().forEach(t => t.stop());
-
                     shareDisplayStream = stream;
                     shareAudioTrack = audioTrack;
                     shareAudioPub = await room.localParticipant.publishTrack(audioTrack, {
-                        name: 'shared-audio',
-                        source: LK.Track.Source.Unknown,
+                        name: 'shared-audio', source: LK.Track.Source.Unknown,
                     });
-
                     shareAudioBtn.textContent = '⏹ Song-Teilen beenden';
                     shareAudioBtn.classList.add('active');
 
-                    // Wenn der Nutzer den Share über den Browser stoppt
                     audioTrack.addEventListener('ended', async () => {
                         try { await room.localParticipant.unpublishTrack(audioTrack); } catch (e) {}
                         shareAudioTrack = null; shareAudioPub = null;
@@ -1025,7 +1041,6 @@ db()->prepare('
                 fullBtn.classList.toggle('active', fullMute);
             }
         }
-        const fullBtn = document.getElementById('fullBtn');
         fullBtn.addEventListener('click', async () => {
             fullMute = !fullMute;
             if (fullMute && room && room.localParticipant.isMicrophoneEnabled) {
@@ -1082,6 +1097,11 @@ db()->prepare('
         refresh();
         refreshPlayers();
         connectLiveKit();
+
+        // ---- Polling-Fallback: alle 1,5 s aktualisieren ----
+        // Nötig, falls ein Spieler kurz die LiveKit-Verbindung verliert.
+        // Günstig, weil die API-Antwort klein ist.
+        setInterval(refresh, 1500);
     </script>
     <script src="/effects.js"></script>
     <script>
@@ -1107,4 +1127,4 @@ db()->prepare('
     </script>
 </body>
 </html>
-<!-- Version 8.4 -->
+<!-- Version 8.5 -->
