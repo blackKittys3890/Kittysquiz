@@ -1,5 +1,5 @@
 <?php
-// Version 1.3
+// Version 1.4
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 
@@ -81,10 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
                 if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp3', 'wav', 'ogg', 'm4a', 'mp4', 'webm'])) {
-                    if (!is_dir('uploads')) mkdir('uploads', 0777, true);
+                    $uploadDir = dirname(__DIR__, 2) . '/uploads';
+                    if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
                     $filename = 'q_' . uniqid() . '.' . $ext;
-                    if (move_uploaded_file($_FILES['image']['tmp_name'], 'uploads/' . $filename)) {
-                        $imageUrl = 'uploads/' . $filename;
+                    if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . '/' . $filename)) {
+                        $imageUrl = '/uploads/' . $filename;
                     }
                 }
             }
@@ -159,7 +160,7 @@ $isOwner = $selected && $selected['owner_id'] === $me;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kategorien & Fragen – <?= APP_NAME ?></title>
+    <title>Kategorien & Fragen – <?= htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'KittysRätsel') ?></title>
     <style>
         body { font-family: system-ui, sans-serif; background: #1f1438; color: #f5f0ff; margin: 0; padding: 30px; }
         a { color: #7fe7d9; text-decoration: none; }
@@ -328,4 +329,4 @@ $isOwner = $selected && $selected['owner_id'] === $me;
     <?php endif; ?>
 </body>
 </html>
-<!-- Version 1.3 -->
+<!-- Version 1.4 -->
