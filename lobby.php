@@ -1,5 +1,5 @@
 <?php
-// Version 2.2
+// Version 2.3
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -46,6 +46,8 @@ $myRooms = $stmt->fetchAll();
 </head>
 <body>
     <h1>Lobby</h1>
+    <div id="rejoin" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;max-width:600px;margin:14px auto;padding:12px 16px;border-radius:14px;background:rgba(255,210,63,.15);border:1px solid #ffd23f;"><span id="rejoinText" style="flex:1;"></span><button id="rejoinBtn" type="button" style="padding:8px 14px;border:none;border-radius:10px;background:#ffd23f;color:#2a1b00;font-weight:bold;cursor:pointer;">Wieder beitreten</button><button id="rejoinX" type="button" title="Ausblenden" style="padding:6px 10px;border:none;border-radius:10px;background:#4a4a66;color:#fff;cursor:pointer;">×</button></div>
+
 
     <div class="panel">
         <h2>Neuen Raum erstellen</h2>
@@ -83,8 +85,38 @@ $myRooms = $stmt->fetchAll();
         <?php endif; ?>
     </div>
 
-    <p><a href="fragen.php">Kategorien & Fragen verwalten</a> | <a href="verfuegbarkeit.php">Verfügbarkeit planen</a> | <a href="logout.php">Ausloggen</a></p>
+    <p><a href="/shared/fragen/fragen.php">Kategorien & Fragen verwalten</a> | <a href="verfuegbarkeit.php">Verfügbarkeit planen</a> | <a href="logout.php">Ausloggen</a></p>
 <footer style="position:fixed;left:0;right:0;bottom:10px;text-align:center;font-size:14px;opacity:.8;z-index:5;"><a href="/impressum.php" style="color:#9ff0ff;">Impressum</a> · <a href="/datenschutz.php" style="color:#9ff0ff;">Datenschutz</a></footer>
+<script>
+(function () {
+    const PAGES = {
+        points: '/modes/punkte/board.php',
+        hearts: '/modes/herzen/herzen.php',
+        eingestuhlt: '/modes/eingestuhlt/eingestuhlt.php',
+        dumm_drauf: '/modes/hau_drauf/dumm_drauf.php'
+    };
+    const box = document.getElementById('rejoin');
+    let data = null;
+    try { data = JSON.parse(localStorage.getItem('kr_last_room') || 'null'); } catch (e) {}
+    if (!data || !data.code || Date.now() - data.t > 24 * 3600 * 1000) return;
+
+    const clear = () => { localStorage.removeItem('kr_last_room'); box.style.display = 'none'; };
+    document.getElementById('rejoinText').textContent = 'Du warst zuletzt in Raum ' + data.code + '.';
+    document.getElementById('rejoinX').onclick = clear;
+    box.style.display = 'flex';
+
+    document.getElementById('rejoinBtn').onclick = async () => {
+        try {
+            const res = await fetch('/room_mode.php?code=' + encodeURIComponent(data.code), { cache: 'no-store' });
+            if (!res.ok) { clear(); alert('Dieser Raum existiert nicht mehr.'); return; }
+            const j = await res.json();
+            location.href = (PAGES[j.mode] || PAGES.points) + '?code=' + encodeURIComponent(data.code);
+        } catch (e) {
+            alert('Verbindungsfehler, bitte nochmal versuchen.');
+        }
+    };
+})();
+</script>
 </body>
 </html>
-<!-- Version 2.2 -->
+<!-- Version 2.3 -->

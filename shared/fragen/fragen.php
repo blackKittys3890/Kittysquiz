@@ -1,5 +1,5 @@
 <?php
-// Version 1.4
+// Version 1.5
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 
@@ -106,6 +106,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ->execute([$points, $question, $answer, $imageUrl, $spotifyUrl, $qid]);
                 flash('Frage aktualisiert.');
             }
+        }
+    }
+    elseif ($action === 'copy_category') {
+        $src = (int)($_POST['id'] ?? 0);
+        $stmt = db()->prepare('SELECT name FROM kr_categories WHERE id = ?');
+        $stmt->execute([$src]);
+        $srcName = $stmt->fetchColumn();
+        if ($srcName === false) {
+            flash('Kategorie nicht gefunden.');
+        } else {
+            db()->prepare('INSERT INTO kr_categories (owner_id, name) VALUES (?, ?)')
+                ->execute([$me, mb_substr($srcName . ' (Kopie)', 0, 100)]);
+            $newId = (int)db()->lastInsertId();
+            db()->prepare('INSERT INTO kr_questions (category_id, points, question, answer, image_url, spotify_url) SELECT ?, points, question, answer, image_url, spotify_url FROM kr_questions WHERE category_id = ?')
+                ->execute([$newId, $src]);
+            flash('Kategorie kopiert. Du kannst sie jetzt bearbeiten.');
+            $catId = $newId;
         }
     }
     elseif ($action === 'delete_question') {
@@ -222,6 +239,13 @@ $isOwner = $selected && $selected['owner_id'] === $me;
                                 </form>
                             </div>
                         <?php endif; ?>
+                        <?php if ($c['owner_id'] !== $me): ?>
+                            <form method="post" class="inline">
+                                <input type="hidden" name="action" value="copy_category">
+                                <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
+                                <button class="small" type="submit">Kopieren</button>
+                            </form>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -231,6 +255,8 @@ $isOwner = $selected && $selected['owner_id'] === $me;
     <?php if ($selected): ?>
         <div class="panel">
             <h2>Fragen: <?= htmlspecialchars($selected['name']) ?></h2>
+            <p class="muted">Teil-Link (wer den Link öffnet, kann die Kategorie kopieren):</p>
+            <input type="text" readonly onclick="this.select()" value="<?= htmlspecialchars('https://' . $_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?') . '?cat=' . (int)$selected['id']) ?>">
 
             <?php if ($isOwner): ?>
                 <?php if ($editQ): ?>
@@ -329,4 +355,4 @@ $isOwner = $selected && $selected['owner_id'] === $me;
     <?php endif; ?>
 </body>
 </html>
-<!-- Version 1.4 -->
+<!-- Version 1.5 -->

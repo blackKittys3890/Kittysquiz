@@ -1,4 +1,4 @@
-// Version 1.6
+// Version 1.7
 // Zusatzeffekte fürs Spielfeld: Countdown, Sounds, Endtafel
 (() => {
     const code = (new URLSearchParams(location.search).get('code') || '').toUpperCase();
@@ -124,8 +124,55 @@
     document.body.append(muteBtn);
     paintMute();
 
+    // Ergebnisbild (PNG) mit Punktestand, zum Teilen im Gruppenchat
+    function resultImage(ranked, title, sub) {
+        const cv = document.createElement('canvas');
+        cv.width = 1080;
+        cv.height = 1350;
+        const g = cv.getContext('2d');
+        const bg = g.createLinearGradient(0, 0, 0, cv.height);
+        bg.addColorStop(0, '#2c1d52');
+        bg.addColorStop(1, '#14082a');
+        g.fillStyle = bg;
+        g.fillRect(0, 0, cv.width, cv.height);
+        g.fillStyle = '#f5f0ff';
+        g.textAlign = 'center';
+        g.font = '900 72px system-ui, sans-serif';
+        g.fillText(title, cv.width / 2, 150);
+        g.font = '400 36px system-ui, sans-serif';
+        g.fillStyle = '#c9bde8';
+        g.fillText(sub, cv.width / 2, 210);
+
+        const medals = ['🥇', '🥈', '🥉'];
+        ranked.slice(0, 8).forEach((t, i) => {
+            const y = 290 + i * 125;
+            g.fillStyle = 'rgba(0,0,0,.3)';
+            g.fillRect(80, y, 920, 105);
+            g.fillStyle = t.color || '#3ddbc4';
+            g.fillRect(80, y, 12, 105);
+            g.textAlign = 'left';
+            g.fillStyle = '#f5f0ff';
+            g.font = '700 46px system-ui, sans-serif';
+            g.fillText((medals[i] || (i + 1) + '.') + '  ' + t.name, 120, y + 66);
+            g.textAlign = 'right';
+            g.font = '900 46px system-ui, sans-serif';
+            g.fillText(t.points + ' Pkt.', 960, y + 66);
+        });
+        g.textAlign = 'center';
+        g.font = '400 30px system-ui, sans-serif';
+        g.fillStyle = '#9d91c4';
+        g.fillText('KittysRätsel', cv.width / 2, cv.height - 50);
+        return cv;
+    }
+
     function showEnd(s) {
         endBox.innerHTML = '';
+        const ranked = [...s.teams].sort((a, b) => b.points - a.points);
+        const title = s.round === 1 ? 'Board 1 ist fertig!' : 'Alle Felder sind gespielt!';
+        const sub = s.round === 1
+            ? 'Der Host kann jetzt auf Board 2 wechseln.'
+            : 'Das Endergebnis';
+
         const card = document.createElement('div');
         card.style.cssText = [
             'background:linear-gradient(160deg,#2c1d52,#1a1030)', 'border:3px solid #3ddbc4',
@@ -133,27 +180,23 @@
             'color:#f5f0ff', 'font-family:system-ui,sans-serif', 'box-sizing:border-box',
         ].join(';');
 
-        const title = document.createElement('div');
-        title.style.cssText = 'font-size:28px;font-weight:900;margin-bottom:6px;';
-        title.textContent = s.round === 1 ? 'Board 1 ist fertig!' : 'Board 2 ist fertig!';
-        card.append(title);
+        const h = document.createElement('div');
+        h.style.cssText = 'font-size:28px;font-weight:900;margin-bottom:6px;';
+        h.textContent = title;
+        const hs = document.createElement('div');
+        hs.style.cssText = 'opacity:.8;margin-bottom:20px;';
+        hs.textContent = sub;
+        card.append(h, hs);
 
-        const sub = document.createElement('div');
-        sub.style.cssText = 'opacity:.8;margin-bottom:20px;';
-        sub.textContent = s.round === 1
-            ? 'Der Host kann jetzt auf Board 2 wechseln.'
-            : 'Alle Felder sind gespielt.';
-        card.append(sub);
-
-        const ranked = [...s.teams].sort((a, b) => b.points - a.points);
         const medals = ['🥇', '🥈', '🥉'];
-        ranked.forEach((t, i) => {
+        const rows = ranked.map((t, i) => {
             const row = document.createElement('div');
             row.style.cssText = [
                 'display:flex', 'justify-content:space-between', 'align-items:center', 'gap:12px',
                 'padding:12px 16px', 'margin-bottom:8px', 'border-radius:12px',
                 'background:rgba(0,0,0,.25)', 'border-left:6px solid ' + t.color,
                 'font-size:20px', 'font-weight:800',
+                'opacity:0', 'transform:translateY(24px)', 'transition:opacity .5s ease, transform .5s ease',
             ].join(';');
             const name = document.createElement('span');
             name.textContent = (medals[i] || (i + 1) + '.') + ' ' + t.name;
@@ -161,19 +204,50 @@
             pts.textContent = t.points + ' Punkte';
             row.append(name, pts);
             card.append(row);
+            return row;
         });
 
+        const btns = document.createElement('div');
+        btns.style.cssText = 'display:none;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;';
+        const save = document.createElement('button');
+        save.type = 'button';
+        save.textContent = '🖼️ Als Bild speichern';
+        save.style.cssText = 'padding:12px 20px;border:none;border-radius:10px;background:#3ddbc4;color:#1f1438;font-weight:bold;font-size:16px;cursor:pointer;';
+        save.addEventListener('click', () => {
+            resultImage(ranked, title, sub).toBlob((blob) => {
+                if (!blob) return;
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'kittysquiz-ergebnis.png';
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+            });
+        });
         const close = document.createElement('button');
         close.type = 'button';
         close.textContent = 'Schließen';
-        close.style.cssText = 'margin-top:20px;padding:12px 24px;border:none;border-radius:10px;background:#444;color:#fff;font-weight:bold;font-size:16px;cursor:pointer;';
+        close.style.cssText = 'padding:12px 24px;border:none;border-radius:10px;background:#444;color:#fff;font-weight:bold;font-size:16px;cursor:pointer;';
         close.addEventListener('click', () => { endBox.style.display = 'none'; });
-        card.append(close);
+        btns.append(save, close);
+        card.append(btns);
 
         endBox.append(card);
         endBox.style.display = 'flex';
-        sfx.finish();
-        confetti();
+
+        // Podium: von Platz 3 nach oben, jeder Platz mit Ton, Platz 1 mit Konfetti
+        const order = rows.map((_, i) => i).reverse();
+        order.forEach((idx, step) => {
+            setTimeout(() => {
+                rows[idx].style.opacity = '1';
+                rows[idx].style.transform = 'translateY(0)';
+                beep(300 + step * 120, 0.18, 'triangle', 0, 0.25);
+                if (idx === 0) {
+                    sfx.finish();
+                    confetti();
+                }
+            }, 900 + step * 1400);
+        });
+        setTimeout(() => { btns.style.display = 'flex'; }, 900 + order.length * 1400);
     }
 
     // ---------- Stand auswerten ----------
@@ -385,4 +459,4 @@
     setInterval(tick, 250);
     poll();
 })();
-// Version 1.6
+// Version 1.7
