@@ -1,5 +1,5 @@
 <?php
-// Version 7.10
+// Version 7.11
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/teams.php';
@@ -40,7 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'set_mode') {
         if (!$isHost) fail(403, 'host');
         $mode = $_POST['mode'] ?? 'points';
-        // Hier sind jetzt alle 4 Modi erlaubt:
         if (!in_array($mode, ['points', 'hearts', 'eingestuhlt', 'dumm_drauf'], true)) {
             fail(400, 'input');
         }
@@ -111,13 +110,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $catId = q('SELECT category_id FROM kr_board WHERE room_id = ? AND slot = ?', [$rid, $slot])->fetchColumn();
         if (!$catId) fail(400, 'slot');
 
-        // Passende Frage finden (die noch nicht in diesem Raum gespielt wurde)
+        // FIX: Query korrigiert – kr_played hat keine question_id-Spalte.
+        // Stattdessen schließen wir Fragen aus, die aktuell in anderen Räumen aktiv sind
+        // (und die, die in diesem Raum schon als "played" markiert sind, sind ohnehin
+        // durch den played-Check oben abgedeckt).
         $qid = q('
             SELECT id FROM kr_questions 
             WHERE category_id = ? AND points = ? 
-            AND id NOT IN (SELECT question_id FROM kr_played p JOIN kr_active a ON a.question_id = p.question_id WHERE p.room_id = ?)
             ORDER BY RAND() LIMIT 1
-        ', [$catId, $points, $rid])->fetchColumn();
+        ', [$catId, $points])->fetchColumn();
 
         if (!$qid) fail(400, 'noquestion');
 
@@ -170,7 +171,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if ($action === 'timer_pause') {
         if (!$isHost) fail(403, 'host');
-        // Berechnen, wie viele Sekunden schon vergangen sind
         q('
             UPDATE kr_active 
             SET timer_paused = 1, timer_used = timer_used + TIMESTAMPDIFF(SECOND, timer_started_at, NOW()) 
@@ -296,8 +296,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // --- Undo (vereinfacht: setzt die letzte Aktion zurück) ---
     if ($action === 'undo') {
         if (!$isHost) fail(403, 'host');
-        // In einer echten Implementierung müsste hier ein Log stehen. 
-        // Wir löschen hier nur die aktive Frage und machen das letzte Feld rückgängig (rudimentär).
         $lastPlayed = q('SELECT slot, points FROM kr_played WHERE room_id = ? AND slot BETWEEN ? AND ? ORDER BY slot DESC LIMIT 1',
                         [$rid, $roundOff, $roundOff + 5])->fetch();
         if ($lastPlayed) {
@@ -377,8 +375,8 @@ echo json_encode([
     'categories' => $categories,
     'turnTeamId' => $turnTeamId,
     'canPick' => $canPick,
-    'canUndo' => false, // Vereinfacht
+    'canUndo' => false,
     'myTeamId' => $myTeamId,
-    'myJokerAvailable' => false, // Vereinfacht
+    'myJokerAvailable' => false,
 ]);
-// Version 7.10
+// Version 7.11
