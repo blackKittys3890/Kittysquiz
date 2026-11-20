@@ -1,9 +1,23 @@
 <?php
-// Version 7.11
-require_once dirname(__DIR__, 2) . '/config.php';
-require_once dirname(__DIR__, 2) . '/db.php';
-require_once __DIR__ . '/teams.php';
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
 
+set_exception_handler(function($e) {
+    http_response_code(500);
+    if (!headers_sent()) header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'fatal' => $e->getMessage(),
+        'file'  => $e->getFile(),
+        'line'  => $e->getLine(),
+        'trace' => explode("\n", $e->getTraceAsString()),
+    ]);
+    exit;
+});
+
+set_error_handler(function($no, $str, $file, $line) {
+    throw new ErrorException($str, 0, $no, $file, $line);
+});
 header('Content-Type: application/json; charset=utf-8');
 
 $me = $_SESSION['discord_user']['id'] ?? null;
