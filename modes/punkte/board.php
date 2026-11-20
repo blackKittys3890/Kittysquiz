@@ -662,6 +662,25 @@ db()->prepare('
             if (oldMedia) oldMedia.remove();
             img.style.display = 'none';
             img.src = '';
+            // Spotify-Song: nur auf dem Gerät des Hosts, damit er nur einmal läuft
+            document.getElementById('qSpotify')?.remove();
+            const spotifyEmbed = (u) => {
+                const m = /open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|album|playlist)\/([A-Za-z0-9]+)/.exec(u || '');
+                return m ? `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator` : null;
+            };
+            const embed = isHost ? spotifyEmbed(a.spotify_url) : null;
+            if (embed) {
+                const sp = document.createElement('iframe');
+                sp.id = 'qSpotify';
+                sp.src = embed;
+                sp.width = '100%';
+                sp.height = '152';
+                sp.allow = 'autoplay; clipboard-write; encrypted-media; picture-in-picture';
+                sp.loading = 'eager';
+                sp.style.cssText = 'border:0;border-radius:12px;margin-top:16px;max-width:520px;';
+                img.after(sp);
+            }
+
             const url = (a.image_url || '').trim();
             const ext = url.split('?')[0].split('.').pop().toLowerCase();
             if (url !== '') {
@@ -1526,7 +1545,6 @@ db()->prepare('
     checkMode();
 })();
 </script>
-<script>(function(){try{var c=new URLSearchParams(location.search).get('code');if(c)localStorage.setItem('kr_last_room',JSON.stringify({code:c.toUpperCase(),t:Date.now()}));}catch(e){}})();</script>
 </body>
 </html>
 <!-- Version 8.2 -->

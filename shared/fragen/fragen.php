@@ -1,5 +1,5 @@
 <?php
-// Version 1.2
+// Version 1.3
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 
@@ -61,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $points   = (int)($_POST['points'] ?? 0);
         $question = trim($_POST['question'] ?? '');
         $answer   = trim($_POST['answer'] ?? '');
+        $spotify  = trim($_POST['spotify_url'] ?? '');
+        $spotifyUrl = $spotify !== '' ? $spotify : null;
 
         $stmt = db()->prepare('SELECT owner_id FROM kr_categories WHERE id = ?');
         $stmt->execute([$catId]);
@@ -68,6 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($owner !== $me) {
             flash('Du kannst nur Kategorien bearbeiten, die du selbst angelegt hast.');
+        } elseif ($spotify !== '' && !preg_match('#^https://open\.spotify\.com/(intl-[a-z]+/)?(track|album|playlist)/[A-Za-z0-9]+#', $spotify)) {
+            flash('Der Spotify-Link ist ungültig. Bitte in Spotify „Link kopieren“ wählen und hier einfügen.');
         } elseif (!in_array($points, $allowedPoints, true) || $question === '' || $answer === '') {
             flash('Bitte Punktwert, Frage und Antwort ausfüllen.');
         } else {
@@ -93,12 +97,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($action === 'add_question') {
-                db()->prepare('INSERT INTO kr_questions (category_id, points, question, answer, image_url) VALUES (?, ?, ?, ?, ?)')
-                    ->execute([$catId, $points, $question, $answer, $imageUrl]);
+                db()->prepare('INSERT INTO kr_questions (category_id, points, question, answer, image_url, spotify_url) VALUES (?, ?, ?, ?, ?, ?)')
+                    ->execute([$catId, $points, $question, $answer, $imageUrl, $spotifyUrl]);
                 flash('Frage gespeichert.');
             } else {
-                db()->prepare('UPDATE kr_questions SET points = ?, question = ?, answer = ?, image_url = ? WHERE id = ?')
-                    ->execute([$points, $question, $answer, $imageUrl, $qid]);
+                db()->prepare('UPDATE kr_questions SET points = ?, question = ?, answer = ?, image_url = ?, spotify_url = ? WHERE id = ?')
+                    ->execute([$points, $question, $answer, $imageUrl, $spotifyUrl, $qid]);
                 flash('Frage aktualisiert.');
             }
         }
@@ -247,6 +251,9 @@ $isOwner = $selected && $selected['owner_id'] === $me;
                         <label>Antwort
                             <textarea name="answer" required><?= htmlspecialchars($editQ['answer']) ?></textarea>
                         </label>
+                        <label>Spotify-Link (optional, der Song ist die Frage)
+                            <input type="url" name="spotify_url" value="<?= htmlspecialchars($editQ['spotify_url'] ?? '') ?>" placeholder="https://open.spotify.com/track/...">
+                        </label>
                         <label>Bild (optional)
                             <?php if ($editQ['image_url']): ?>
                                 <?= mediaThumb($editQ['image_url']) ?>
@@ -274,6 +281,9 @@ $isOwner = $selected && $selected['owner_id'] === $me;
                         <label>Antwort
                             <textarea name="answer" required></textarea>
                         </label>
+                        <label>Spotify-Link (optional, der Song ist die Frage)
+                            <input type="url" name="spotify_url" placeholder="https://open.spotify.com/track/...">
+                        </label>
                         <label>Bild (optional)
                             <input type="file" name="image" accept="image/*,audio/*,video/*">
                         </label>
@@ -289,7 +299,9 @@ $isOwner = $selected && $selected['owner_id'] === $me;
                 <?php foreach ($questions as $q): ?>
                     <tr>
                         <td><?= (int)$q['points'] ?></td>
-                        <td><?= nl2br(htmlspecialchars($q['question'])) ?></td>
+                        <td><?= nl2br(htmlspecialchars($q['question'])) ?>
+                            <?php if (!empty($q['spotify_url'])): ?><div class="muted">🎵 Spotify-Song</div><?php endif; ?>
+                        </td>
                         <td><?= nl2br(htmlspecialchars($q['answer'])) ?></td>
                         <td>
                             <?php if (!empty($q['image_url'])): ?>
@@ -316,3 +328,4 @@ $isOwner = $selected && $selected['owner_id'] === $me;
     <?php endif; ?>
 </body>
 </html>
+<!-- Version 1.3 -->
