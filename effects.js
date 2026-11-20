@@ -1,4 +1,4 @@
-// Version 1.7
+// Version 1.8
 // Zusatzeffekte fürs Spielfeld: Countdown, Sounds, Endtafel
 (() => {
     const code = (new URLSearchParams(location.search).get('code') || '').toUpperCase();
@@ -165,96 +165,192 @@
         return cv;
     }
 
+    // Podium im Kahoot-Stil: Plätze 3, 2, 1 nacheinander, danach die restlichen Teams
     function showEnd(s) {
         endBox.innerHTML = '';
         const ranked = [...s.teams].sort((a, b) => b.points - a.points);
-        const title = s.round === 1 ? 'Board 1 ist fertig!' : 'Alle Felder sind gespielt!';
-        const sub = s.round === 1
-            ? 'Der Host kann jetzt auf Board 2 wechseln.'
-            : 'Das Endergebnis';
+        const title = s.round === 1 ? 'Board 1 ist fertig!' : 'Endergebnis';
+        const sub = s.round === 1 ? 'Der Host kann jetzt auf Board 2 wechseln.' : 'Glückwunsch an die Gewinner!';
 
         const card = document.createElement('div');
         card.style.cssText = [
             'background:linear-gradient(160deg,#2c1d52,#1a1030)', 'border:3px solid #3ddbc4',
-            'border-radius:20px', 'padding:32px', 'width:min(640px,100%)', 'text-align:center',
-            'color:#f5f0ff', 'font-family:system-ui,sans-serif', 'box-sizing:border-box',
+            'border-radius:20px', 'padding:28px 24px', 'width:min(680px,100%)', 'text-align:center',
+            'color:#f5f0ff', 'font-family:system-ui,sans-serif', 'box-sizing:border-box', 'max-height:96vh', 'overflow:auto',
         ].join(';');
 
         const h = document.createElement('div');
-        h.style.cssText = 'font-size:28px;font-weight:900;margin-bottom:6px;';
+        h.style.cssText = 'font-size:28px;font-weight:900;margin-bottom:4px;';
         h.textContent = title;
         const hs = document.createElement('div');
-        hs.style.cssText = 'opacity:.8;margin-bottom:20px;';
+        hs.style.cssText = 'opacity:.8;margin-bottom:14px;';
         hs.textContent = sub;
         card.append(h, hs);
 
-        const medals = ['🥇', '🥈', '🥉'];
-        const rows = ranked.map((t, i) => {
+        // Podium: Anzeigereihenfolge 2 - 1 - 3
+        const stage = document.createElement('div');
+        stage.style.cssText = 'display:flex;align-items:flex-end;justify-content:center;gap:10px;height:300px;margin-top:10px;';
+        const slots = [
+            { idx: 1, h: '52%', base: '#c0c0c0', medal: '🥈' },
+            { idx: 0, h: '80%', base: '#ffd23f', medal: '🥇' },
+            { idx: 2, h: '38%', base: '#cd7f32', medal: '🥉' },
+        ];
+        const stands = {};
+        const labels = {};
+        slots.forEach((sl) => {
+            const t = ranked[sl.idx];
+            const col = document.createElement('div');
+            col.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;max-width:200px;';
+            if (!t) { stage.append(col); return; }
+            const label = document.createElement('div');
+            label.style.cssText = 'opacity:0;transition:opacity .5s ease;margin-bottom:6px;font-weight:800;font-size:16px;line-height:1.2;word-break:break-word;';
+            label.innerHTML = '';
+            const n = document.createElement('div');
+            n.textContent = t.name;
+            const p = document.createElement('div');
+            p.style.cssText = 'font-size:14px;opacity:.85;';
+            p.textContent = t.points + ' Pkt.';
+            label.append(n, p);
+            const stand = document.createElement('div');
+            stand.style.cssText = [
+                'width:100%', 'height:0', 'border-radius:12px 12px 0 0',
+                'background:linear-gradient(' + sl.base + ',' + sl.base + ') top / 100% 14px no-repeat, ' + sl.base + '66',
+                'border-top:6px solid ' + (t.color || sl.base),
+                'transition:height .9s cubic-bezier(.2,.9,.3,1)',
+                'display:flex;align-items:flex-start;justify-content:center;font-size:34px;padding-top:8px;box-sizing:border-box;',
+            ].join(';');
+            stand.textContent = sl.medal;
+            col.append(label, stand);
+            stage.append(col);
+            stands[sl.idx] = { stand, sl };
+            labels[sl.idx] = label;
+        });
+        card.append(stage);
+
+        // Restliche Teams
+        const rest = document.createElement('div');
+        rest.style.cssText = 'margin-top:14px;';
+        ranked.slice(3).forEach((t, i) => {
             const row = document.createElement('div');
             row.style.cssText = [
                 'display:flex', 'justify-content:space-between', 'align-items:center', 'gap:12px',
-                'padding:12px 16px', 'margin-bottom:8px', 'border-radius:12px',
-                'background:rgba(0,0,0,.25)', 'border-left:6px solid ' + t.color,
-                'font-size:20px', 'font-weight:800',
-                'opacity:0', 'transform:translateY(24px)', 'transition:opacity .5s ease, transform .5s ease',
+                'padding:10px 14px', 'margin-bottom:6px', 'border-radius:10px',
+                'background:rgba(0,0,0,.25)', 'border-left:6px solid ' + t.color, 'font-weight:700',
+                'opacity:0', 'transition:opacity .5s ease',
             ].join(';');
-            const name = document.createElement('span');
-            name.textContent = (medals[i] || (i + 1) + '.') + ' ' + t.name;
-            const pts = document.createElement('span');
-            pts.textContent = t.points + ' Punkte';
-            row.append(name, pts);
-            card.append(row);
-            return row;
+            const nm = document.createElement('span');
+            nm.textContent = (i + 4) + '. ' + t.name;
+            const pt = document.createElement('span');
+            pt.textContent = t.points + ' Pkt.';
+            row.append(nm, pt);
+            rest.append(row);
+            row.dataset.reveal = '1';
         });
+        card.append(rest);
 
         const btns = document.createElement('div');
-        btns.style.cssText = 'display:none;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;';
+        btns.style.cssText = 'display:none;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px;';
+        const share = document.createElement('button');
+        share.type = 'button';
+        share.textContent = '📤 Teilen';
+        share.style.cssText = 'padding:12px 20px;border:none;border-radius:10px;background:#7b2ff7;color:#fff;font-weight:bold;font-size:16px;cursor:pointer;';
+        share.addEventListener('click', () => shareResult(ranked, title, sub));
         const save = document.createElement('button');
         save.type = 'button';
         save.textContent = '🖼️ Als Bild speichern';
         save.style.cssText = 'padding:12px 20px;border:none;border-radius:10px;background:#3ddbc4;color:#1f1438;font-weight:bold;font-size:16px;cursor:pointer;';
         save.addEventListener('click', () => {
-            resultImage(ranked, title, sub).toBlob((blob) => {
-                if (!blob) return;
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'kittysquiz-ergebnis.png';
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-            });
+            resultImage(ranked, title, sub).toBlob((blob) => { if (blob) downloadBlob(blob); });
         });
         const close = document.createElement('button');
         close.type = 'button';
         close.textContent = 'Schließen';
         close.style.cssText = 'padding:12px 24px;border:none;border-radius:10px;background:#444;color:#fff;font-weight:bold;font-size:16px;cursor:pointer;';
         close.addEventListener('click', () => { endBox.style.display = 'none'; });
-        btns.append(save, close);
+        btns.append(share, save, close);
         card.append(btns);
 
         endBox.append(card);
         endBox.style.display = 'flex';
 
-        // Podium: von Platz 3 nach oben, jeder Platz mit Ton, Platz 1 mit Konfetti
-        const order = rows.map((_, i) => i).reverse();
+        // Reveal: 3. Platz, 2. Platz, 1. Platz (mit Konfetti)
+        const order = [2, 1, 0];
         order.forEach((idx, step) => {
             setTimeout(() => {
-                rows[idx].style.opacity = '1';
-                rows[idx].style.transform = 'translateY(0)';
-                beep(300 + step * 120, 0.18, 'triangle', 0, 0.25);
-                if (idx === 0) {
-                    sfx.finish();
-                    confetti();
-                }
-            }, 900 + step * 1400);
+                const st = stands[idx];
+                if (labels[idx]) labels[idx].style.opacity = '1';
+                if (st) st.stand.style.height = st.sl.h;
+                beep(300 + step * 140, 0.18, 'triangle', 0, 0.25);
+                if (idx === 0) { sfx.finish(); confetti(); }
+            }, 600 + step * 1400);
         });
-        setTimeout(() => { btns.style.display = 'flex'; }, 900 + order.length * 1400);
+        setTimeout(() => {
+            rest.querySelectorAll('[data-reveal]').forEach((row, i) => {
+                setTimeout(() => { row.style.opacity = '1'; }, i * 250);
+            });
+        }, 600 + 3 * 1400);
+        setTimeout(() => { btns.style.display = 'flex'; }, 600 + 3 * 1400 + 800);
     }
+
+    function downloadBlob(blob) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'kittysquiz-ergebnis.png';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }
+
+    // Teilen: auf Handy/Tablet direkt über das Teilen-Menü, sonst als Bild-Download
+    function shareResult(ranked, title, sub) {
+        resultImage(ranked, title, sub).toBlob(async (blob) => {
+            if (!blob) return;
+            const file = new File([blob], 'kittysquiz-ergebnis.png', { type: 'image/png' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: 'KittysRätsel – ' + title, text: sub });
+                    return;
+                } catch (e) {
+                    if (e && e.name === 'AbortError') return;
+                }
+            }
+            downloadBlob(blob);
+        });
+    }
+
+    // Kurzer Countdown, bevor das Podium erscheint
+    function startPodiumCountdown(cb) {
+        const ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed;inset:0;z-index:75;display:flex;align-items:center;justify-content:center;background:rgba(10,5,25,.85);font:900 140px system-ui,sans-serif;color:#fff;';
+        document.body.append(ov);
+        let n = 3;
+        const tick = () => {
+            if (n > 0) {
+                ov.textContent = String(n);
+                beep(440, 0.12, 'square', 0, 0.2);
+                n--;
+                setTimeout(tick, 900);
+            } else {
+                ov.remove();
+                cb();
+            }
+        };
+        tick();
+    }
+
+    // Host-Knopf „Podium zeigen“
+    document.addEventListener('kk:podium', () => {
+        if (!lastState) return;
+        startPodiumCountdown(() => showEnd(lastState));
+    });
 
     // ---------- Stand auswerten ----------
 
     let pausedLeft = null;
 
+    let lastState = null;
+
     function handle(s) {
+        lastState = s;
         onPoints(s.teams);
         const a = s.active;
         const key = a ? a.slot + ':' + a.points + ':' + a.category : '';
@@ -459,4 +555,4 @@
     setInterval(tick, 250);
     poll();
 })();
-// Version 1.7
+// Version 1.8

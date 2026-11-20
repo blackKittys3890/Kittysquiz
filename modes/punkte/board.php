@@ -2,7 +2,7 @@
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-// Version 8.8
+// Version 8.9
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/teams.php';
@@ -255,6 +255,7 @@ db()->prepare('
                 <strong>Punkte korrigieren</strong>
                 <div id="hostScores"></div>
                 <div class="row"><button class="btn danger small" id="resetBtn" type="button">Punkte aller Teams auf 0</button></div>
+                <div class="row"><button class="btn small" id="podiumBtn" type="button">🏆 Podium zeigen</button></div>
             </div>
             <button class="btn block grey" id="hostClose" type="button">Schließen</button>
         </div>
@@ -798,6 +799,10 @@ db()->prepare('
         if (isHost) {
             document.getElementById('hostBtn').addEventListener('click', openHostMenu);
             document.getElementById('hostClose').addEventListener('click', () => { hostModal.style.display = 'none'; });
+            document.getElementById('podiumBtn').addEventListener('click', () => {
+                hostModal.style.display = 'none';
+                document.dispatchEvent(new CustomEvent('kk:podium'));
+            });
             document.getElementById('addTeamForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const name = document.getElementById('newTeamName').value.trim();
@@ -1187,4 +1192,4 @@ db()->prepare('
     </script>
 </body>
 </html>
-<!-- Version 8.8 -->
+<!-- Version 8.9 -->
