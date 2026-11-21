@@ -1,6 +1,8 @@
 <?php
-// Version 1.5
+// Version 1.6
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/auth.php';
 
 // 1. State prüfen (Schutz gegen CSRF)
 if (!isset($_GET['state'], $_SESSION['oauth_state']) ||
@@ -70,7 +72,18 @@ $_SESSION['discord_user'] = [
     'decoration' => $decoration,
 ];
 
-// 5. Nach dem Login direkt zur Lobby
-header('Location: lobby.php');
+// E-Mail von Discord übernehmen (nur wenn bestätigt und frei)
+$key = (string)$discordUser['id'];
+auth_store_provider_email($key, (string)($discordUser['email'] ?? ''), !empty($discordUser['verified']));
+
+// Angemeldet bleiben, wenn im Formular gewählt
+if (remember_wanted()) {
+    remember_set($_SESSION['discord_user']);
+}
+
+// 5. Zurück zum Ziel (z. B. Einladungslink), sonst Lobby. Fehlende E-Mail fragt die Lobby ab.
+$target = $_SESSION['after_login'] ?? 'lobby.php';
+unset($_SESSION['after_login']);
+header('Location: ' . $target);
 exit;
-// Version 1.5
+// Version 1.6

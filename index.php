@@ -1,5 +1,5 @@
 <?php
-// Version 1.15
+// Version 1.16
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -20,7 +20,7 @@ $loginUrl = 'https://discord.com/oauth2/authorize?' . http_build_query([
     'client_id'     => DISCORD_CLIENT_ID,
     'redirect_uri'  => DISCORD_REDIRECT_URI,
     'response_type' => 'code',
-    'scope'         => 'identify',
+    'scope'         => 'identify email',
     'state'         => $state,
 ]);
 
@@ -32,7 +32,7 @@ $googleUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query(
     'client_id'     => GOOGLE_CLIENT_ID,
     'redirect_uri'  => GOOGLE_REDIRECT_URI,
     'response_type' => 'code',
-    'scope'         => 'openid profile',
+    'scope'         => 'openid profile email',
     'state'         => $googleState,
     'prompt'        => 'select_account',
 ]);
@@ -86,7 +86,17 @@ unset($_SESSION['login_error']);
     </div>
 <footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a> · <a href="https://whydonate.com/fundraising/kittysquiz" target="_blank" rel="noopener">❤️ Unterstützen</a></footer>
 <script src="/js/cookie-hinweis.js"></script>
+<script>
+// Merk-Wunsch vor dem Anbieter-Login merken (wird im Callback gelesen)
+document.querySelectorAll('.btn-google, .btn-discord').forEach(function (a) {
+    a.addEventListener('click', function () {
+        var box = document.querySelector('input[name="remember"]');
+        var on = box && box.checked ? '1' : '0';
+        document.cookie = 'kr_remember_pref=' + on + '; path=/; max-age=600; SameSite=Lax; Secure';
+    });
+});
+</script>
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.15 -->
+<!-- Version 1.16 -->

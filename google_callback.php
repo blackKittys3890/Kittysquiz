@@ -1,6 +1,8 @@
 <?php
-// Version 1.0
+// Version 1.1
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/auth.php';
 
 // 1. State prüfen (Schutz gegen CSRF)
 if (!isset($_GET['state'], $_SESSION['google_state']) ||
@@ -59,6 +61,17 @@ $_SESSION['discord_user'] = [
     'decoration' => null,
 ];
 
-header('Location: lobby.php');
+// E-Mail von Google übernehmen (nur wenn bestätigt und frei)
+auth_store_provider_email('google_' . $info['sub'], (string)($info['email'] ?? ''), !empty($info['email_verified']));
+
+// Angemeldet bleiben, wenn im Formular gewählt
+if (remember_wanted()) {
+    remember_set($_SESSION['discord_user']);
+}
+
+// Zurück zum Ziel (z. B. Einladungslink), sonst Lobby
+$target = $_SESSION['after_login'] ?? 'lobby.php';
+unset($_SESSION['after_login']);
+header('Location: ' . $target);
 exit;
-// Version 1.0
+// Version 1.1

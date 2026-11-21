@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 // Gemeinsame Anmelde-Hilfen: „Angemeldet bleiben“ und E-Mail-Pflicht.
 
 const REMEMBER_DAYS = 30;
@@ -93,4 +93,24 @@ function mode_selectable(string $key): bool
 {
     return mode_enabled($key) || auth_is_admin();
 }
-// Version 1.1
+
+// E-Mail vom Anbieter (Discord/Google) übernehmen, aber nur wenn sie bestätigt, frei und noch nicht hinterlegt ist
+function auth_store_provider_email(string $key, string $email, bool $verified): void
+{
+    if (!$verified || !filter_var($email, FILTER_VALIDATE_EMAIL)) return;
+    $email = strtolower($email);
+    if (auth_email_for($key) !== null) return;
+    $st = db()->prepare('SELECT 1 FROM kr_emails WHERE email = ?');
+    $st->execute([$email]);
+    if ($st->fetchColumn()) return;
+    db()->prepare('INSERT INTO kr_emails (user_key, email) VALUES (?, ?)')->execute([$key, $email]);
+}
+
+// Merk-Wunsch aus dem Anmeldeformular (per Cookie, vor dem Anbieter-Login gesetzt)
+function remember_wanted(): bool
+{
+    $on = ($_COOKIE['kr_remember_pref'] ?? '') === '1';
+    setcookie('kr_remember_pref', '', ['expires' => 1, 'path' => '/', 'secure' => true, 'samesite' => 'Lax']);
+    return $on;
+}
+// Version 1.2
