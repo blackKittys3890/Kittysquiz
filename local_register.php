@@ -1,7 +1,8 @@
 <?php
-// Version 1.0
+// Version 1.1
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/auth.php';
 
 $error = '';
 $allowedTypes = [
@@ -14,6 +15,7 @@ $allowedTypes = [
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
+    $email = strtolower(trim($_POST['email'] ?? ''));
     $avatarName = null;
 
     if (!preg_match('/^[A-Za-z0-9_\-]{3,20}$/', $username)) {
@@ -43,6 +45,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if (!$error && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190)) {
+        $error = 'Bitte eine gültige E-Mail-Adresse angeben.';
+    }
+
+    if (!$error) {
+        $stmt = db()->prepare('SELECT 1 FROM kr_emails WHERE email = ?');
+        $stmt->execute([$email]);
+        if ($stmt->fetchColumn()) {
+            $error = 'Diese E-Mail-Adresse wird schon verwendet.';
+        }
+    }
+
     if (!$error) {
         if ($avatarName) {
             if (!is_dir(__DIR__ . '/uploads')) {
@@ -55,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ->execute([$username, password_hash($password, PASSWORD_DEFAULT), $avatarName]);
 
         $id = db()->lastInsertId();
+        db()->prepare('INSERT INTO kr_emails (user_key, email) VALUES (?, ?)')->execute(['local_' . $id, $email]);
         session_regenerate_id(true);
         $_SESSION['discord_user'] = [
             'id'         => 'local_' . $id,
@@ -64,6 +79,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'premium'    => 0,
             'decoration' => null,
         ];
+
+        if (!empty($_POST['remember'])) {
+            remember_set($_SESSION['discord_user']);
+        }
 
         header('Location: lobby.php');
         exit;
@@ -99,11 +118,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label>Benutzername
                 <input name="username" maxlength="20" required value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
             </label>
+            <label>E-Mail-Adresse (Pflicht, für Passwort vergessen)
+                <input name="email" type="email" maxlength="190" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+            </label>
             <label>Passwort (mind. 8 Zeichen)
                 <input name="password" type="password" minlength="8" required>
             </label>
             <label>Profilbild (optional)
                 <input name="avatar" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+            </label>
+            <label style="display:flex;gap:8px;align-items:center;">
+                <input type="checkbox" name="remember" value="1" checked style="width:auto;margin:0;"> Angemeldet bleiben (30 Tage)
             </label>
             <button type="submit">Konto erstellen</button>
         </form>
@@ -112,4 +137,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->

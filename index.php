@@ -1,6 +1,8 @@
 <?php
-// Version 1.8
+// Version 1.9
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/auth.php';
+remember_restore();
 
 $user = $_SESSION['discord_user'] ?? null;
 
@@ -109,8 +111,11 @@ unset($_SESSION['login_error']);
         <?php if ($error): ?><p class="error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
 
         <form method="post" action="local_login.php">
-            <input name="username" placeholder="Benutzername" required>
+            <input name="login" placeholder="Benutzername oder E-Mail" required>
             <input name="password" type="password" placeholder="Passwort" required>
+            <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0;">
+                <input type="checkbox" name="remember" value="1" checked style="width:auto;margin:0;"> Angemeldet bleiben (30 Tage)
+            </label>
             <button class="btn local" type="submit">Anmelden</button>
         </form>
         <p><a href="local_register.php">Neues Konto erstellen</a></p>
@@ -138,4 +143,4 @@ unset($_SESSION['login_error']);
 <script src="/cookie-hinweis.js"></script>
 </body>
 </html>
-<!-- Version 1.8 -->
+<!-- Version 1.9 -->

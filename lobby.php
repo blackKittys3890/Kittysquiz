@@ -1,7 +1,10 @@
 <?php
-// Version 2.4
+// Version 2.5
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/auth.php';
+remember_restore();
+require_email();
 
 $user = $_SESSION['discord_user'] ?? null;
 if (!$user) {
@@ -120,4 +123,4 @@ $myRooms = $stmt->fetchAll();
 <script src="/cookie-hinweis.js"></script>
 </body>
 </html>
-<!-- Version 2.4 -->
+<!-- Version 2.5 -->
