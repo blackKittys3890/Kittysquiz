@@ -31,10 +31,13 @@
             Verantwortlich für die Datenverarbeitung auf dieser Website ist:
         </p>
         <p>
+        <p>
             Eliah Weichert<br>
-            Hechinger Straße 12<br>
-            71229 Leonberg<br>
-            Deutschland<br>
+            c/o MDC#2523<br>
+            Welserstraße 3<br>
+            87463 Dietmannsried<br>
+            Deutschland
+        </p>
             E-Mail: <a href="mailto:eliah@sudi.de">eliah@sudi.de</a>
         </p>
 
