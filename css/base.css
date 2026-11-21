@@ -1,4 +1,4 @@
-/* Version 1.1 - gemeinsamer Stil für alle Seiten */
+/* Version 1.2 - gemeinsamer Stil für alle Seiten */
 
 :root {
     --bg-1: #2b1d4a;
@@ -118,3 +118,22 @@ input[type="checkbox"] { width: auto; margin: 0; }
 /* Logo (nur wenn logo.png im Root liegt) */
 .logo-img { display: block; height: 64px; width: auto; margin: 0 auto 10px; }
 .logo-img-small { display: inline-block; height: 38px; margin: 0 10px 0 0; vertical-align: middle; }
+
+/* Große Schrift: ganze Seite wird vergrößert */
+html.kr-big body { zoom: 1.25; }
+
+.kr-big-toggle {
+    position: fixed;
+    right: 12px;
+    bottom: 44px;
+    z-index: 90;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 10px;
+    background: var(--violet);
+    color: #fff;
+    font: inherit;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+}

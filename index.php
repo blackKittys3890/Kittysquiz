@@ -1,5 +1,5 @@
 <?php
-// Version 1.14
+// Version 1.15
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -46,7 +46,7 @@ unset($_SESSION['login_error']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= APP_NAME ?></title>
-    <link rel="stylesheet" href="/css/base.css?v=1.1">
+    <link rel="stylesheet" href="/css/base.css?v=1.2">
     <link rel="stylesheet" href="/css/index.css?v=1.2">
 </head>
 <body>
@@ -86,6 +86,7 @@ unset($_SESSION['login_error']);
     </div>
 <footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a> · <a href="https://whydonate.com/fundraising/kittysquiz" target="_blank" rel="noopener">❤️ Unterstützen</a></footer>
 <script src="/js/cookie-hinweis.js"></script>
+<script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.14 -->
+<!-- Version 1.15 -->
