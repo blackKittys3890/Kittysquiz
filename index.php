@@ -1,5 +1,5 @@
 <?php
-// Version 1.12
+// Version 1.13
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -51,7 +51,7 @@ unset($_SESSION['login_error']);
 </head>
 <body>
     <div class="card login-card">
-        <?php if (file_exists(__DIR__ . '/logo.png')): ?><img src="/logo.png" alt="" class="logo-img"><?php endif; ?>
+        <?php if (file_exists(__DIR__ . '/img/logo.png')): ?><img src="/img/logo.png" alt="" class="logo-img"><?php endif; ?>
         <div class="logo"><?= APP_NAME ?></div>
         <div class="tagline">Quiz & Rätsel mit Freunden</div>
 
@@ -85,7 +85,7 @@ unset($_SESSION['login_error']);
         </a>
     </div>
 <footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a> · <a href="https://whydonate.com/fundraising/kittysquiz" target="_blank" rel="noopener">❤️ Unterstützen</a></footer>
-<script src="/cookie-hinweis.js"></script>
+<script src="/js/cookie-hinweis.js"></script>
 </body>
 </html>
-<!-- Version 1.12 -->
+<!-- Version 1.13 -->

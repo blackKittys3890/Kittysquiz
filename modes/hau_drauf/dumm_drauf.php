@@ -1,5 +1,5 @@
 <?php
-// Version 2.3
+// Version 2.4
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 
@@ -96,7 +96,7 @@ db()->prepare('
 
     <div class="players" id="players"></div>
 
-    <script src="/kr-cams.js"></script>
+    <script src="/js/kr-cams.js"></script>
     <script>
         const code = <?= json_encode($code) ?>;
         const myId = <?= json_encode((string)$user['id']) ?>;
@@ -280,4 +280,4 @@ db()->prepare('
 <script>(function(){try{var c=new URLSearchParams(location.search).get('code');if(c)localStorage.setItem('kr_last_room',JSON.stringify({code:c.toUpperCase(),t:Date.now()}));}catch(e){}})();</script>
 </body>
 </html>
-<!-- Version 2.3 -->
+<!-- Version 2.4 -->

@@ -2,7 +2,7 @@
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-// Version 8.9
+// Version 8.10
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/teams.php';
@@ -1168,7 +1168,7 @@ db()->prepare('
         // Günstig, weil die API-Antwort klein ist.
         setInterval(refresh, 1500);
     </script>
-    <script src="/effects.js"></script>
+    <script src="/js/effects.js"></script>
     <script>
     (function () {
         const CUR = 'points';
@@ -1192,4 +1192,4 @@ db()->prepare('
     </script>
 </body>
 </html>
-<!-- Version 8.9 -->
+<!-- Version 8.10 -->

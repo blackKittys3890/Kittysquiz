@@ -1,5 +1,5 @@
 <?php
-// Version 1.4
+// Version 1.5
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -31,12 +31,10 @@
             Verantwortlich für die Datenverarbeitung auf dieser Website ist:
         </p>
         <p>
-        <p>
             Eliah Weichert<br>
             Hechinger Straße 12<br>
-            71229, Leonberg<br>
-            Deutschland
-        </p>
+            71229 Leonberg<br>
+            Deutschland<br>
             E-Mail: <a href="mailto:eliah@sudi.de">eliah@sudi.de</a>
         </p>
 
@@ -68,20 +66,29 @@
         <p>
             Bei der Anmeldung mit Discord übermittelt Discord (Discord Inc., USA) an uns Ihre Discord-ID, Ihren
             Benutzernamen, Ihr Profilbild und, falls vorhanden, Ihre Profil-Dekoration. Wir speichern diese Angaben,
-            um Ihr Spielerprofil im Raum anzuzeigen. Eine E-Mail-Adresse speichern wir dabei nicht.
+            um Ihr Spielerprofil im Raum anzuzeigen. Eine E-Mail-Adresse erhalten wir von Discord nicht. Sie geben sie bei der ersten Anmeldung selbst an (siehe Abschnitt 4d).
         </p>
 
         <h3>b) Anmeldung mit Google</h3>
         <p>
             Bei der Anmeldung mit Google übermittelt Google LLC (USA) Ihren Namen und Ihr Profilbild an uns. Wir speichern
-            diese Angaben, um Ihr Spielerprofil anzuzeigen. Die E-Mail-Adresse wird nicht dauerhaft gespeichert.
+            diese Angaben, um Ihr Spielerprofil anzuzeigen. Eine E-Mail-Adresse erhalten wir von Google nicht. Sie geben sie bei der ersten Anmeldung selbst an (siehe Abschnitt 4d).
         </p>
 
         <h3>c) Lokales Konto</h3>
         <p>
-            Bei einem lokalen Konto speichern wir Ihren gewählten Benutzernamen, Ihr Profilbild (eine Auswahl aus
-            vorgegebenen Bildern) und Ihr Passwort. Das Passwort wird nur als nicht umkehrbarer Hash (bcrypt-Verfahren
+            Bei einem lokalen Konto speichern wir Ihren gewählten Benutzernamen, Ihre E-Mail-Adresse, optional ein
+            von Ihnen hochgeladenes Profilbild und Ihr Passwort. Das Passwort wird nur als nicht umkehrbarer Hash (bcrypt-Verfahren
             über PHP <code>password_hash</code>) gespeichert, nie im Klartext.
+        </p>
+
+        <h3>d) E-Mail-Adresse</h3>
+        <p>
+            Für jedes Konto speichern wir eine E-Mail-Adresse. Sie wird bei lokalen Konten bei der Registrierung,
+            bei Discord- und Google-Konten bei der ersten Anmeldung abgefragt, sofern noch keine hinterlegt ist.
+            Wir nutzen sie ausschließlich, um Ihnen den Zugang zurückzusetzen und wichtige Hinweise zum Konto zu senden.
+            Die Angabe ist Pflicht, um die Seite zu nutzen. Eine Weitergabe an Dritte erfolgt nicht.
+            Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
         </p>
 
         <p>
@@ -91,7 +98,11 @@
         <h2>5. Sitzung und Cookies</h2>
         <p>
             Nach der Anmeldung setzen wir ein Sitzungs-Cookie, damit Sie angemeldet bleiben. Dieses Cookie ist technisch
-            zwingend nötig und wird beim Abmelden bzw. nach Ende der Sitzung gelöscht. Im Browser speichern wir außerdem
+            zwingend nötig und wird beim Abmelden bzw. nach Ende der Sitzung gelöscht.
+            Wenn Sie „Angemeldet bleiben“ wählen, setzen wir zusätzlich ein Cookie <code>kr_remember</code>. Es enthält
+            einen zufälligen Schlüssel, der 30 Tage gültig ist. In der Datenbank speichern wir davon nur einen nicht
+            umkehrbaren Hash sowie die Angaben zu Ihrem Konto. Beim Abmelden wird das Cookie gelöscht. Die Nutzung
+            ist freiwillig und erfolgt auf Ihre Entscheidung hin. Im Browser speichern wir außerdem
             kleine Einstellungen (z. B. den zuletzt besuchten Raum und die Ton-Einstellung). Diese liegen nur auf Ihrem
             Gerät im sogenannten Local Storage und werden nicht an uns übertragen. Rechtsgrundlage ist § 25 Abs. 2 TDDDG
             sowie Art. 6 Abs. 1 lit. f DSGVO.
@@ -142,7 +153,16 @@
             Videodienst, Anmeldedienste) oder gesetzlich vorgeschrieben ist. Eine Weitergabe zu Werbezwecken findet nicht statt.
         </p>
 
-        <h2>11. Ihre Rechte</h2>
+        <h2>11. Spendenseite (whydonate)</h2>
+        <p>
+            In der Fußzeile verlinken wir auf unsere Unterstützungsseite bei <strong>whydonate.com</strong>
+            (Betreiber: Whydonate, Deutschland). Die Seite wird erst geöffnet, wenn Sie auf den Link klicken.
+            Dort gelten die Datenschutzbestimmungen von whydonate, die Sie direkt auf deren Seite einsehen können.
+            Wir erhalten dabei nur die Angaben, die Sie auf der Spendenseite selbst machen.
+            Rechtsgrundlage für den Aufruf der Seite ist Art. 6 Abs. 1 lit. f DSGVO (Hinweis auf Unterstützungsmöglichkeiten).
+        </p>
+
+        <h2>12. Ihre Rechte</h2>
         <p>
             Sie haben das Recht auf Auskunft über Ihre gespeicherten Daten, auf Berichtigung, Löschung und
             Einschränkung der Verarbeitung sowie auf Datenübertragbarkeit. Erteilte Einwilligungen können Sie
@@ -155,11 +175,11 @@
             Landesbeauftragte für den Datenschutz und die Informationsfreiheit.
         </p>
 
-        <h2>12. Stand</h2>
+        <h2>13. Stand</h2>
         <p>
             Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.4 -->
+<!-- Version 1.5 -->

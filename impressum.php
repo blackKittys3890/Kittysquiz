@@ -27,7 +27,7 @@
         <p>
             Eliah Weichert<br>
             Hechinger Straße 12<br>
-            71229, Leonberg<br>
+            71229 Leonberg<br>
             Deutschland
         </p>
 
