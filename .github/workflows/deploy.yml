@@ -1,4 +1,4 @@
-# Version 1.1
+# Version 1.2
 name: Deploy
 
 on:
@@ -31,14 +31,34 @@ jobs:
             --exclude='uploads' \
             ./ deploy/
 
-      - name: Per SFTP hochladen
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          username: ${{ secrets.SSH_USER }}
-          server: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          ssh_private_key: ${{ secrets.SSH_KEY }}
-          local_path: "./deploy/*"
-          remote_path: "public_html"
-          sftp_only: true
-# Version 1.1
+      - name: Ordner anlegen und Dateien hochladen
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          # Schlüssel nur für diesen Lauf ablegen
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          # Batch-Datei: zuerst alle Ordner (fehlende werden angelegt, vorhandene ignoriert), dann alle Dateien
+          cd deploy
+          {
+            find . -mindepth 1 -type d | sed 's|^\./|-mkdir public_html/|'
+            find . -type f | sed 's|^\./||' | while IFS= read -r f; do
+              printf 'put "%s" "public_html/%s"\n' "$f" "$f"
+            done
+          } > ../batch.txt
+
+          echo "Anzahl Befehle: $(wc -l < ../batch.txt)"
+
+          # sftp-Verbindung über denselben Schlüssel (kein Shell-Zugriff nötig)
+          sftp -b ../batch.txt \
+            -i ~/.ssh/deploy_key \
+            -P "$SSH_PORT" \
+            -o StrictHostKeyChecking=no \
+            -o BatchMode=yes \
+            "$SSH_USER@$SSH_HOST"
+# Version 1.2
