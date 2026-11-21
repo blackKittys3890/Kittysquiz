@@ -1,0 +1,116 @@
+/* Version 1.0 - gemeinsamer Stil für alle Seiten */
+
+:root {
+    --bg-1: #2b1d4a;
+    --bg-2: #4b2c6f;
+    --card: rgba(255, 255, 255, .08);
+    --card-strong: rgba(255, 255, 255, .12);
+    --line: rgba(255, 255, 255, .14);
+    --text: #f5f0ff;
+    --muted: #c9bde8;
+    --pink: #ff3ea5;
+    --violet: #7b2ff7;
+    --mint: #3ddbc4;
+    --yellow: #ffd23f;
+    --danger: #ff6b8a;
+    --radius: 16px;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; }
+
+html, body { min-height: 100%; }
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--text);
+    background: linear-gradient(135deg, var(--bg-1), var(--bg-2)) fixed;
+    line-height: 1.5;
+}
+
+a { color: var(--mint); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }
+h1 { font-size: 28px; }
+h2 { font-size: 20px; }
+
+.muted { color: var(--muted); font-size: 14px; }
+.error { color: var(--danger); font-weight: 700; }
+
+/* Karten */
+.card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow);
+}
+
+/* Eingabefelder */
+input, select, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: rgba(20, 10, 40, .55);
+    color: var(--text);
+    font: inherit;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--mint);
+}
+input[type="checkbox"] { width: auto; margin: 0; }
+
+/* Knöpfe */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 700;
+    color: #fff;
+    background: var(--violet);
+    cursor: pointer;
+    transition: filter .15s ease, transform .05s ease;
+}
+.btn:hover { filter: brightness(1.1); text-decoration: none; }
+.btn:active { transform: translateY(1px); }
+.btn-block { display: flex; width: 100%; }
+.btn-pink { background: var(--pink); }
+.btn-ghost { background: rgba(255, 255, 255, .12); }
+.btn-small { padding: 8px 14px; font-size: 14px; }
+
+/* Hinweisleiste (z. B. „Wieder beitreten“) */
+.banner {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    border-radius: var(--radius);
+    background: var(--card-strong);
+    border: 1px solid var(--line);
+}
+.banner .banner-text { flex: 1; min-width: 200px; }
+
+/* Fußzeile */
+.site-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    text-align: center;
+    font-size: 14px;
+    opacity: .85;
+    z-index: 5;
+    pointer-events: none;
+}
+.site-footer a { color: var(--mint); pointer-events: auto; }

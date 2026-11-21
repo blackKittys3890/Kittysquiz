@@ -1,0 +1,59 @@
+/* Version 1.0 - Lobby */
+
+.page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px 20px 90px;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+.topbar .brand { font-size: 24px; font-weight: 900; }
+.topbar .who { display: flex; align-items: center; gap: 12px; }
+.topbar .who .name { font-weight: 700; }
+
+.grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: 1fr;
+}
+@media (min-width: 820px) {
+    .grid { grid-template-columns: 340px 1fr; align-items: start; }
+}
+
+.stack { display: grid; gap: 18px; }
+
+.join-row { display: grid; gap: 10px; grid-template-columns: 1fr auto; }
+.join-row input { text-transform: uppercase; letter-spacing: 2px; }
+
+.room-list { display: grid; gap: 10px; }
+.room {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(20, 10, 40, .35);
+    border: 1px solid var(--line);
+}
+.room .code {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+.room .date { color: var(--muted); font-size: 14px; }
+
+.links {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
