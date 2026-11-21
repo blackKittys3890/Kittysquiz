@@ -1,5 +1,5 @@
 <?php
-// Version 1.6
+// Version 1.7
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -66,13 +66,15 @@
         <p>
             Bei der Anmeldung mit Discord übermittelt Discord (Discord Inc., USA) an uns Ihre Discord-ID, Ihren
             Benutzernamen, Ihr Profilbild und, falls vorhanden, Ihre Profil-Dekoration. Wir speichern diese Angaben,
-            um Ihr Spielerprofil im Raum anzuzeigen. Eine E-Mail-Adresse erhalten wir von Discord nicht. Sie geben sie bei der ersten Anmeldung selbst an (siehe Abschnitt 4d).
+            um Ihr Spielerprofil im Raum anzuzeigen. Zusätzlich fragen wir die E-Mail-Adresse Ihres Discord-Kontos ab, sofern Sie
+            sie bei Discord bestätigt haben und sie bei uns noch nicht verwendet wird (siehe Abschnitt 4d).
         </p>
 
         <h3>b) Anmeldung mit Google</h3>
         <p>
             Bei der Anmeldung mit Google übermittelt Google LLC (USA) Ihren Namen und Ihr Profilbild an uns. Wir speichern
-            diese Angaben, um Ihr Spielerprofil anzuzeigen. Eine E-Mail-Adresse erhalten wir von Google nicht. Sie geben sie bei der ersten Anmeldung selbst an (siehe Abschnitt 4d).
+            diese Angaben, um Ihr Spielerprofil anzuzeigen. Zusätzlich übermittelt Google die E-Mail-Adresse Ihres Google-Kontos,
+            sofern sie bestätigt ist und bei uns noch nicht verwendet wird (siehe Abschnitt 4d).
         </p>
 
         <h3>c) Lokales Konto</h3>
@@ -84,8 +86,9 @@
 
         <h3>d) E-Mail-Adresse</h3>
         <p>
-            Für jedes Konto speichern wir eine E-Mail-Adresse. Sie wird bei lokalen Konten bei der Registrierung,
-            bei Discord- und Google-Konten bei der ersten Anmeldung abgefragt, sofern noch keine hinterlegt ist.
+            Für jedes Konto speichern wir eine E-Mail-Adresse. Sie wird bei lokalen Konten bei der Registrierung angegeben.
+            Bei Discord- und Google-Konten übernehmen wir die bestätigte Adresse des Anbieters. Ist keine vorhanden oder
+            schon bei uns verwendet, fragen wir sie direkt ab.
             Wir nutzen sie ausschließlich, um Ihnen den Zugang zurückzusetzen und wichtige Hinweise zum Konto zu senden.
             Die Angabe ist Pflicht, um die Seite zu nutzen. Eine Weitergabe an Dritte erfolgt nicht.
             Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
@@ -206,4 +209,4 @@
     </div>
 </body>
 </html>
-<!-- Version 1.6 -->
+<!-- Version 1.7 -->
