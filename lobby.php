@@ -1,5 +1,5 @@
 <?php
-// Version 2.3
+// Version 2.4
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
@@ -117,6 +117,7 @@ $myRooms = $stmt->fetchAll();
     };
 })();
 </script>
+<script src="/cookie-hinweis.js"></script>
 </body>
 </html>
-<!-- Version 2.3 -->
+<!-- Version 2.4 -->
