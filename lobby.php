@@ -1,5 +1,5 @@
 <?php
-// Version 3.5
+// Version 3.6
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -92,7 +92,7 @@ $myRooms = $stmt->fetchAll();
                         </div>
                         <details class="invite-box">
                             <summary>Einladen oder erinnern</summary>
-                            <form method="post" action="/invite.php" class="invite-form">
+                            <form method="post" action="/invite/invite.php" class="invite-form">
                                 <input type="hidden" name="code" value="<?= htmlspecialchars($r['code']) ?>">
                                 <textarea name="emails" rows="2" placeholder="E-Mail-Adressen, mit Komma oder Leerzeichen getrennt" required></textarea>
                                 <select name="mode">
@@ -153,4 +153,4 @@ $myRooms = $stmt->fetchAll();
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 3.5 -->
+<!-- Version 3.6 -->

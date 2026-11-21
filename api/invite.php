@@ -1,9 +1,9 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Einladung und Erinnerung per E-Mail. Nur der Host eines Raums darf das.
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/auth.php';
+require_once dirname(__DIR__) . '/config.php';
+require_once dirname(__DIR__) . '/db.php';
+require_once dirname(__DIR__) . '/auth.php';
 require_once __DIR__ . '/mail_helper.php';
 
 $user = $_SESSION['discord_user'] ?? null;
@@ -36,7 +36,7 @@ $left = MAIL_DAILY_LIMIT - invite_used_today($me);
 if ($left <= 0) back('Tageslimit erreicht (20 Mails in 24 Stunden). Bitte morgen erneut versuchen.');
 if (count($emails) > $left) back("Du kannst heute nur noch $left Mails verschicken.");
 
-$joinUrl = 'https://kittysquiz.app/join.php?code=' . urlencode($code);
+$joinUrl = 'https://kittysquiz.app/invite/join.php?code=' . urlencode($code);
 
 if ($mode === 'remind') {
     $dt = DateTime::createFromFormat('Y-m-d\TH:i', $when);
@@ -66,4 +66,4 @@ foreach ($emails as $e) {
     }
 }
 back("Einladung an $sent von " . count($emails) . " Adresse(n) verschickt.");
-// Version 1.0
+// Version 1.1

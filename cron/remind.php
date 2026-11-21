@@ -1,8 +1,8 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Verschickt fällige Erinnerungen. Läuft jede Minute per Cronjob.
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
+require_once dirname(__DIR__) . '/config.php';
+require_once dirname(__DIR__) . '/db.php';
 require_once __DIR__ . '/mail_helper.php';
 
 if (PHP_SAPI !== 'cli') {
@@ -16,7 +16,7 @@ if (PHP_SAPI !== 'cli') {
 $rows = db()->query('SELECT id, room_code, email FROM kr_reminders WHERE remind_at <= NOW() AND sent_at IS NULL ORDER BY remind_at LIMIT 50')->fetchAll();
 $sent = 0;
 foreach ($rows as $r) {
-    $url = 'https://kittysquiz.app/join.php?code=' . urlencode($r['room_code']);
+    $url = 'https://kittysquiz.app/invite/join.php?code=' . urlencode($r['room_code']);
     $text = "Hallo,\n\nDeine Runde bei KittysRätsel beginnt jetzt bzw. steht an.\n\n"
           . "Raum-Code: {$r['room_code']}\nDirekt beitreten: $url\n\nKittysRätsel\nhttps://kittysquiz.app\n";
     if (send_app_mail($r['email'], 'Erinnerung: KittysRätsel-Runde', $text)) {
@@ -25,4 +25,4 @@ foreach ($rows as $r) {
     }
 }
 echo "Gesendet: $sent\n";
-// Version 1.0
+// Version 1.1

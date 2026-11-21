@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Gemeinsame Mail-Hilfe für Einladungen und Erinnerungen.
 
 const MAIL_DAILY_LIMIT = 20;
@@ -35,4 +35,4 @@ function parse_emails(string $raw): array
     }
     return array_values(array_unique($ok));
 }
-// Version 1.0
+// Version 1.1

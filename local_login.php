@@ -1,5 +1,5 @@
 <?php
-// Version 1.2
+// Version 1.3
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -54,4 +54,4 @@ $target = $_SESSION['after_login'] ?? 'lobby.php';
 unset($_SESSION['after_login']);
 header('Location: ' . $target);
 exit;
-// Version 1.2
+// Version 1.3
