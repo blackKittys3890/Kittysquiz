@@ -1,7 +1,8 @@
 <?php
-// Version 1.14
+// Version 1.16
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
+require_once dirname(__DIR__, 2) . '/auth.php';
 
 $user = $_SESSION['discord_user'] ?? null;
 if (!$user) { header('Location: /index.php'); exit; }
@@ -17,7 +18,7 @@ $currentMode = $room['mode'] ?? 'points';
 // --- MODUS WECHSELN (Muss VOR der Weiterleitung stehen!) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['switch_mode'])) {
     $newMode = $_POST['switch_mode'];
-    if ($isHost && in_array($newMode, ['points', 'hearts', 'eingestuhlt', 'dumm_drauf'], true)) {
+    if ($isHost && in_array($newMode, ['points', 'hearts', 'eingestuhlt', 'dumm_drauf'], true) && mode_selectable($newMode)) {
         db()->prepare('UPDATE kr_rooms SET mode = ? WHERE code = ?')->execute([$newMode, $code]);
         if ($newMode === 'points') { header('Location: /modes/punkte/board.php?code=' . $code); exit; }
         elseif ($newMode === 'hearts') { header('Location: /modes/herzen/herzen.php?code=' . $code); exit; }
@@ -777,6 +778,7 @@ connectLiveKit();
 })();
 </script>
 <script>(function(){try{var c=new URLSearchParams(location.search).get('code');if(c)localStorage.setItem('kr_last_room',JSON.stringify({code:c.toUpperCase(),t:Date.now()}));}catch(e){}})();</script>
+<script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.14 -->
+<!-- Version 1.16 -->

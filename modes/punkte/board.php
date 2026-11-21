@@ -2,9 +2,10 @@
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-// Version 8.10
+// Version 8.12
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
+require_once dirname(__DIR__, 2) . '/auth.php';
 require_once __DIR__ . '/teams.php';
 
 $user = $_SESSION['discord_user'] ?? null;
@@ -21,7 +22,7 @@ $currentMode = $room['mode'] ?? 'points';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['switch_mode'])) {
     $newMode = $_POST['switch_mode'];
-    if ($isHost && in_array($newMode, ['points', 'hearts', 'eingestuhlt', 'dumm_drauf'], true)) {
+    if ($isHost && in_array($newMode, ['points', 'hearts', 'eingestuhlt', 'dumm_drauf'], true) && mode_selectable($newMode)) {
         db()->prepare('UPDATE kr_rooms SET mode = ? WHERE code = ?')->execute([$newMode, $code]);
         if ($newMode === 'hearts') { header('Location: /modes/herzen/herzen.php?code=' . $code); exit; }
         elseif ($newMode === 'eingestuhlt') { header('Location: /modes/eingestuhlt/eingestuhlt.php?code=' . $code); exit; }
@@ -1190,6 +1191,7 @@ db()->prepare('
         checkMode();
     })();
     </script>
+<script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 8.10 -->
+<!-- Version 8.12 -->

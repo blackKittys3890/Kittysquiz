@@ -1,4 +1,4 @@
-// Version 1.3
+// Version 1.4
 <?php
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
@@ -53,11 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['switch_mode'])) {
 
 <form method="POST" class="mode-switch-box" id="modeForm">
     <span style="font-size:14px; color:#fff;">Modus:</span>
-    <select name="switch_mode" id="globalModeSel">
-        <option value="points" <?= $currentMode === 'points' ? 'selected' : '' ?>>Punkte-Board</option>
-        <option value="hearts" <?= $currentMode === 'hearts' ? 'selected' : '' ?>>Der Dümmste Fliegt</option>
-        <option value="eingestuhlt" <?= $currentMode === 'eingestuhlt' ? 'selected' : '' ?>>Eingeschult</option>
-        <option value="dumm_drauf" <?= $currentMode === 'dumm_drauf' ? 'selected' : '' ?>>Hau drauf</option>
+    <?php require_once __DIR__ . '/db.php'; require_once __DIR__ . '/auth.php'; ?>
+<select name="switch_mode" id="globalModeSel">
+        <?php if (mode_selectable('points')): ?><option value="points" <?= $currentMode === 'points' ? 'selected' : '' ?>>Punkte-Board<?= (!mode_enabled('points') ? ' (Test)' : '') ?></option><?php endif; ?>
+        <?php if (mode_selectable('hearts')): ?><option value="hearts" <?= $currentMode === 'hearts' ? 'selected' : '' ?>>Der Dümmste Fliegt<?= (!mode_enabled('hearts') ? ' (Test)' : '') ?></option><?php endif; ?>
+        <?php if (mode_selectable('eingestuhlt')): ?><option value="eingestuhlt" <?= $currentMode === 'eingestuhlt' ? 'selected' : '' ?>>Eingeschult<?= (!mode_enabled('eingestuhlt') ? ' (Test)' : '') ?></option><?php endif; ?>
+        <?php if (mode_selectable('dumm_drauf')): ?><option value="dumm_drauf" <?= $currentMode === 'dumm_drauf' ? 'selected' : '' ?>>Hau drauf<?= (!mode_enabled('dumm_drauf') ? ' (Test)' : '') ?></option><?php endif; ?>
     </select>
 </form>
 
@@ -76,4 +77,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-// Version 1.3
+// Version 1.4

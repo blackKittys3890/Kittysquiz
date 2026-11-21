@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 // Link aus der Einladung: leitet nach dem Login in den richtigen Modus.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -24,6 +24,11 @@ if ($mode === false) {
     exit;
 }
 
+if (!mode_selectable((string)$mode)) {
+    echo 'Dieser Spielmodus ist gerade nicht verfügbar. <a href="/lobby.php">Zur Lobby</a>';
+    exit;
+}
+
 $pages = [
     'points' => '/modes/punkte/board.php',
     'hearts' => '/modes/herzen/herzen.php',
@@ -32,4 +37,4 @@ $pages = [
 ];
 header('Location: ' . ($pages[$mode] ?? $pages['points']) . '?code=' . urlencode($code));
 exit;
-// Version 1.1
+// Version 1.2

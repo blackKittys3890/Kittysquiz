@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Gemeinsame Anmelde-Hilfen: „Angemeldet bleiben“ und E-Mail-Pflicht.
 
 const REMEMBER_DAYS = 30;
@@ -68,4 +68,29 @@ function remember_clear(): void
     }
     setcookie(REMEMBER_COOKIE, '', ['expires' => 1, 'path' => '/', 'secure' => true, 'httponly' => true, 'samesite' => 'Lax']);
 }
-// Version 1.0
+
+// Admin: Eintrag in kr_admins
+function auth_is_admin(): bool
+{
+    $u = $_SESSION['discord_user'] ?? null;
+    if (!$u) return false;
+    $st = db()->prepare('SELECT 1 FROM kr_admins WHERE user_key = ?');
+    $st->execute([(string)$u['id']]);
+    return (bool)$st->fetchColumn();
+}
+
+// Modus aktiv? Fehlt der Eintrag, gilt er als aktiv.
+function mode_enabled(string $key): bool
+{
+    $st = db()->prepare('SELECT enabled FROM kr_modes WHERE mode_key = ?');
+    $st->execute([$key]);
+    $v = $st->fetchColumn();
+    return $v === false ? true : (bool)$v;
+}
+
+// Darf dieser Nutzer den Modus wählen? Admins dürfen alles.
+function mode_selectable(string $key): bool
+{
+    return mode_enabled($key) || auth_is_admin();
+}
+// Version 1.1
