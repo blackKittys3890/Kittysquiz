@@ -1,4 +1,4 @@
-/* Version 1.0 - Anmeldung */
+/* Version 1.1 - Anmeldung */
 
 body {
     display: flex;
@@ -51,7 +51,7 @@ body {
 }
 
 .social { display: grid; gap: 10px; }
-.social .btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+.btn svg { width: 20px; height: 20px; flex-shrink: 0; }
 .btn-google { background: #fff; color: #1f1438; }
 .btn-discord { background: #5865f2; }
 
