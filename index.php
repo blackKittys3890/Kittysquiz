@@ -1,5 +1,5 @@
 <?php
-// Version 1.13
+// Version 1.14
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -46,8 +46,8 @@ unset($_SESSION['login_error']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= APP_NAME ?></title>
-    <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/base.css?v=1.1">
+    <link rel="stylesheet" href="/css/index.css?v=1.2">
 </head>
 <body>
     <div class="card login-card">
@@ -88,4 +88,4 @@ unset($_SESSION['login_error']);
 <script src="/js/cookie-hinweis.js"></script>
 </body>
 </html>
-<!-- Version 1.13 -->
+<!-- Version 1.14 -->
