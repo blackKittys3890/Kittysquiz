@@ -1,5 +1,5 @@
 <?php
-// Version 1.5
+// Version 1.6
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -150,10 +150,34 @@
         <h2>10. Weitergabe an Dritte</h2>
         <p>
             Eine Weitergabe Ihrer Daten erfolgt nur, soweit dies für den Betrieb der Seite nötig ist (Hosting, Datenbank,
-            Videodienst, Anmeldedienste) oder gesetzlich vorgeschrieben ist. Eine Weitergabe zu Werbezwecken findet nicht statt.
+            Mailversand, Videodienst, Anmeldedienste) oder gesetzlich vorgeschrieben ist. Hosting, Datenbank und Mailversand
+            erfolgen über die Hetzner Online GmbH. Eine Weitergabe zu Werbezwecken findet nicht statt.
         </p>
 
-        <h2>11. Spendenseite (whydonate)</h2>
+        <h2>11. Einladungen und Erinnerungen per E-Mail</h2>
+        <p>
+            Der Host eines Raums kann Personen per E-Mail einladen oder ihnen zu einem Termin eine Erinnerung schicken.
+            Dafür gibt er die E-Mail-Adressen der Empfänger ein. Wir speichern dabei:
+        </p>
+        <ul>
+            <li>die E-Mail-Adresse des Empfängers,</li>
+            <li>den Raum-Code,</li>
+            <li>die interne Kennung des Hosts,</li>
+            <li>den Zeitpunkt des Versands bzw. der geplanten Erinnerung.</li>
+        </ul>
+        <p>
+            Der Empfänger erhält eine einmalige Einladung bzw. Erinnerung mit einem Link zum Raum. Der Versand erfolgt
+            über den Mailserver von Hetzner (Absender noreply@kittysquiz.app). Die Versandmails enthalten keine Werbung.
+            Ein Host darf in 24 Stunden höchstens 20 Mails auslösen. Die Angaben zu Einladungen und Erinnerungen werden
+            nach 30 Tagen gelöscht. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Durchführung des Spiels) sowie
+            Art. 6 Abs. 1 lit. f DSGVO (Schutz vor Missbrauch des Versands).
+        </p>
+        <p>
+            Wenn Sie als Empfänger keine Einladung mehr möchten, antworten Sie auf die Mail oder schreiben Sie an die
+            oben genannte Kontaktadresse. Wir entfernen die Adresse dann aus unseren Daten.
+        </p>
+
+        <h2>12. Spendenseite (whydonate)</h2>
         <p>
             In der Fußzeile verlinken wir auf unsere Unterstützungsseite bei <strong>whydonate.com</strong>
             (Betreiber: Whydonate, Deutschland). Die Seite wird erst geöffnet, wenn Sie auf den Link klicken.
@@ -162,7 +186,7 @@
             Rechtsgrundlage für den Aufruf der Seite ist Art. 6 Abs. 1 lit. f DSGVO (Hinweis auf Unterstützungsmöglichkeiten).
         </p>
 
-        <h2>12. Ihre Rechte</h2>
+        <h2>13. Ihre Rechte</h2>
         <p>
             Sie haben das Recht auf Auskunft über Ihre gespeicherten Daten, auf Berichtigung, Löschung und
             Einschränkung der Verarbeitung sowie auf Datenübertragbarkeit. Erteilte Einwilligungen können Sie
@@ -175,11 +199,11 @@
             Landesbeauftragte für den Datenschutz und die Informationsfreiheit.
         </p>
 
-        <h2>13. Stand</h2>
+        <h2>14. Stand</h2>
         <p>
             Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.5 -->
+<!-- Version 1.6 -->

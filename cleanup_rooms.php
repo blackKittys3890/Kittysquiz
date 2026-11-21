@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Löscht Räume und alle zugehörigen Spieldaten, die älter als CLEANUP_DAYS Tage sind.
 // Läuft per Cronjob über den Browser-Aufruf mit Schlüssel (siehe Anleitung).
 
@@ -28,6 +28,14 @@ if (PHP_SAPI !== 'cli') {
 
 $pdo = db();
 
+// Einladungen und Erinnerungen nach 30 Tagen löschen (vor dem Raum-Teil, damit es immer läuft)
+$inv = $pdo->prepare('DELETE FROM kr_invites WHERE created_at < NOW() - INTERVAL 30 DAY');
+$inv->execute();
+echo "kr_invites: " . $inv->rowCount() . " alte Einladungen gelöscht\n";
+$rem = $pdo->prepare('DELETE FROM kr_reminders WHERE remind_at < NOW() - INTERVAL 30 DAY');
+$rem->execute();
+echo "kr_reminders: " . $rem->rowCount() . " alte Erinnerungen gelöscht\n";
+
 $stmt = $pdo->prepare('SELECT id FROM kr_rooms WHERE created_at < NOW() - INTERVAL ' . (int)CLEANUP_DAYS . ' DAY');
 $stmt->execute();
 $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -52,4 +60,4 @@ foreach (ROOM_TABLES as $table) {
 $del = $pdo->prepare("DELETE FROM kr_rooms WHERE id IN ({$placeholders})");
 $del->execute($ids);
 echo "kr_rooms: " . $del->rowCount() . " Räume gelöscht\n";
-// Version 1.0
+// Version 1.1
