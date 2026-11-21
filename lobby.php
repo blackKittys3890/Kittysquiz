@@ -112,9 +112,13 @@ $myRooms = $stmt->fetchAll();
     </div>
 
     <div class="links" style="margin-top:22px;">
+        <a href="/ideen.php">💡 Ideen</a>
         <a href="/shared/fragen/fragen.php">Kategorien & Fragen</a>
         <a href="verfuegbarkeit.php">Verfügbarkeit planen</a>
-        <?php if (auth_is_admin()): ?><a href="/admin/admin_modes.php">Modi verwalten</a><?php endif; ?>
+        <?php if (auth_is_admin()): ?>
+            <a href="/admin/admin_modes.php">Modi verwalten</a>
+            <a href="/admin/admin_ideen.php">Ideen verwalten</a>
+        <?php endif; ?>
     </div>
 </div>
 
