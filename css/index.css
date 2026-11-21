@@ -1,4 +1,4 @@
-/* Version 1.1 - Anmeldung */
+/* Version 1.2 - Anmeldung */
 
 body {
     display: flex;
@@ -60,3 +60,10 @@ body {
     margin-top: 16px;
     font-weight: 700;
 }
+
+/* Logo auf der Anmeldeseite größer */
+.login-card .logo-img { height: 120px; margin-bottom: 8px; }
+
+/* Google- und Discord-Knöpfe kompakter */
+.btn-google, .btn-discord { padding: 9px 14px; font-size: 14px; gap: 8px; }
+.btn-google svg, .btn-discord svg { width: 18px; height: 18px; }
