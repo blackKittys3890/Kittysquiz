@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.2
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
 require_once dirname(__DIR__) . '/auth.php';
@@ -19,6 +19,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt = db()->prepare('UPDATE kr_ideas SET status = ? WHERE id = ?');
         $stmt->execute([$_POST['status'], $_POST['id']]);
         $msg = 'Status aktualisiert.';
+        
+        // Wenn der Status auf "Abgeschlossen" gesetzt wurde, in die Bot-Queue schreiben
+        if ($_POST['status'] === 'Abgeschlossen') {
+            $stmt = db()->prepare('SELECT text FROM kr_ideas WHERE id = ?');
+            $stmt->execute([$_POST['id']]);
+            $idea = $stmt->fetch();
+            
+            if ($idea) {
+                db()->prepare('INSERT INTO kr_bot_queue (action, payload) VALUES (?, ?)')
+                    ->execute(['idea_completed', json_encode(['text' => $idea['text']])]);
+                $msg = 'Status aktualisiert und an Discord gesendet.';
+            }
+        }
     } elseif ($_POST['action'] === 'delete' && isset($_POST['id'])) {
         $stmt = db()->prepare('DELETE FROM kr_ideas WHERE id = ?');
         $stmt->execute([$_POST['id']]);
