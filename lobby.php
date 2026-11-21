@@ -1,5 +1,5 @@
 <?php
-// Version 3.4
+// Version 3.5
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -34,7 +34,7 @@ $myRooms = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lobby – <?= APP_NAME ?></title>
     <link rel="stylesheet" href="/css/base.css?v=1.2">
-    <link rel="stylesheet" href="/css/lobby.css">
+    <link rel="stylesheet" href="/css/lobby.css?v=1.1">
 </head>
 <body>
 <div class="page">
@@ -46,6 +46,8 @@ $myRooms = $stmt->fetchAll();
             <a class="btn btn-ghost btn-small" href="logout.php">Abmelden</a>
         </div>
     </header>
+
+    <?php if (!empty($_GET['msg'])): ?><div class="card msg" style="margin-bottom:18px;"><?= htmlspecialchars($_GET['msg']) ?></div><?php endif; ?>
 
     <div id="rejoin" class="banner">
         <span id="rejoinText" class="banner-text"></span>
@@ -88,6 +90,20 @@ $myRooms = $stmt->fetchAll();
                             </div>
                             <a href="/modes/punkte/board.php?code=<?= htmlspecialchars($r['code']) ?>" class="btn btn-small">Öffnen</a>
                         </div>
+                        <details class="invite-box">
+                            <summary>Einladen oder erinnern</summary>
+                            <form method="post" action="/invite.php" class="invite-form">
+                                <input type="hidden" name="code" value="<?= htmlspecialchars($r['code']) ?>">
+                                <textarea name="emails" rows="2" placeholder="E-Mail-Adressen, mit Komma oder Leerzeichen getrennt" required></textarea>
+                                <select name="mode">
+                                    <option value="invite">Jetzt einladen</option>
+                                    <option value="remind">Erinnerung zum Termin</option>
+                                </select>
+                                <input type="datetime-local" name="remind_at" aria-label="Termin für die Erinnerung">
+                                <button type="submit" class="btn btn-small">Senden</button>
+                                <span class="muted">Max. 20 Mails pro Tag.</span>
+                            </form>
+                        </details>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -137,4 +153,4 @@ $myRooms = $stmt->fetchAll();
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 3.4 -->
+<!-- Version 3.5 -->

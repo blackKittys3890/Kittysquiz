@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -50,6 +50,8 @@ if (!empty($_POST['remember'])) {
     remember_set($user);
 }
 
-header('Location: lobby.php');
+$target = $_SESSION['after_login'] ?? 'lobby.php';
+unset($_SESSION['after_login']);
+header('Location: ' . $target);
 exit;
-// Version 1.1
+// Version 1.2

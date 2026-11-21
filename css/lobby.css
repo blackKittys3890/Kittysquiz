@@ -1,4 +1,4 @@
-/* Version 1.0 - Lobby */
+/* Version 1.1 - Lobby */
 
 .page {
     max-width: 980px;
@@ -57,3 +57,10 @@
     flex-wrap: wrap;
     margin-top: 6px;
 }
+
+/* Einladen / Erinnern */
+.invite-box { margin-top: 8px; }
+.invite-box summary { cursor: pointer; color: var(--mint); font-weight: 700; padding: 6px 0; }
+.invite-form { display: grid; gap: 8px; padding: 8px 0 4px; }
+.invite-form .muted { font-size: 13px; }
+.msg { color: var(--mint); font-weight: 700; }
