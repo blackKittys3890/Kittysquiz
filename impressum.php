@@ -26,9 +26,8 @@
         <h2>Angaben gemäß § 5 DDG</h2>
         <p>
             Eliah Weichert<br>
-            c/o MDC#2523<br>
-            Welserstraße 3<br>
-            87463 Dietmannsried<br>
+            Hechinger Straße 12<br>
+            71229, Leonberg<br>
             Deutschland
         </p>
 
