@@ -1,5 +1,5 @@
 <?php
-// Version 1.10
+// Version 1.11
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -51,7 +51,8 @@ unset($_SESSION['login_error']);
 </head>
 <body>
     <div class="card login-card">
-        <div class="logo">🐱 <?= APP_NAME ?></div>
+        <?php if (file_exists(__DIR__ . '/logo.png')): ?><img src="/logo.png" alt="" class="logo-img"><?php endif; ?>
+        <div class="logo"><?= APP_NAME ?></div>
         <div class="tagline">Quiz & Rätsel mit Freunden</div>
 
         <?php if ($error): ?><p class="error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
@@ -87,4 +88,4 @@ unset($_SESSION['login_error']);
 <script src="/cookie-hinweis.js"></script>
 </body>
 </html>
-<!-- Version 1.10 -->
+<!-- Version 1.11 -->

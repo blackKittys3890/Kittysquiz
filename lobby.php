@@ -1,5 +1,5 @@
 <?php
-// Version 3.0
+// Version 3.1
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -40,7 +40,7 @@ $myRooms = $stmt->fetchAll();
 <div class="page">
 
     <header class="topbar">
-        <div class="brand">🐱 <?= APP_NAME ?></div>
+        <div class="brand"><?php if (file_exists(__DIR__ . '/logo.png')): ?><img src="/logo.png" alt="" class="logo-img logo-img-small"><?php endif; ?><span><?= APP_NAME ?></span></div>
         <div class="who">
             <span class="name"><?= htmlspecialchars($user['name'] ?? $user['username'] ?? '') ?></span>
             <a class="btn btn-ghost btn-small" href="logout.php">Abmelden</a>
@@ -136,4 +136,4 @@ $myRooms = $stmt->fetchAll();
 <script src="/cookie-hinweis.js"></script>
 </body>
 </html>
-<!-- Version 3.0 -->
+<!-- Version 3.1 -->

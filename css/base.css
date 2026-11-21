@@ -1,4 +1,4 @@
-/* Version 1.0 - gemeinsamer Stil für alle Seiten */
+/* Version 1.1 - gemeinsamer Stil für alle Seiten */
 
 :root {
     --bg-1: #2b1d4a;
@@ -114,3 +114,7 @@ input[type="checkbox"] { width: auto; margin: 0; }
     pointer-events: none;
 }
 .site-footer a { color: var(--mint); pointer-events: auto; }
+
+/* Logo (nur wenn logo.png im Root liegt) */
+.logo-img { display: block; height: 64px; width: auto; margin: 0 auto 10px; }
+.logo-img-small { display: inline-block; height: 38px; margin: 0 10px 0 0; vertical-align: middle; }
