@@ -1,5 +1,5 @@
 <?php
-// Version 1.11
+// Version 1.12
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -84,8 +84,8 @@ unset($_SESSION['login_error']);
             Mit Discord anmelden
         </a>
     </div>
-<footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a></footer>
+<footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a> · <a href="https://whydonate.com/fundraising/kittysquiz" target="_blank" rel="noopener">❤️ Unterstützen</a></footer>
 <script src="/cookie-hinweis.js"></script>
 </body>
 </html>
-<!-- Version 1.11 -->
+<!-- Version 1.12 -->

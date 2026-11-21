@@ -1,5 +1,5 @@
 <?php
-// Version 3.1
+// Version 3.2
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -101,7 +101,7 @@ $myRooms = $stmt->fetchAll();
     </div>
 </div>
 
-<footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a></footer>
+<footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a> · <a href="https://whydonate.com/fundraising/kittysquiz" target="_blank" rel="noopener">❤️ Unterstützen</a></footer>
 
 <script>
 (function () {
@@ -136,4 +136,4 @@ $myRooms = $stmt->fetchAll();
 <script src="/cookie-hinweis.js"></script>
 </body>
 </html>
-<!-- Version 3.1 -->
+<!-- Version 3.2 -->
