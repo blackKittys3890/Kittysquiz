@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 // Verschickt fällige Erinnerungen. Läuft jede Minute per Cronjob.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -25,4 +25,12 @@ foreach ($rows as $r) {
     }
 }
 echo "Gesendet: $sent\n";
-// Version 1.1
+
+// Einmal täglich um 4:00 Uhr (deutsche Zeit) zusätzlich aufräumen,
+// damit nur ein Cronjob nötig ist.
+$now = new DateTime('now', new DateTimeZone('Europe/Berlin'));
+if ((int)$now->format('H') === 4 && (int)$now->format('i') === 0) {
+    echo "--- Aufräumen ---\n";
+    include dirname(__DIR__) . '/cleanup_rooms.php';
+}
+// Version 1.2
