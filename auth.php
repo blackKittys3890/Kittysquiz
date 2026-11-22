@@ -1,5 +1,7 @@
 <?php
 // Version 1.6
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/db.php';
 // Gemeinsame Anmelde-Hilfen: „Angemeldet bleiben“ und E-Mail-Pflicht.
 
 const REMEMBER_DAYS = 30;
