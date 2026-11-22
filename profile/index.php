@@ -1,5 +1,5 @@
 <?php
-// Version 1.4
+// Version 1.5
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -14,6 +14,34 @@ $isLocal = str_starts_with($key, 'local_');
 $provider = $isLocal ? 'Lokales Konto' : (str_starts_with($key, 'google_') ? 'Google' : 'Discord');
 $msg = '';
 $err = '';
+
+// Verlauf aller Profilbilder: jedes je genutzte Bild wird gemerkt
+function avatar_history_add(string $key, ?string $value): void
+{
+    if (!$value) return;
+    db()->prepare('INSERT IGNORE INTO kr_avatar_history (user_key, avatar_hash, avatar) VALUES (?, ?, ?)')
+        ->execute([$key, sha1($value), $value]);
+}
+
+// Alte Bilder nachtragen: aktuelles Profilbild, lokales Bild, Bilder der verbundenen Anmeldungen
+function avatar_history_sync(string $key, array $links): void
+{
+    $cur = db()->prepare('SELECT avatar FROM kr_profiles WHERE user_key = ?');
+    $cur->execute([$key]);
+    avatar_history_add($key, $cur->fetchColumn() ?: null);
+
+    $loc = db()->prepare('SELECT avatar FROM kr_users WHERE id = ?');
+    if (str_starts_with($key, 'local_')) {
+        $loc->execute([(int)substr($key, 6)]);
+        $f = $loc->fetchColumn();
+        if ($f) avatar_history_add($key, str_starts_with($f, '/') || str_starts_with($f, 'http') ? $f : '/uploads/' . $f);
+    }
+    foreach ($links as $lk) {
+        $p = db()->prepare('SELECT url FROM kr_provider_avatars WHERE login_key = ?');
+        $p->execute([$lk]);
+        avatar_history_add($key, $p->fetchColumn() ?: null);
+    }
+}
 
 // Profil-Zeile holen, für Discord/Google beim ersten Aufruf anlegen
 function ensure_profile(string $key, string $name, bool $isLocal): array
@@ -43,6 +71,7 @@ function ensure_profile(string $key, string $name, bool $isLocal): array
 }
 
 $links = linked_logins($key);
+avatar_history_sync($key, $links);
 if (!empty($_SESSION['profile_msg'])) { $msg = $_SESSION['profile_msg']; unset($_SESSION['profile_msg']); }
 $profile = ensure_profile($key, (string)($user['name'] ?? $user['username'] ?? 'Spieler'), $isLocal);
 
@@ -117,8 +146,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($action === 'set_avatar') {
         $choice = $_POST['avatar_choice'] ?? '';
         $value = null;
-        if (str_starts_with($choice, 'provider:') && ($pu = linked_avatar_url($key, substr($choice, 9)))) {
-            $value = $pu;
+        if (str_starts_with($choice, 'hist:')) {
+            $h = db()->prepare('SELECT avatar FROM kr_avatar_history WHERE id = ? AND user_key = ?');
+            $h->execute([(int)substr($choice, 5), $key]);
+            $value = $h->fetchColumn() ?: null;
         } elseif (str_starts_with($choice, 'preset:') && in_array('/img/avatars/' . basename(substr($choice, 7)), avatar_presets(), true)) {
             $value = '/img/avatars/' . basename(substr($choice, 7));
         } elseif ($choice === 'upload' && !empty($_FILES['avatar_file']['name'])) {
@@ -143,6 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($value !== null && !$err) {
             db()->prepare('UPDATE kr_profiles SET avatar = ? WHERE user_key = ?')->execute([$value, $key]);
+            avatar_history_add($key, $value);
             $_SESSION['discord_user']['avatar'] = $value;
             $user = $_SESSION['discord_user'];
             $p = db();
@@ -225,7 +257,7 @@ $email = auth_email_for($key);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Mein Profil – <?= htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'KittysRätsel') ?></title>
-    <link rel="stylesheet" href="/css/base.css?v=1.2">
+    <link rel="stylesheet" href="/css/base.css?v=1.4">
     <link rel="stylesheet" href="/css/lobby.css?v=1.1">
 </head>
 <body>
@@ -292,16 +324,22 @@ $email = auth_email_for($key);
             <form method="post" enctype="multipart/form-data" class="invite-form">
                 <input type="hidden" name="action" value="set_avatar">
 
-                <?php foreach (linked_logins($key) as $lk):
-                    $lu = linked_avatar_url($key, $lk);
-                    if (!$lu) continue;
-                    $lp = str_starts_with($lk, 'google_') ? 'Google' : (str_starts_with($lk, 'local_') ? 'Lokal' : 'Discord');
+                <?php
+                $hist = db()->prepare('SELECT id, avatar FROM kr_avatar_history WHERE user_key = ? ORDER BY created_at DESC, id DESC');
+                $hist->execute([$key]);
+                $history = $hist->fetchAll();
                 ?>
-                    <label class="remember" style="gap:10px;">
-                        <input type="radio" name="avatar_choice" value="provider:<?= htmlspecialchars($lk) ?>">
-                        <img src="<?= htmlspecialchars($lu) ?>" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"> Bild von <?= htmlspecialchars($lp) ?>
-                    </label>
-                <?php endforeach; ?>
+                <?php if ($history): ?>
+                    <p class="muted" style="margin:8px 0 4px;">Deine bisherigen Bilder:</p>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <?php foreach ($history as $h): ?>
+                            <label style="cursor:pointer;">
+                                <input type="radio" name="avatar_choice" value="hist:<?= (int)$h['id'] ?>" style="display:none;">
+                                <img src="<?= htmlspecialchars($h['avatar']) ?>" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid transparent;">
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
 
                 <p class="muted" style="margin:8px 0 4px;">Standardbilder:</p>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -358,4 +396,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.4 -->
+<!-- Version 1.5 -->
