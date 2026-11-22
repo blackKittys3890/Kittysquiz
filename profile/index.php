@@ -1,5 +1,5 @@
 <?php
-// Version 1.5
+// Version 1.7
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -146,7 +146,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($action === 'set_avatar') {
         $choice = $_POST['avatar_choice'] ?? '';
         $value = null;
-        if (str_starts_with($choice, 'hist:')) {
+        if (preg_match('/^def:([0-5])$/', $choice, $dm)) {
+            $value = 'https://cdn.discordapp.com/embed/avatars/' . (int)$dm[1] . '.png';
+        } elseif (str_starts_with($choice, 'hist:')) {
             $h = db()->prepare('SELECT avatar FROM kr_avatar_history WHERE id = ? AND user_key = ?');
             $h->execute([(int)substr($choice, 5), $key]);
             $value = $h->fetchColumn() ?: null;
@@ -341,8 +343,29 @@ $email = auth_email_for($key);
                     </div>
                 <?php endif; ?>
 
+                <?php $discordDefaults = []; for ($d = 0; $d < 6; $d++) $discordDefaults[$d] = 'https://cdn.discordapp.com/embed/avatars/' . $d . '.png'; ?>
+                <p class="muted" style="margin:8px 0 4px;">Discord-Standardbilder:</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <?php foreach ($discordDefaults as $d => $dUrl): ?>
+                        <label style="cursor:pointer;">
+                            <input type="radio" name="avatar_choice" value="def:<?= $d ?>" style="display:none;">
+                            <img src="<?= htmlspecialchars($dUrl) ?>" alt="Discord-Standardbild <?= $d + 1 ?>" style="width:56px;height:56px;border-radius:50%;border:2px solid transparent;">
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+
                 <p class="muted" style="margin:8px 0 4px;">Standardbilder:</p>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <?php foreach (linked_logins($key) as $lk):
+                        $lu = linked_avatar_url($key, $lk);
+                        if (!$lu) continue;
+                        $lp = str_starts_with($lk, 'google_') ? 'Google' : (str_starts_with($lk, 'local_') ? 'Lokal' : 'Discord');
+                    ?>
+                        <label style="cursor:pointer;" title="Mein <?= htmlspecialchars($lp) ?>-Bild">
+                            <input type="radio" name="avatar_choice" value="provider:<?= htmlspecialchars($lk) ?>" style="display:none;">
+                            <img src="<?= htmlspecialchars($lu) ?>" alt="Mein <?= htmlspecialchars($lp) ?>-Bild" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid transparent;">
+                        </label>
+                    <?php endforeach; ?>
                     <?php foreach (avatar_presets() as $n => $pathPreset): ?>
                         <label style="cursor:pointer;">
                             <input type="radio" name="avatar_choice" value="preset:<?= htmlspecialchars(basename($pathPreset)) ?>" style="display:none;">
@@ -396,4 +419,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.5 -->
+<!-- Version 1.7 -->
