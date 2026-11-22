@@ -1,5 +1,5 @@
 <?php
-// Version 3.10
+// Version 3.11
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -33,7 +33,7 @@ $myRooms = $stmt->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lobby – <?= APP_NAME ?></title>
-    <link rel="stylesheet" href="/css/base.css?v=1.2">
+    <link rel="stylesheet" href="/css/base.css?v=1.4">
     <link rel="stylesheet" href="/css/lobby.css?v=1.1">
 </head>
 <body>
@@ -160,4 +160,4 @@ $myRooms = $stmt->fetchAll();
 <?php require_once __DIR__ . '/profile_bubble.php'; ?>
 </body>
 </html>
-<!-- Version 3.10 -->
+<!-- Version 3.11 -->
