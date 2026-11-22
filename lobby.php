@@ -1,5 +1,5 @@
 <?php
-// Version 3.8
+// Version 3.9
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -115,6 +115,7 @@ $myRooms = $stmt->fetchAll();
         <a href="/ideen.php">💡 Ideen</a>
         <a href="/shared/fragen/fragen.php">Kategorien & Fragen</a>
         <a href="verfuegbarkeit.php">Verfügbarkeit planen</a>
+        <a href="/profile/index.php">Mein Profil</a>
         <?php if (auth_is_admin()): ?>
             <a href="/admin/admin_modes.php">Modi verwalten</a>
             <a href="/admin/admin_ideen.php">Ideen verwalten</a>
@@ -158,4 +159,4 @@ $myRooms = $stmt->fetchAll();
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 3.8 -->
+<!-- Version 3.9 -->
