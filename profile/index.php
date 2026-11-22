@@ -1,5 +1,5 @@
 <?php
-// Version 1.7
+// Version 1.8
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -343,17 +343,6 @@ $email = auth_email_for($key);
                     </div>
                 <?php endif; ?>
 
-                <?php $discordDefaults = []; for ($d = 0; $d < 6; $d++) $discordDefaults[$d] = 'https://cdn.discordapp.com/embed/avatars/' . $d . '.png'; ?>
-                <p class="muted" style="margin:8px 0 4px;">Discord-Standardbilder:</p>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <?php foreach ($discordDefaults as $d => $dUrl): ?>
-                        <label style="cursor:pointer;">
-                            <input type="radio" name="avatar_choice" value="def:<?= $d ?>" style="display:none;">
-                            <img src="<?= htmlspecialchars($dUrl) ?>" alt="Discord-Standardbild <?= $d + 1 ?>" style="width:56px;height:56px;border-radius:50%;border:2px solid transparent;">
-                        </label>
-                    <?php endforeach; ?>
-                </div>
-
                 <p class="muted" style="margin:8px 0 4px;">Standardbilder:</p>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
                     <?php foreach (linked_logins($key) as $lk):
@@ -419,4 +408,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.7 -->
+<!-- Version 1.8 -->
