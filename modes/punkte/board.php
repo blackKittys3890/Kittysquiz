@@ -1192,7 +1192,6 @@ db()->prepare('
     })();
     </script>
 <script src="/js/bigtext.js"></script>
-<?php require_once dirname(__DIR__, 2) . '/profile_bubble.php'; ?>
 </body>
 </html>
 <!-- Version 8.13 -->
