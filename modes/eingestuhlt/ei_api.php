@@ -1,7 +1,8 @@
 <?php
-// Version 1.7
+// Version 1.8
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
+require_once dirname(__DIR__, 2) . '/auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -294,7 +295,7 @@ foreach ($rows as $p) {
     $players[] = [
         'id'        => $pid,
         'name'      => $p['username'],
-        'avatar'    => getAvatarUrl(['id' => $pid, 'avatar' => $p['avatar']]),
+        'avatar'    => kr_avatar($pid, $p['avatar']),
         'decoration'=> $p['decoration'] ?: null,
         'premium'   => (int)$p['premium'],
         'lives'     => (int)$p['lives'],
@@ -333,4 +334,4 @@ echo json_encode([
     'winner'      => ($phase === 'over' && count(array_filter($players, fn($p) => !$p['out'])) === 1)
                         ? current(array_filter($players, fn($p) => !$p['out']))['name'] : null,
 ]);
-// Version 1.7
+// Version 1.8

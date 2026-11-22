@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.3
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -58,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$error) {
+        $avatarValue = $avatarName ? '/uploads/' . $avatarName : (($p = avatar_presets()) ? $p[array_rand($p)] : '/img/avatars/preset-1.png');
         if ($avatarName) {
             if (!is_dir(__DIR__ . '/uploads')) {
                 mkdir(__DIR__ . '/uploads', 0755, true);
@@ -66,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         db()->prepare('INSERT INTO kr_users (username, password_hash, avatar) VALUES (?, ?, ?)')
-            ->execute([$username, password_hash($password, PASSWORD_DEFAULT), $avatarName]);
+            ->execute([$username, password_hash($password, PASSWORD_DEFAULT), $avatarValue]);
 
         $id = db()->lastInsertId();
         db()->prepare('INSERT INTO kr_emails (user_key, email) VALUES (?, ?)')->execute(['local_' . $id, $email]);
@@ -75,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'id'         => 'local_' . $id,
             'name'       => $username,
             'username'   => $username,
-            'avatar'     => $avatarName,
+            'avatar'     => $avatarValue,
             'premium'    => 0,
             'decoration' => null,
         ];
@@ -137,4 +138,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </body>
 </html>
-<!-- Version 1.1 -->
+<!-- Version 1.3 -->

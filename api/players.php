@@ -1,7 +1,8 @@
 <?php
-// Version 2.3
+// Version 2.4
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
+require_once dirname(__DIR__) . '/auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -51,7 +52,7 @@ $stmt->execute([$room['id']]);
 $players = array_map(fn($p) => [
     'discord_id'     => $p['discord_id'],
     'username'       => $p['username'],
-    'avatar_url'     => getAvatarUrl(['id' => $p['discord_id'], 'avatar' => $p['avatar']]),
+    'avatar_url'     => kr_avatar($p['discord_id'], $p['avatar']),
     'team_id'        => $p['team_id'] !== null ? (int)$p['team_id'] : null,
     'team_name'      => $p['team_name'],
     'team_color'     => $p['team_color'],
@@ -63,4 +64,4 @@ $players = array_map(fn($p) => [
 ], $stmt->fetchAll());
 
 echo json_encode($players);
-// Version 2.3
+// Version 2.4

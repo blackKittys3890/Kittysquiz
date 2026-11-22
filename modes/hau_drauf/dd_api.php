@@ -1,7 +1,8 @@
 <?php
-// Version 1.4
+// Version 1.5
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
+require_once dirname(__DIR__, 2) . '/auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -101,7 +102,7 @@ if (!empty($g['term_id']) && in_array($phase, ['play', 'reveal'], true)) {
 $players = array_map(fn($p) => [
     'id'     => $p['discord_id'],
     'name'   => $p['username'],
-    'avatar' => getAvatarUrl(['id' => $p['discord_id'], 'avatar' => $p['avatar']]),
+    'avatar' => kr_avatar($p['discord_id'], $p['avatar']),
     'isMe'   => $p['discord_id'] === $me,
 ], q('SELECT discord_id, username, avatar
       FROM kr_room_players
@@ -123,4 +124,4 @@ echo json_encode([
     'term'       => $term,
     'players'    => $players,
 ]);
-// Version 1.4
+// Version 1.5

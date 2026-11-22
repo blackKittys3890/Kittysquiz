@@ -1,5 +1,5 @@
 <?php
-// Version 1.2
+// Version 1.4
 // Gemeinsame Anmelde-Hilfen: „Angemeldet bleiben“ und E-Mail-Pflicht.
 
 const REMEMBER_DAYS = 30;
@@ -113,4 +113,39 @@ function remember_wanted(): bool
     setcookie('kr_remember_pref', '', ['expires' => 1, 'path' => '/', 'secure' => true, 'samesite' => 'Lax']);
     return $on;
 }
-// Version 1.2
+
+// Profilbild-Adresse: fertige Adressen/Pfade direkt, sonst Discord-Hash über die Standard-Funktion
+function kr_avatar(string $id, ?string $avatar): string
+{
+    if ($avatar && (str_starts_with($avatar, '/') || str_starts_with($avatar, 'http'))) {
+        return $avatar;
+    }
+    return getAvatarUrl(['id' => $id, 'avatar' => $avatar]);
+}
+
+// Name und Profilbild aus kr_profiles über die Sitzung legen (nach jeder Anmeldung)
+function auth_apply_profile(array $user): array
+{
+    $st = db()->prepare('SELECT display_name, avatar FROM kr_profiles WHERE user_key = ?');
+    $st->execute([(string)$user['id']]);
+    $row = $st->fetch();
+    if (!$row) return $user;
+
+    $user['name'] = $row['display_name'];
+    if (!empty($row['avatar'])) {
+        $user['avatar'] = $row['avatar'];
+    } elseif (!empty($user['avatar']) && !str_starts_with($user['avatar'], '/') && !str_starts_with($user['avatar'], 'http')) {
+        // Alte lokale Bilder liegen als Dateiname im Upload-Ordner
+        $user['avatar'] = '/uploads/' . $user['avatar'];
+    }
+    return $user;
+}
+
+// Alle Standardbilder aus img/avatars (preset-*.png/.jpg/.jpeg/.webp), als Web-Pfade
+function avatar_presets(): array
+{
+    $files = glob(__DIR__ . '/img/avatars/preset-*.{png,jpg,jpeg,webp}', GLOB_BRACE) ?: [];
+    sort($files, SORT_NATURAL);
+    return array_map(fn($f) => '/img/avatars/' . basename($f), $files);
+}
+// Version 1.4

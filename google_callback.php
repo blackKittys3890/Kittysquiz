@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -61,6 +61,8 @@ $_SESSION['discord_user'] = [
     'decoration' => null,
 ];
 
+$_SESSION['discord_user'] = auth_apply_profile($_SESSION['discord_user']);
+
 // E-Mail von Google übernehmen (nur wenn bestätigt und frei)
 auth_store_provider_email('google_' . $info['sub'], (string)($info['email'] ?? ''), !empty($info['email_verified']));
 
@@ -74,4 +76,4 @@ $target = $_SESSION['after_login'] ?? 'lobby.php';
 unset($_SESSION['after_login']);
 header('Location: ' . $target);
 exit;
-// Version 1.1
+// Version 1.2
