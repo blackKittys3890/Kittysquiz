@@ -1,5 +1,5 @@
 <?php
-// Version 1.7
+// Version 1.8
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -61,13 +61,29 @@ $decoration = $decorationAsset
     ? 'https://cdn.discordapp.com/avatar-decoration-presets/' . $decorationAsset . '.png'
     : null;
 
+// Bild-Adresse dieser Discord-Anmeldung
+$loginKey = (string)$discordUser['id'];
+$discordAvatarUrl = !empty($discordUser['avatar'])
+    ? 'https://cdn.discordapp.com/avatars/' . $loginKey . '/' . $discordUser['avatar'] . '.png'
+    : null;
+
+// Verknüpfen statt anmelden (aus dem Profil heraus gestartet)
+if (($_SESSION['link_mode'] ?? '') === 'discord' && !empty($_SESSION['discord_user'])) {
+    unset($_SESSION['link_mode']);
+    $_SESSION['profile_msg'] = auth_link_login($loginKey, $discordAvatarUrl);
+    header('Location: /profile/index.php');
+    exit;
+}
+
 // 4. Session setzen (Session-ID nach Login erneuern)
 session_regenerate_id(true);
+$main = canonical_key($loginKey);
+auth_save_provider_avatar($loginKey, $discordAvatarUrl);
 $_SESSION['discord_user'] = [
-    'id'         => $discordUser['id'],
+    'id'         => $main,
     'name'       => $displayName,
     'username'   => $displayName,
-    'avatar'     => $discordUser['avatar'] ?? null,
+    'avatar'     => $main === $loginKey ? ($discordUser['avatar'] ?? null) : $discordAvatarUrl,
     'premium'    => $premium,
     'decoration' => $decoration,
 ];
@@ -75,7 +91,7 @@ $_SESSION['discord_user'] = [
 $_SESSION['discord_user'] = auth_apply_profile($_SESSION['discord_user']);
 
 // E-Mail von Discord übernehmen (nur wenn bestätigt und frei)
-$key = (string)$discordUser['id'];
+$key = $main;
 auth_store_provider_email($key, (string)($discordUser['email'] ?? ''), !empty($discordUser['verified']));
 
 // Angemeldet bleiben, wenn im Formular gewählt
@@ -88,4 +104,4 @@ $target = $_SESSION['after_login'] ?? 'lobby.php';
 unset($_SESSION['after_login']);
 header('Location: ' . $target);
 exit;
-// Version 1.7
+// Version 1.8

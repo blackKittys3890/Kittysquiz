@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.4
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -42,6 +42,8 @@ function ensure_profile(string $key, string $name, bool $isLocal): array
     return ['display_name' => $name, 'handle' => $handle];
 }
 
+$links = linked_logins($key);
+if (!empty($_SESSION['profile_msg'])) { $msg = $_SESSION['profile_msg']; unset($_SESSION['profile_msg']); }
 $profile = ensure_profile($key, (string)($user['name'] ?? $user['username'] ?? 'Spieler'), $isLocal);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -109,6 +111,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $profile = ['display_name' => $display, 'handle' => $handle];
                 $msg = 'Name und Benutzername wurden gespeichert.';
             }
+        }
+    }
+
+    elseif ($action === 'set_avatar') {
+        $choice = $_POST['avatar_choice'] ?? '';
+        $value = null;
+        if (str_starts_with($choice, 'provider:') && ($pu = linked_avatar_url($key, substr($choice, 9)))) {
+            $value = $pu;
+        } elseif (str_starts_with($choice, 'preset:') && in_array('/img/avatars/' . basename(substr($choice, 7)), avatar_presets(), true)) {
+            $value = '/img/avatars/' . basename(substr($choice, 7));
+        } elseif ($choice === 'upload' && !empty($_FILES['avatar_file']['name'])) {
+            $f = $_FILES['avatar_file'];
+            $info = $f['error'] === UPLOAD_ERR_OK ? @getimagesize($f['tmp_name']) : false;
+            $ext = ['image/png' => 'png', 'image/jpeg' => 'jpg', 'image/gif' => 'gif', 'image/webp' => 'webp'][$info['mime'] ?? ''] ?? null;
+            if (!$info || !$ext || $f['size'] > 2 * 1024 * 1024) {
+                $err = 'Profilbild: nur PNG, JPG, GIF oder WebP bis 2 MB.';
+            } else {
+                $dir = dirname(__DIR__) . '/uploads/avatars';
+                if (!is_dir($dir)) mkdir($dir, 0755, true);
+                $name = bin2hex(random_bytes(12)) . '.' . $ext;
+                if (move_uploaded_file($f['tmp_name'], $dir . '/' . $name)) {
+                    $value = '/uploads/avatars/' . $name;
+                } else {
+                    $err = 'Das Bild konnte nicht gespeichert werden.';
+                }
+            }
+        } else {
+            $err = 'Bitte wähle ein Profilbild aus.';
+        }
+
+        if ($value !== null && !$err) {
+            db()->prepare('UPDATE kr_profiles SET avatar = ? WHERE user_key = ?')->execute([$value, $key]);
+            $_SESSION['discord_user']['avatar'] = $value;
+            $user = $_SESSION['discord_user'];
+            $p = db();
+            $p->prepare('UPDATE kr_room_players SET avatar = ? WHERE discord_id = ?')->execute([$value, $key]);
+            $rows = $p->prepare('SELECT id, payload FROM kr_remember WHERE user_key = ?');
+            $rows->execute([$key]);
+            foreach ($rows->fetchAll() as $r) {
+                $data = json_decode($r['payload'], true) ?: [];
+                $data['avatar'] = $value;
+                $p->prepare('UPDATE kr_remember SET payload = ? WHERE id = ?')
+                    ->execute([json_encode($data, JSON_UNESCAPED_UNICODE), $r['id']]);
+            }
+            $msg = 'Profilbild wurde gespeichert.';
+        }
+    }
+
+    elseif ($action === 'unlink') {
+        $login = $_POST['login_key'] ?? '';
+        if (!in_array($login, linked_logins($key), true) || $login === $key) {
+            $err = 'Dieses Konto kann hier nicht getrennt werden.';
+        } else {
+            db()->prepare('DELETE FROM kr_links WHERE login_key = ? AND profile_key = ?')->execute([$login, $key]);
+            $msg = 'Konto getrennt. Es ist jetzt wieder ein eigenes Konto.';
         }
     }
 
@@ -192,6 +249,33 @@ $email = auth_email_for($key);
         </section>
 
         <section class="card">
+            <h2>Verbundene Konten</h2>
+            <p class="muted">Mehrere Anmeldungen teilen sich ein Profil. Mit jedem verbundenen Konto kannst du dich anmelden und dasselbe Profil nutzen.</p>
+            <?php foreach (linked_logins($key) as $lk):
+                $lp = str_starts_with($lk, 'google_') ? 'Google' : (str_starts_with($lk, 'local_') ? 'Lokales Konto' : 'Discord');
+            ?>
+                <div class="room" style="margin-bottom:8px;">
+                    <div><strong><?= htmlspecialchars($lp) ?></strong><?= $lk === $key ? ' <span class="muted">(Hauptkonto)</span>' : '' ?></div>
+                    <?php if ($lk !== $key): ?>
+                        <form method="post" class="inline" onsubmit="return confirm('Dieses Konto wirklich trennen?');">
+                            <input type="hidden" name="action" value="unlink">
+                            <input type="hidden" name="login_key" value="<?= htmlspecialchars($lk) ?>">
+                            <button class="btn btn-ghost btn-small" type="submit">Trennen</button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+            <div class="links" style="margin-top:10px;">
+                <?php
+                $hasDiscord = false; $hasGoogle = false;
+                foreach ($links as $lk) { if (str_starts_with($lk, 'google_')) $hasGoogle = true; elseif (!str_starts_with($lk, 'local_')) $hasDiscord = true; }
+                ?>
+                <?php if (!$hasDiscord): ?><a class="btn btn-small" href="/profile/link.php?provider=discord">Discord verbinden</a><?php endif; ?>
+                <?php if (!$hasGoogle): ?><a class="btn btn-small" href="/profile/link.php?provider=google">Google verbinden</a><?php endif; ?>
+            </div>
+        </section>
+
+        <section class="card">
             <h2>Anzeigename &amp; Benutzername</h2>
             <p class="muted">Der Anzeigename ist frei wählbar und darf doppelt vorkommen. Der Benutzername ist einmalig und dient zur Identifikation.<?= $isLocal ? ' Mit dem Benutzernamen meldest du dich auch an.' : '' ?></p>
             <form method="post" class="invite-form">
@@ -199,6 +283,41 @@ $email = auth_email_for($key);
                 <input type="text" name="display_name" required maxlength="32" value="<?= htmlspecialchars($profile['display_name']) ?>" placeholder="Anzeigename">
                 <input type="text" name="handle" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_.]{3,20}" value="<?= htmlspecialchars($profile['handle']) ?>" placeholder="Benutzername">
                 <button type="submit" class="btn btn-block">Speichern</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Profilbild</h2>
+            <p><img src="<?= htmlspecialchars(kr_avatar($key, $user['avatar'] ?? null)) ?>" alt="" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--mint);"></p>
+            <form method="post" enctype="multipart/form-data" class="invite-form">
+                <input type="hidden" name="action" value="set_avatar">
+
+                <?php foreach (linked_logins($key) as $lk):
+                    $lu = linked_avatar_url($key, $lk);
+                    if (!$lu) continue;
+                    $lp = str_starts_with($lk, 'google_') ? 'Google' : (str_starts_with($lk, 'local_') ? 'Lokal' : 'Discord');
+                ?>
+                    <label class="remember" style="gap:10px;">
+                        <input type="radio" name="avatar_choice" value="provider:<?= htmlspecialchars($lk) ?>">
+                        <img src="<?= htmlspecialchars($lu) ?>" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"> Bild von <?= htmlspecialchars($lp) ?>
+                    </label>
+                <?php endforeach; ?>
+
+                <p class="muted" style="margin:8px 0 4px;">Standardbilder:</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <?php foreach (avatar_presets() as $n => $pathPreset): ?>
+                        <label style="cursor:pointer;">
+                            <input type="radio" name="avatar_choice" value="preset:<?= htmlspecialchars(basename($pathPreset)) ?>" style="display:none;">
+                            <img src="<?= htmlspecialchars($pathPreset) ?>" alt="Standardbild <?= $n + 1 ?>" style="width:56px;height:56px;border-radius:50%;border:2px solid transparent;">
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+
+                <p class="muted" style="margin:8px 0 4px;">Oder eigenes Bild:</p>
+                <label class="remember"><input type="radio" name="avatar_choice" value="upload"> Eigenes Bild hochladen</label>
+                <input type="file" name="avatar_file" accept="image/png,image/jpeg,image/gif,image/webp">
+
+                <button type="submit" class="btn btn-block">Profilbild speichern</button>
             </form>
         </section>
 
@@ -239,4 +358,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.1 -->
+<!-- Version 1.4 -->

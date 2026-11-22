@@ -1,5 +1,5 @@
 <?php
-// Version 1.4
+// Version 1.5
 // Gemeinsame Anmelde-Hilfen: „Angemeldet bleiben“ und E-Mail-Pflicht.
 
 const REMEMBER_DAYS = 30;
@@ -55,6 +55,7 @@ function remember_restore(): void
     if (!$payload) return;
     $user = json_decode($payload, true);
     if (!is_array($user)) return;
+    $user['id'] = canonical_key((string)$user['id']);
     session_regenerate_id(true);
     $_SESSION['discord_user'] = $user;
 }
@@ -148,4 +149,55 @@ function avatar_presets(): array
     sort($files, SORT_NATURAL);
     return array_map(fn($f) => '/img/avatars/' . basename($f), $files);
 }
-// Version 1.4
+
+// ---------- Verknüpfung mehrerer Anmeldungen zu einem Profil ----------
+
+// Anmelde-Schlüssel -> Hauptkonto (ist keine Verknüpfung da, bleibt es der Schlüssel selbst)
+function canonical_key(string $loginKey): string
+{
+    $st = db()->prepare('SELECT profile_key FROM kr_links WHERE login_key = ?');
+    $st->execute([$loginKey]);
+    return (string)($st->fetchColumn() ?: $loginKey);
+}
+
+// Alle Anmeldungen, die zu diesem Profil gehören (inkl. Hauptkonto)
+function linked_logins(string $profileKey): array
+{
+    $st = db()->prepare('SELECT login_key FROM kr_links WHERE profile_key = ? ORDER BY created_at');
+    $st->execute([$profileKey]);
+    return array_merge([$profileKey], $st->fetchAll(PDO::FETCH_COLUMN));
+}
+
+// Bild-Adresse einer verbundenen Anmeldung (nur wenn sie zum Profil gehört)
+function linked_avatar_url(string $profileKey, string $loginKey): ?string
+{
+    if (!in_array($loginKey, linked_logins($profileKey), true)) return null;
+    $st = db()->prepare('SELECT url FROM kr_provider_avatars WHERE login_key = ?');
+    $st->execute([$loginKey]);
+    $u = $st->fetchColumn();
+    return $u ?: null;
+}
+
+// Bild einer Anmeldung speichern (bei jeder Anmeldung aktualisieren)
+function auth_save_provider_avatar(string $loginKey, ?string $url): void
+{
+    if (!$url) return;
+    db()->prepare('INSERT INTO kr_provider_avatars (login_key, url) VALUES (?, ?) ON DUPLICATE KEY UPDATE url = VALUES(url)')
+        ->execute([$loginKey, $url]);
+}
+
+// Anmeldung an das aktuell angemeldete Profil hängen. Gibt eine Meldung zurück.
+function auth_link_login(string $loginKey, ?string $avatarUrl): string
+{
+    $cur = (string)($_SESSION['discord_user']['id'] ?? '');
+    if ($cur === '') return 'Bitte zuerst anmelden.';
+    if ($loginKey === $cur) return 'Dieses Konto ist schon mit deinem Profil verbunden.';
+    if (canonical_key($loginKey) !== $loginKey) return 'Dieses Konto gehört schon zu einem anderen Profil.';
+    $st = db()->prepare('SELECT 1 FROM kr_links WHERE login_key = ?');
+    $st->execute([$loginKey]);
+    if ($st->fetchColumn()) return 'Dieses Konto gehört schon zu einem anderen Profil.';
+    db()->prepare('INSERT INTO kr_links (login_key, profile_key) VALUES (?, ?)')->execute([$loginKey, $cur]);
+    auth_save_provider_avatar($loginKey, $avatarUrl);
+    return 'Konto verbunden.';
+}
+// Version 1.5
