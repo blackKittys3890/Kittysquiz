@@ -1,5 +1,5 @@
 <?php
-// Version 3.11
+// Version 3.12
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -89,6 +89,10 @@ $myRooms = $stmt->fetchAll();
                                 <div class="date">Erstellt am <?= date('d.m.Y H:i', strtotime($r['created_at'])) ?></div>
                             </div>
                             <a href="/modes/punkte/board.php?code=<?= htmlspecialchars($r['code']) ?>" class="btn btn-small">Öffnen</a>
+                            <form method="post" action="/raum_loeschen.php" class="inline" onsubmit="return confirm('Raum wirklich löschen? Alle Spieldaten gehen verloren.');">
+                                <input type="hidden" name="code" value="<?= htmlspecialchars($r['code']) ?>">
+                                <button type="submit" class="btn btn-ghost btn-small">Löschen</button>
+                            </form>
                         </div>
                         <details class="invite-box">
                             <summary>Einladen oder erinnern</summary>
@@ -112,7 +116,7 @@ $myRooms = $stmt->fetchAll();
     </div>
 
     <div class="links" style="margin-top:22px;">
-        <a href="/ideen.php">Ideen</a>
+        <a href="/ideen.php">💡 Ideen</a>
         <a href="/shared/fragen/fragen.php">Kategorien & Fragen</a>
         <a href="verfuegbarkeit.php">Verfügbarkeit planen</a>
         <a href="/profile/index.php">Mein Profil</a>
@@ -160,4 +164,4 @@ $myRooms = $stmt->fetchAll();
 <?php require_once __DIR__ . '/profile_bubble.php'; ?>
 </body>
 </html>
-<!-- Version 3.11 -->
+<!-- Version 3.12 -->
