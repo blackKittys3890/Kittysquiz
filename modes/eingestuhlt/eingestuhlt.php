@@ -1,5 +1,5 @@
 <?php
-// Version 1.16
+// Version 1.17
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once dirname(__DIR__, 2) . '/auth.php';
@@ -779,6 +779,7 @@ connectLiveKit();
 </script>
 <script>(function(){try{var c=new URLSearchParams(location.search).get('code');if(c)localStorage.setItem('kr_last_room',JSON.stringify({code:c.toUpperCase(),t:Date.now()}));}catch(e){}})();</script>
 <script src="/js/bigtext.js"></script>
+<?php require_once dirname(__DIR__, 2) . '/profile_bubble.php'; ?>
 </body>
 </html>
-<!-- Version 1.16 -->
+<!-- Version 1.17 -->

@@ -1,5 +1,5 @@
 <?php
-// Version 3.9
+// Version 3.10
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -157,6 +157,7 @@ $myRooms = $stmt->fetchAll();
 </script>
 <script src="/js/cookie-hinweis.js"></script>
 <script src="/js/bigtext.js"></script>
+<?php require_once __DIR__ . '/profile_bubble.php'; ?>
 </body>
 </html>
-<!-- Version 3.9 -->
+<!-- Version 3.10 -->

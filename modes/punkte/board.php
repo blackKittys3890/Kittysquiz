@@ -2,7 +2,7 @@
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-// Version 8.12
+// Version 8.13
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once dirname(__DIR__, 2) . '/auth.php';
@@ -1192,6 +1192,7 @@ db()->prepare('
     })();
     </script>
 <script src="/js/bigtext.js"></script>
+<?php require_once dirname(__DIR__, 2) . '/profile_bubble.php'; ?>
 </body>
 </html>
-<!-- Version 8.12 -->
+<!-- Version 8.13 -->
