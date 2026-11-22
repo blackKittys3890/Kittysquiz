@@ -124,7 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($isLocal) {
                     $p->prepare('UPDATE kr_users SET username = ? WHERE id = ?')->execute([$handle, (int)substr($key, 6)]);
                 }
-                // Anzeige überall aktualisieren: Sitzung, laufende Räume, Merk-Einträge
                 $_SESSION['discord_user']['name'] = $display;
                 $_SESSION['discord_user']['username'] = $handle;
                 $p->prepare('UPDATE kr_room_players SET username = ? WHERE discord_id = ?')->execute([$display, $key]);
