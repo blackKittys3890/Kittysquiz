@@ -1,5 +1,5 @@
 <?php
-// Version 1.8
+// Version 1.9
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -181,7 +181,38 @@
             oben genannte Kontaktadresse. Wir entfernen die Adresse dann aus unseren Daten.
         </p>
 
-        <h2>12. Spendenseite (whydonate)</h2>
+        <h2>12. Ideen</h2>
+        <p>
+            Du kannst Ideen für das Spiel einreichen, auf der Webseite oder über den Discord-Server. Dabei speichern wir
+            den Ideentext und den Namen, unter dem du angemeldet bist oder im Discord auftrittst. Die Ideen nutzen wir
+            ausschließlich, um das Spiel weiterzuentwickeln. Eine Weitergabe an Dritte erfolgt nicht.
+            Rechtsgrundlage ist Art. 6 Abs. 1 lit. a DSGVO (deine Einreichung ist freiwillig). Ideen werden gespeichert,
+            bis sie umgesetzt oder verworfen sind. Auf Wunsch entfernen wir deine Idee gern vorher.
+        </p>
+
+        <h2>13. Discord-Server und Bot</h2>
+        <p>
+            Auf dem öffentlichen Discord-Server von KittysRätsel verarbeitet unser Bot die Befehle, die Mitglieder
+            ausführen (z. B. /idee). Dabei sieht der Bot den Benutzernamen und den Befehlsinhalt. Der Server selbst unterliegt
+            den Datenschutzbestimmungen von Discord Inc. (USA). Wir betreiben den Bot auf eigener Infrastruktur, die Daten
+            werden nur für die Funktion des Servers genutzt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b und lit. f DSGVO.
+        </p>
+
+        <h2>14. Profilbilder und verknüpfte Konten</h2>
+        <p>
+            Du kannst ein Profilbild wählen: ein eigenes Bild, ein Standardbild oder das Bild deines Discord- bzw.
+            Google-Kontos. Eigene Bilder speichern wir auf unserem Server. Die Bild-Adressen deiner Discord- und
+            Google-Konten speichern wir ebenfalls. Discord- und Google-Bilder werden von den Servern dieser Anbieter geladen,
+            dabei wird deine IP-Adresse an sie übermittelt. Wir speichern außerdem einen Verlauf deiner bisher genutzten Bilder,
+            damit du sie wiederverwenden kannst. Du kannst Bilder jederzeit ersetzen und einzelne verknüpfte Konten trennen.
+            Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+        </p>
+        <p>
+            Mehrere Anmeldungen (Discord, Google, lokal) können zu einem Profil verbunden werden. Dazu speichern wir die
+            interne Kennung jeder verbundenen Anmeldung. Beim Löschen des Kontos werden alle zugehörigen Angaben entfernt.
+        </p>
+
+        <h2>15. Spendenseite (whydonate)</h2>
         <p>
             In der Fußzeile verlinken wir auf unsere Unterstützungsseite bei <strong>whydonate.com</strong>
             (Betreiber: Whydonate, Deutschland). Die Seite wird erst geöffnet, wenn Sie auf den Link klicken.
@@ -190,7 +221,7 @@
             Rechtsgrundlage für den Aufruf der Seite ist Art. 6 Abs. 1 lit. f DSGVO (Hinweis auf Unterstützungsmöglichkeiten).
         </p>
 
-        <h2>13. Ihre Rechte</h2>
+        <h2>16. Ihre Rechte</h2>
         <p>
             Sie haben das Recht auf Auskunft über Ihre gespeicherten Daten, auf Berichtigung, Löschung und
             Einschränkung der Verarbeitung sowie auf Datenübertragbarkeit. Erteilte Einwilligungen können Sie
@@ -203,11 +234,11 @@
             Landesbeauftragte für den Datenschutz und die Informationsfreiheit.
         </p>
 
-        <h2>14. Stand</h2>
+        <h2>17. Stand</h2>
         <p>
             Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.8 -->
+<!-- Version 1.9 -->
