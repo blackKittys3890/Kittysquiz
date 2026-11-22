@@ -1,4 +1,4 @@
-/* Version 1.4 - gemeinsamer Stil für alle Seiten */
+/* Version 1.5 - gemeinsamer Stil für alle Seiten */
 
 :root {
     --bg-1: #2b1d4a;
@@ -172,4 +172,11 @@ label:has(input[type="radio"]) { cursor: pointer; }
 label:has(input[type="radio"]:checked) img {
     outline: 3px solid var(--mint);
     outline-offset: 2px;
+}
+
+/* Profilbild rechts (auf dem Spielfeld, dort liegt links der Ton-Knopf) */
+.profile-bubble.right {
+    left: auto;
+    right: 12px;
+    bottom: 90px;
 }
