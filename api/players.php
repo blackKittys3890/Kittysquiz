@@ -1,5 +1,5 @@
 <?php
-// Version 2.4
+// Version 2.5
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
 require_once dirname(__DIR__) . '/auth.php';
@@ -53,6 +53,7 @@ $players = array_map(fn($p) => [
     'discord_id'     => $p['discord_id'],
     'username'       => $p['username'],
     'avatar_url'     => kr_avatar($p['discord_id'], $p['avatar']),
+    'badges'         => user_badges((string)$p['discord_id']),
     'team_id'        => $p['team_id'] !== null ? (int)$p['team_id'] : null,
     'team_name'      => $p['team_name'],
     'team_color'     => $p['team_color'],
@@ -64,4 +65,4 @@ $players = array_map(fn($p) => [
 ], $stmt->fetchAll());
 
 echo json_encode($players);
-// Version 2.4
+// Version 2.5

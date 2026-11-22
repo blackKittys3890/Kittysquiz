@@ -1,5 +1,5 @@
 <?php
-// Version 1.12
+// Version 1.13
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -303,7 +303,7 @@ $email = auth_email_for($key);
     <div class="stack">
         <section class="card">
             <h2>Konto</h2>
-            <p><strong>Anzeigename:</strong> <?= htmlspecialchars($profile['display_name']) ?></p>
+            <p><strong>Anzeigename:</strong> <?= htmlspecialchars($profile['display_name']) ?> <?= badge_imgs(user_badges($key)) ?></p>
             <p><strong>Benutzername:</strong> @<?= htmlspecialchars($profile['handle']) ?></p>
             <p><strong>Anmeldung:</strong> <?= htmlspecialchars($provider) ?></p>
             <p><strong>E-Mail:</strong> <?= htmlspecialchars($email ?? 'nicht hinterlegt') ?></p>
@@ -463,4 +463,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.12 -->
+<!-- Version 1.13 -->

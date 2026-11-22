@@ -1,4 +1,4 @@
-/* Version 1.5 - gemeinsamer Stil für alle Seiten */
+/* Version 1.6 - gemeinsamer Stil für alle Seiten */
 
 :root {
     --bg-1: #2b1d4a;
@@ -180,3 +180,6 @@ label:has(input[type="radio"]:checked) img {
     right: 12px;
     bottom: 90px;
 }
+
+/* Badges neben dem Namen */
+.badge-icon { width: 18px; height: 18px; vertical-align: middle; margin-left: 6px; }

@@ -206,4 +206,23 @@ function auth_link_login(string $loginKey, ?string $avatarUrl): string
     auth_save_provider_avatar($loginKey, $avatarUrl);
     return 'Konto verbunden.';
 }
-// Version 1.6
+
+// Badges eines Profils (Liste wie ['discord', 'google'])
+function user_badges(string $key): array
+{
+    $st = db()->prepare('SELECT badge FROM kr_profiles WHERE user_key = ?');
+    $st->execute([$key]);
+    $b = (string)($st->fetchColumn() ?: '');
+    return array_values(array_intersect(array_filter(explode(',', $b)), ['discord', 'google']));
+}
+
+// Badge-Bilder als HTML (neben dem Namen)
+function badge_imgs(array $badges): string
+{
+    $html = '';
+    foreach ($badges as $b) {
+        $html .= '<img class="badge-icon" src="/img/badges/badge-' . htmlspecialchars($b) . '.png" alt="' . htmlspecialchars(ucfirst($b)) . '" title="' . htmlspecialchars(ucfirst($b)) . '">';
+    }
+    return $html;
+}
+// Version 1.7
