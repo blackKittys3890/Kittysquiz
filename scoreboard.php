@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Allgemeines Scoreboard: Punkte aller gespielten Boards, zusammengefasst nach Teamname.
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
@@ -8,7 +8,7 @@ require_once __DIR__ . '/auth.php';
 $user = $_SESSION['discord_user'] ?? null;
 if (!$user) { header('Location: /index.php'); exit; }
 
-$rows = db()->query('SELECT id, room_id, round_played, results, created_at FROM kr_history ORDER BY id DESC LIMIT 3000')->fetchAll();
+$rows = db()->query('SELECT id, room_id, round_played, results FROM kr_history ORDER BY id DESC LIMIT 3000')->fetchAll();
 
 $teams = [];
 $recent = [];
@@ -80,7 +80,7 @@ uasort($teams, fn($a, $b) => $b['points'] <=> $a['points'] ?: $b['wins'] <=> $a[
         <?php endif; ?>
         <?php foreach ($recent as $r): ?>
             <div class="room" style="margin-bottom:8px;display:block;">
-                <div class="date">Board <?= (int)$r['round_played'] ?> · <?= htmlspecialchars(date('d.m.Y H:i', strtotime($r['created_at']))) ?></div>
+                <div class="date">Board <?= (int)$r['round_played'] ?> · Eintrag #<?= (int)$r['id'] ?></div>
                 <div style="margin-top:4px;">
                     <?php foreach ($r['results'] as $i => $t): ?>
                         <span style="margin-right:12px;<?= $i === 0 ? 'color:var(--yellow);font-weight:700;' : '' ?>"><?= htmlspecialchars($t['name']) ?>: <?= (int)$t['points'] ?></span>
@@ -92,4 +92,4 @@ uasort($teams, fn($a, $b) => $b['points'] <=> $a['points'] ?: $b['wins'] <=> $a[
 </div>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->
