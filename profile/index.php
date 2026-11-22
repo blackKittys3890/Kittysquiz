@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -14,6 +14,35 @@ $isLocal = str_starts_with($key, 'local_');
 $provider = $isLocal ? 'Lokales Konto' : (str_starts_with($key, 'google_') ? 'Google' : 'Discord');
 $msg = '';
 $err = '';
+
+// Profil-Zeile holen, für Discord/Google beim ersten Aufruf anlegen
+function ensure_profile(string $key, string $name, bool $isLocal): array
+{
+    $st = db()->prepare('SELECT display_name, handle FROM kr_profiles WHERE user_key = ?');
+    $st->execute([$key]);
+    if ($r = $st->fetch()) return $r;
+
+    if ($isLocal) {
+        $u = db()->prepare('SELECT username FROM kr_users WHERE id = ?');
+        $u->execute([(int)substr($key, 6)]);
+        $handle = (string)$u->fetchColumn();
+    } else {
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name) ?: '';
+        $base = substr(strtolower(preg_replace('/[^a-z0-9_.]/i', '', $ascii)), 0, 14) ?: 'spieler';
+        $handle = $base;
+        for ($i = 0; $i < 50; $i++) {
+            $c = db()->prepare('SELECT 1 FROM kr_profiles WHERE handle = ?');
+            $c->execute([$handle]);
+            if (!$c->fetchColumn()) break;
+            $handle = $base . random_int(10, 99999);
+        }
+    }
+    db()->prepare('INSERT INTO kr_profiles (user_key, display_name, handle) VALUES (?, ?, ?)')
+        ->execute([$key, $name, $handle]);
+    return ['display_name' => $name, 'handle' => $handle];
+}
+
+$profile = ensure_profile($key, (string)($user['name'] ?? $user['username'] ?? 'Spieler'), $isLocal);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -36,6 +65,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 db()->prepare('UPDATE kr_users SET password_hash = ? WHERE id = ?')
                     ->execute([password_hash($new, PASSWORD_DEFAULT), $id]);
                 $msg = 'Passwort wurde geändert.';
+            }
+        }
+    }
+
+    elseif ($action === 'change_names') {
+        $display = trim($_POST['display_name'] ?? '');
+        $handle = strtolower(trim($_POST['handle'] ?? ''));
+        if (mb_strlen($display) < 1 || mb_strlen($display) > 32) {
+            $err = 'Der Anzeigename braucht 1 bis 32 Zeichen.';
+        } elseif (!preg_match('/^[a-z0-9_.]{3,20}$/', $handle)) {
+            $err = 'Der Benutzername braucht 3 bis 20 Zeichen: Buchstaben (a–z), Zahlen, Punkt oder Unterstrich.';
+        } else {
+            $c = db()->prepare('SELECT 1 FROM kr_profiles WHERE handle = ? AND user_key <> ?');
+            $c->execute([$handle, $key]);
+            $taken = (bool)$c->fetchColumn();
+            if ($isLocal) {
+                $c2 = db()->prepare('SELECT 1 FROM kr_users WHERE username = ? AND id <> ?');
+                $c2->execute([$handle, (int)substr($key, 6)]);
+                $taken = $taken || (bool)$c2->fetchColumn();
+            }
+            if ($taken) {
+                $err = 'Dieser Benutzername ist schon vergeben.';
+            } else {
+                $p = db();
+                $p->prepare('UPDATE kr_profiles SET display_name = ?, handle = ? WHERE user_key = ?')->execute([$display, $handle, $key]);
+                if ($isLocal) {
+                    $p->prepare('UPDATE kr_users SET username = ? WHERE id = ?')->execute([$handle, (int)substr($key, 6)]);
+                }
+                // Anzeige überall aktualisieren: Sitzung, laufende Räume, Merk-Einträge
+                $_SESSION['discord_user']['name'] = $display;
+                $_SESSION['discord_user']['username'] = $handle;
+                $p->prepare('UPDATE kr_room_players SET username = ? WHERE discord_id = ?')->execute([$display, $key]);
+                $rows = $p->prepare('SELECT id, payload FROM kr_remember WHERE user_key = ?');
+                $rows->execute([$key]);
+                foreach ($rows->fetchAll() as $r) {
+                    $data = json_decode($r['payload'], true) ?: [];
+                    $data['name'] = $display;
+                    $data['username'] = $handle;
+                    $p->prepare('UPDATE kr_remember SET payload = ? WHERE id = ?')
+                        ->execute([json_encode($data, JSON_UNESCAPED_UNICODE), $r['id']]);
+                }
+                $profile = ['display_name' => $display, 'handle' => $handle];
+                $msg = 'Name und Benutzername wurden gespeichert.';
             }
         }
     }
@@ -112,10 +184,22 @@ $email = auth_email_for($key);
     <div class="stack">
         <section class="card">
             <h2>Konto</h2>
-            <p><strong>Name:</strong> <?= htmlspecialchars($user['name'] ?? $user['username'] ?? '') ?></p>
+            <p><strong>Anzeigename:</strong> <?= htmlspecialchars($profile['display_name']) ?></p>
+            <p><strong>Benutzername:</strong> @<?= htmlspecialchars($profile['handle']) ?></p>
             <p><strong>Anmeldung:</strong> <?= htmlspecialchars($provider) ?></p>
             <p><strong>E-Mail:</strong> <?= htmlspecialchars($email ?? 'nicht hinterlegt') ?></p>
             <p class="muted">Name und Profilbild bei Discord und Google kommen vom Anbieter.</p>
+        </section>
+
+        <section class="card">
+            <h2>Anzeigename &amp; Benutzername</h2>
+            <p class="muted">Der Anzeigename ist frei wählbar und darf doppelt vorkommen. Der Benutzername ist einmalig und dient zur Identifikation.<?= $isLocal ? ' Mit dem Benutzernamen meldest du dich auch an.' : '' ?></p>
+            <form method="post" class="invite-form">
+                <input type="hidden" name="action" value="change_names">
+                <input type="text" name="display_name" required maxlength="32" value="<?= htmlspecialchars($profile['display_name']) ?>" placeholder="Anzeigename">
+                <input type="text" name="handle" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_.]{3,20}" value="<?= htmlspecialchars($profile['handle']) ?>" placeholder="Benutzername">
+                <button type="submit" class="btn btn-block">Speichern</button>
+            </form>
         </section>
 
         <section class="card">
@@ -155,4 +239,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->
