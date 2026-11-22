@@ -112,7 +112,7 @@ $myRooms = $stmt->fetchAll();
     </div>
 
     <div class="links" style="margin-top:22px;">
-        <a href="/ideen.php">💡 Ideen</a>
+        <a href="/ideen.php">Ideen</a>
         <a href="/shared/fragen/fragen.php">Kategorien & Fragen</a>
         <a href="verfuegbarkeit.php">Verfügbarkeit planen</a>
         <a href="/profile/index.php">Mein Profil</a>
