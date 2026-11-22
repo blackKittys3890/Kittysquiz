@@ -25,7 +25,7 @@ const KRCams = (() => {
             to: to,
             payload: JSON.stringify({ kind, data }),
         });
-        return fetch('/signal.php', { method: 'POST', body }).catch(() => {});
+        return fetch('/api/signal.php', { method: 'POST', body }).catch(() => {});
     }
 
     function micOnNow() {
@@ -178,7 +178,7 @@ const KRCams = (() => {
 
     async function pollSignals() {
         try {
-            const res = await fetch('/signal.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
+            const res = await fetch('/api/signal.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
             if (res.ok) {
                 const msgs = await res.json();
                 for (const m of msgs) {
@@ -210,7 +210,7 @@ const KRCams = (() => {
 
     async function pollPlayers() {
         try {
-            const res = await fetch('/players.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
+            const res = await fetch('/api/players.php?code=' + encodeURIComponent(roomCode), { cache: 'no-store' });
             if (res.ok) {
                 players = await res.json();
                 syncPeers();
@@ -234,7 +234,7 @@ const KRCams = (() => {
             for (const e of peers.values()) e.pc.close();
             if (camStream) camStream.getTracks().forEach(t => t.stop());
             if (micStream) micStream.getTracks().forEach(t => t.stop());
-            navigator.sendBeacon('/leave.php', new URLSearchParams({ code: roomCode }));
+            navigator.sendBeacon('/api/leave.php', new URLSearchParams({ code: roomCode }));
         });
     }
 

@@ -584,7 +584,7 @@ function drawCams() {
 
 async function refreshRoomPlayers() {
     try {
-        const res = await fetch('/players.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+        const res = await fetch('/api/players.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
         if (res.ok) roomPlayers = await res.json();
     } catch (e) {}
     drawCams();
@@ -601,7 +601,7 @@ async function connectLiveKit() {
     if (room) { room.disconnect(); room = null; }
     setStatus('verbinde …');
     try {
-        const res = await fetch('/livekit_token.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+        const res = await fetch('/api/livekit_token.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok || !data.token) throw new Error(data.error || 'kein Zugang');
 
@@ -763,7 +763,7 @@ connectLiveKit();
     const code = new URLSearchParams(location.search).get('code') || '';
     async function checkMode() {
         try {
-            const res = await fetch('/room_mode.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+            const res = await fetch('/api/room_mode.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
             if (res.ok) {
                 const j = await res.json();
                 if (j.mode && j.mode !== CUR && PAGES[j.mode]) {

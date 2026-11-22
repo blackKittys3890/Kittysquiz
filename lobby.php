@@ -144,7 +144,7 @@ $myRooms = $stmt->fetchAll();
 
     document.getElementById('rejoinBtn').onclick = async () => {
         try {
-            const res = await fetch('/room_mode.php?code=' + encodeURIComponent(data.code), { cache: 'no-store' });
+            const res = await fetch('/api/room_mode.php?code=' + encodeURIComponent(data.code), { cache: 'no-store' });
             if (!res.ok) { clear(); alert('Dieser Raum existiert nicht mehr.'); return; }
             const j = await res.json();
             location.href = (PAGES[j.mode] || PAGES.points) + '?code=' + encodeURIComponent(data.code);

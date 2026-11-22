@@ -264,7 +264,7 @@ db()->prepare('
         const code = new URLSearchParams(location.search).get('code') || '';
         async function checkMode() {
             try {
-                const res = await fetch('/room_mode.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
+                const res = await fetch('/api/room_mode.php?code=' + encodeURIComponent(code), { cache: 'no-store' });
                 if (res.ok) {
                     const j = await res.json();
                     if (j.mode && j.mode !== CUR && PAGES[j.mode]) {
