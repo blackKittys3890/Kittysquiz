@@ -1,5 +1,5 @@
 <?php
-// Version 1.10
+// Version 1.11
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -46,7 +46,7 @@ function avatar_history_sync(string $key, array $links): void
 // Profil-Zeile holen, für Discord/Google beim ersten Aufruf anlegen
 function ensure_profile(string $key, string $name, bool $isLocal): array
 {
-    $st = db()->prepare('SELECT display_name, handle FROM kr_profiles WHERE user_key = ?');
+    $st = db()->prepare('SELECT display_name, handle, badge FROM kr_profiles WHERE user_key = ?');
     $st->execute([$key]);
     if ($r = $st->fetch()) return $r;
 
@@ -201,6 +201,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    elseif ($action === 'set_badge') {
+        $b = $_POST['badge'] ?? '';
+        $available = ['', 'local'];
+        foreach ($links as $lk) {
+            if (str_starts_with($lk, 'google_')) $available[] = 'google';
+            elseif (!str_starts_with($lk, 'local_')) $available[] = 'discord';
+        }
+        if (!in_array($b, $available, true)) {
+            $err = 'Dieses Badge ist für dein Profil nicht verfügbar.';
+        } else {
+            db()->prepare('UPDATE kr_profiles SET badge = ? WHERE user_key = ?')->execute([$b === '' ? null : $b, $key]);
+            $profile['badge'] = $b === '' ? null : $b;
+            $msg = 'Badge wurde gespeichert.';
+        }
+    }
+
     elseif ($action === 'unlink') {
         $login = $_POST['login_key'] ?? '';
         if (!in_array($login, linked_logins($key), true) || $login === $key) {
@@ -288,6 +304,29 @@ $email = auth_email_for($key);
             <p><strong>Anmeldung:</strong> <?= htmlspecialchars($provider) ?></p>
             <p><strong>E-Mail:</strong> <?= htmlspecialchars($email ?? 'nicht hinterlegt') ?></p>
             <p class="muted">Name und Profilbild bei Discord und Google kommen vom Anbieter.</p>
+        </section>
+
+        <section class="card">
+            <h2>Badge</h2>
+            <p class="muted">Wähle, welches Badge bei deinem Profil stehen soll. Angezeigt wird es später.</p>
+            <?php
+            $badgeOptions = ['' => 'Kein Badge'];
+            if ($isLocal) $badgeOptions['local'] = 'Lokales Konto';
+            $hasG = false; $hasD = false;
+            foreach ($links as $lk) { if (str_starts_with($lk, 'google_')) $hasG = true; elseif (!str_starts_with($lk, 'local_')) $hasD = true; }
+            if ($hasD) $badgeOptions['discord'] = 'Discord';
+            if ($hasG) $badgeOptions['google'] = 'Google';
+            ?>
+            <form method="post" class="invite-form">
+                <input type="hidden" name="action" value="set_badge">
+                <?php foreach ($badgeOptions as $bv => $bl): ?>
+                    <label class="remember">
+                        <input type="radio" name="badge" value="<?= htmlspecialchars($bv) ?>" <?= ($profile['badge'] ?? '') === $bv ? 'checked' : '' ?>>
+                        <?= htmlspecialchars($bl) ?>
+                    </label>
+                <?php endforeach; ?>
+                <button type="submit" class="btn btn-block">Badge speichern</button>
+            </form>
         </section>
 
         <section class="card">
@@ -419,4 +458,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.10 -->
+<!-- Version 1.11 -->
