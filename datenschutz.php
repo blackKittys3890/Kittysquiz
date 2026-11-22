@@ -1,5 +1,5 @@
 <?php
-// Version 1.9
+// Version 1.10
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -22,7 +22,7 @@
 </head>
 <body>
     <div class="card">
-        <p><a href="/index.php">← Zurück zur Startseite</a></p>
+        <p><a href="/index.php">← Zurück zur Startseite</a> · <a href="/impressum.php">Impressum</a></p>
 
         <h1>Datenschutzerklärung</h1>
 
@@ -241,4 +241,4 @@
     </div>
 </body>
 </html>
-<!-- Version 1.9 -->
+<!-- Version 1.10 -->
