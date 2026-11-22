@@ -1,5 +1,5 @@
 <?php
-// Version 1.8
+// Version 1.9
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -71,6 +71,14 @@ function ensure_profile(string $key, string $name, bool $isLocal): array
 }
 
 $links = linked_logins($key);
+// Discord-Bild für bestehende Discord-Konten nachtragen (falls noch nicht gespeichert)
+if (!$isLocal && !str_starts_with($key, 'google_')) {
+    $cur = $user['avatar'] ?? '';
+    $ownUrl = ($cur && !str_starts_with($cur, '/') && !str_starts_with($cur, 'http'))
+        ? 'https://cdn.discordapp.com/avatars/' . $key . '/' . $cur . '.png'
+        : 'https://cdn.discordapp.com/embed/avatars/' . (((int)$key >> 22) % 6) . '.png';
+    db()->prepare('INSERT IGNORE INTO kr_provider_avatars (login_key, url) VALUES (?, ?)')->execute([$key, $ownUrl]);
+}
 avatar_history_sync($key, $links);
 if (!empty($_SESSION['profile_msg'])) { $msg = $_SESSION['profile_msg']; unset($_SESSION['profile_msg']); }
 $profile = ensure_profile($key, (string)($user['name'] ?? $user['username'] ?? 'Spieler'), $isLocal);
@@ -408,4 +416,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.8 -->
+<!-- Version 1.9 -->

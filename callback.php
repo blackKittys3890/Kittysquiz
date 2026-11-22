@@ -1,5 +1,5 @@
 <?php
-// Version 1.8
+// Version 1.9
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -63,9 +63,10 @@ $decoration = $decorationAsset
 
 // Bild-Adresse dieser Discord-Anmeldung
 $loginKey = (string)$discordUser['id'];
+// Ohne eigenes Bild nutzt Discord ein Standardbild (abhängig von der ID)
 $discordAvatarUrl = !empty($discordUser['avatar'])
     ? 'https://cdn.discordapp.com/avatars/' . $loginKey . '/' . $discordUser['avatar'] . '.png'
-    : null;
+    : 'https://cdn.discordapp.com/embed/avatars/' . (((int)$loginKey >> 22) % 6) . '.png';
 
 // Verknüpfen statt anmelden (aus dem Profil heraus gestartet)
 if (($_SESSION['link_mode'] ?? '') === 'discord' && !empty($_SESSION['discord_user'])) {
@@ -104,4 +105,4 @@ $target = $_SESSION['after_login'] ?? 'lobby.php';
 unset($_SESSION['after_login']);
 header('Location: ' . $target);
 exit;
-// Version 1.8
+// Version 1.9
