@@ -1,5 +1,5 @@
 <?php
-// Version 7.11
+// Version 7.12
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/teams.php';
@@ -329,8 +329,19 @@ $played = q('SELECT slot - ? AS slot, points FROM kr_played WHERE room_id = ? AN
 
 // Spielstand automatisch merken, sobald ein Board vollständig gespielt ist (42 Felder, keine Frage offen)
 if (count($played) >= 42 && !q('SELECT 1 FROM kr_active WHERE room_id = ?', [$rid])->fetchColumn()) {
-    $results = q('SELECT name, points FROM kr_teams WHERE room_id = ? ORDER BY points DESC', [$rid])->fetchAll();
-    $json = json_encode(array_map(fn($r) => ['name' => $r['name'], 'points' => (int)$r['points']], $results), JSON_UNESCAPED_UNICODE);
+    $teamRows = q('SELECT id, name, points FROM kr_teams WHERE room_id = ? ORDER BY points DESC', [$rid])->fetchAll();
+    $playerRows = q('SELECT discord_id, username, team_id FROM kr_room_players WHERE room_id = ?', [$rid])->fetchAll();
+    $out = [];
+    foreach ($teamRows as $tr) {
+        $members = [];
+        foreach ($playerRows as $pr) {
+            if ((int)$pr['team_id'] === (int)$tr['id']) {
+                $members[] = ['id' => (string)$pr['discord_id'], 'name' => (string)$pr['username']];
+            }
+        }
+        $out[] = ['name' => $tr['name'], 'points' => (int)$tr['points'], 'members' => $members];
+    }
+    $json = json_encode($out, JSON_UNESCAPED_UNICODE);
     $lastSaved = q('SELECT results FROM kr_history WHERE room_id = ? AND round_played = ? ORDER BY id DESC LIMIT 1', [$rid, (int)$room['board_round']])->fetchColumn();
     if ($lastSaved !== $json) {
         q('INSERT INTO kr_history (room_id, round_played, results) VALUES (?, ?, ?)', [$rid, (int)$room['board_round'], $json]);
@@ -391,4 +402,4 @@ echo json_encode([
     'myTeamId' => $myTeamId,
     'myJokerAvailable' => false, // Vereinfacht
 ]);
-// Version 7.11
+// Version 7.12
