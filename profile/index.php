@@ -1,5 +1,5 @@
 <?php
-// Version 1.9
+// Version 1.10
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -298,6 +298,9 @@ $email = auth_email_for($key);
             ?>
                 <div class="room" style="margin-bottom:8px;">
                     <div><strong><?= htmlspecialchars($lp) ?></strong><?= $lk === $key ? ' <span class="muted">(Hauptkonto)</span>' : '' ?></div>
+                    <?php if (!str_starts_with($lk, 'local_')): ?>
+                        <a class="btn btn-ghost btn-small" href="/profile/link.php?provider=<?= str_starts_with($lk, 'google_') ? 'google' : 'discord' ?>">Bild aktualisieren</a>
+                    <?php endif; ?>
                     <?php if ($lk !== $key): ?>
                         <form method="post" class="inline" onsubmit="return confirm('Dieses Konto wirklich trennen?');">
                             <input type="hidden" name="action" value="unlink">
@@ -416,4 +419,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.9 -->
+<!-- Version 1.10 -->

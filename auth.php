@@ -1,5 +1,5 @@
 <?php
-// Version 1.5
+// Version 1.6
 // Gemeinsame Anmelde-Hilfen: „Angemeldet bleiben“ und E-Mail-Pflicht.
 
 const REMEMBER_DAYS = 30;
@@ -191,7 +191,11 @@ function auth_link_login(string $loginKey, ?string $avatarUrl): string
 {
     $cur = (string)($_SESSION['discord_user']['id'] ?? '');
     if ($cur === '') return 'Bitte zuerst anmelden.';
-    if ($loginKey === $cur) return 'Dieses Konto ist schon mit deinem Profil verbunden.';
+    // Schon verbunden (oder das Hauptkonto selbst): nur das Bild aktualisieren
+    if ($loginKey === $cur || in_array($loginKey, linked_logins($cur), true)) {
+        auth_save_provider_avatar($loginKey, $avatarUrl);
+        return 'Bild aktualisiert.';
+    }
     if (canonical_key($loginKey) !== $loginKey) return 'Dieses Konto gehört schon zu einem anderen Profil.';
     $st = db()->prepare('SELECT 1 FROM kr_links WHERE login_key = ?');
     $st->execute([$loginKey]);
@@ -200,4 +204,4 @@ function auth_link_login(string $loginKey, ?string $avatarUrl): string
     auth_save_provider_avatar($loginKey, $avatarUrl);
     return 'Konto verbunden.';
 }
-// Version 1.5
+// Version 1.6
