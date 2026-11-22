@@ -1,5 +1,5 @@
 <?php
-// Version 1.11
+// Version 1.12
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -202,18 +202,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     elseif ($action === 'set_badge') {
-        $b = $_POST['badge'] ?? '';
-        $available = ['', 'local'];
+        $picked = array_values(array_unique((array)($_POST['badge'] ?? [])));
+        $available = [];
+        if ($isLocal) $available[] = 'local';
         foreach ($links as $lk) {
             if (str_starts_with($lk, 'google_')) $available[] = 'google';
             elseif (!str_starts_with($lk, 'local_')) $available[] = 'discord';
         }
-        if (!in_array($b, $available, true)) {
-            $err = 'Dieses Badge ist für dein Profil nicht verfügbar.';
+        $available = array_values(array_unique($available));
+        $valid = array_values(array_intersect($picked, $available));
+        if (count($valid) !== count($picked)) {
+            $err = 'Ein gewähltes Badge ist für dein Profil nicht verfügbar.';
         } else {
-            db()->prepare('UPDATE kr_profiles SET badge = ? WHERE user_key = ?')->execute([$b === '' ? null : $b, $key]);
-            $profile['badge'] = $b === '' ? null : $b;
-            $msg = 'Badge wurde gespeichert.';
+            $store = $valid ? implode(',', $valid) : null;
+            db()->prepare('UPDATE kr_profiles SET badge = ? WHERE user_key = ?')->execute([$store, $key]);
+            $profile['badge'] = $store;
+            $msg = 'Badges wurden gespeichert.';
         }
     }
 
@@ -308,9 +312,9 @@ $email = auth_email_for($key);
 
         <section class="card">
             <h2>Badge</h2>
-            <p class="muted">Wähle, welches Badge bei deinem Profil stehen soll. Angezeigt wird es später.</p>
+            <p class="muted">Wähle alle Badges, die bei deinem Profil stehen sollen. Angezeigt werden sie später.</p>
             <?php
-            $badgeOptions = ['' => 'Kein Badge'];
+            $badgeOptions = [];
             if ($isLocal) $badgeOptions['local'] = 'Lokales Konto';
             $hasG = false; $hasD = false;
             foreach ($links as $lk) { if (str_starts_with($lk, 'google_')) $hasG = true; elseif (!str_starts_with($lk, 'local_')) $hasD = true; }
@@ -319,9 +323,10 @@ $email = auth_email_for($key);
             ?>
             <form method="post" class="invite-form">
                 <input type="hidden" name="action" value="set_badge">
+                <?php $currentBadges = array_filter(explode(',', (string)($profile['badge'] ?? ''))); ?>
                 <?php foreach ($badgeOptions as $bv => $bl): ?>
                     <label class="remember">
-                        <input type="radio" name="badge" value="<?= htmlspecialchars($bv) ?>" <?= ($profile['badge'] ?? '') === $bv ? 'checked' : '' ?>>
+                        <input type="checkbox" name="badge[]" value="<?= htmlspecialchars($bv) ?>" <?= in_array($bv, $currentBadges, true) ? 'checked' : '' ?>>
                         <?= htmlspecialchars($bl) ?>
                     </label>
                 <?php endforeach; ?>
@@ -458,4 +463,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.11 -->
+<!-- Version 1.12 -->
