@@ -1,5 +1,5 @@
 <?php
-// Version 1.7
+// Version 1.8
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -32,8 +32,9 @@
         </p>
         <p>
             Eliah Weichert<br>
-            Hechinger Straße 12<br>
-            71229 Leonberg<br>
+            c/o Impressumservice Dein-Impressum<br>
+            Stettiner Str. 41<br>
+            35410 Hungen<br>
             Deutschland<br>
             E-Mail: <a href="mailto:eliah@sudi.de">eliah@sudi.de</a>
         </p>
@@ -209,4 +210,4 @@
     </div>
 </body>
 </html>
-<!-- Version 1.7 -->
+<!-- Version 1.8 -->

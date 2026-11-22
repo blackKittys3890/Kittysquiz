@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -26,8 +26,9 @@
         <h2>Angaben gemäß § 5 DDG</h2>
         <p>
             Eliah Weichert<br>
-            Hechinger Straße 12<br>
-            71229 Leonberg<br>
+            c/o Impressumservice Dein-Impressum<br>
+            Stettiner Str. 41<br>
+            35410 Hungen<br>
             Deutschland
         </p>
 
@@ -50,4 +51,4 @@
     </div>
 </body>
 </html>
-<!-- Version 1.1 -->
+<!-- Version 1.2 -->
