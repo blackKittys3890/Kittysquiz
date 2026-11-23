@@ -1,5 +1,5 @@
 <?php
-// Version 1.18
+// Version 1.20
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -111,4 +111,4 @@ document.querySelectorAll('.btn-google, .btn-discord').forEach(function (a) {
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.18 -->
+<!-- Version 1.20 -->
