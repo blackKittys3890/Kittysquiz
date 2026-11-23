@@ -1,9 +1,5 @@
 <?php
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
-
-// Version 1.17
+// Version 1.18
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -40,6 +36,12 @@ $googleUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query(
     'state'         => $googleState,
     'prompt'        => 'select_account',
 ]);
+
+// Vector-Login: Client-ID und Widget-Adresse aus config.php.
+// Solange nichts eingetragen ist, wird der Block nicht angezeigt.
+$vectorClientId = defined('VECTOR_CLIENT_ID') ? (string)VECTOR_CLIENT_ID : '';
+$vectorWidgetUrl = defined('VECTOR_WIDGET_URL') ? (string)VECTOR_WIDGET_URL : '';
+$showVector = $vectorClientId !== '' && $vectorWidgetUrl !== '';
 
 $error = $_SESSION['login_error'] ?? '';
 unset($_SESSION['login_error']);
@@ -87,6 +89,12 @@ unset($_SESSION['login_error']);
             </svg>
             Mit Discord anmelden
         </a>
+
+        <?php if ($showVector): ?>
+        <div class="divider">oder mit dem Handy</div>
+        <div data-vector-login data-client-id="<?= htmlspecialchars($vectorClientId) ?>" style="display:flex;justify-content:center;"></div>
+        <script src="<?= htmlspecialchars($vectorWidgetUrl) ?>"></script>
+        <?php endif; ?>
     </div>
 <footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a> · <a href="https://whydonate.com/fundraising/kittysquiz" target="_blank" rel="noopener">❤️ Unterstützen</a></footer>
 <script src="/js/cookie-hinweis.js"></script>
@@ -103,4 +111,4 @@ document.querySelectorAll('.btn-google, .btn-discord').forEach(function (a) {
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.17 -->
+<!-- Version 1.18 -->
