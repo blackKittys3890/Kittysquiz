@@ -1,5 +1,5 @@
 <?php
-// Version 1.20
+// Version 1.21
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -90,10 +90,12 @@ unset($_SESSION['login_error']);
             Mit Discord anmelden
         </a>
 
-        <?php if ($showVector): ?>
         <div class="divider">oder mit dem Handy</div>
+        <?php if ($showVector): ?>
         <div data-vector-login data-client-id="<?= htmlspecialchars($vectorClientId) ?>" style="display:flex;justify-content:center;"></div>
         <script src="<?= htmlspecialchars($vectorWidgetUrl) ?>"></script>
+        <?php else: ?>
+        <button class="btn btn-block" type="button" disabled style="opacity:.6;cursor:not-allowed;">Mit Vector anmelden (kommt noch)</button>
         <?php endif; ?>
     </div>
 <footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a> · <a href="https://whydonate.com/fundraising/kittysquiz" target="_blank" rel="noopener">❤️ Unterstützen</a></footer>
@@ -111,4 +113,4 @@ document.querySelectorAll('.btn-google, .btn-discord').forEach(function (a) {
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.20 -->
+<!-- Version 1.21 -->
