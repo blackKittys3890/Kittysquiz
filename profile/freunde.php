@@ -1,5 +1,5 @@
 <?php
-// Version 1.4
+// Version 1.5
 // Freundesystem: Freunde per Benutzername hinzufügen, Anfragen annehmen oder ablehnen, Freunde entfernen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -23,6 +23,49 @@ function friend_row(string $a, string $b): ?array
     $st = db()->prepare('SELECT * FROM kr_friends WHERE user_a = ? AND user_b = ?');
     $st->execute([$x, $y]);
     return $st->fetch() ?: null;
+}
+
+// Spielmodus-Name und Seite, wie in der Lobby
+function mode_label(string $m): string
+{
+    return ['points' => 'Punkte-Board', 'hearts' => 'Der Dümmste fliegt', 'eingestuhlt' => 'Eingeschult', 'dumm_drauf' => 'Hau drauf'][$m] ?? 'einem Spielmodus';
+}
+
+function mode_page(string $m): string
+{
+    return ['points' => '/modes/punkte/board.php', 'hearts' => '/modes/herzen/herzen.php', 'eingestuhlt' => '/modes/eingestuhlt/eingestuhlt.php', 'dumm_drauf' => '/modes/hau_drauf/dumm_drauf.php'][$m] ?? '/modes/punkte/board.php';
+}
+
+// Raum, in dem ich gerade bin, sonst mein letzter eigener Raum
+function my_room_code(string $me): ?string
+{
+    $st = db()->prepare('SELECT r.code FROM kr_room_players rp JOIN kr_rooms r ON r.id = rp.room_id
+                         WHERE rp.discord_id = ? AND rp.last_seen > NOW() - INTERVAL 60 SECOND
+                         ORDER BY rp.last_seen DESC LIMIT 1');
+    $st->execute([$me]);
+    $code = $st->fetchColumn();
+    if ($code) return (string)$code;
+
+    $st = db()->prepare('SELECT code FROM kr_rooms WHERE host_id = ? ORDER BY created_at DESC LIMIT 1');
+    $st->execute([$me]);
+    $code = $st->fetchColumn();
+    return $code ? (string)$code : null;
+}
+
+// Welche Freunde gerade (in den letzten 60 Sekunden) in einem Raum aktiv sind
+function friend_presence(array $keys): array
+{
+    if (!$keys) return [];
+    $in = implode(',', array_fill(0, count($keys), '?'));
+    $st = db()->prepare("SELECT rp.discord_id, r.code, r.mode FROM kr_room_players rp
+                         JOIN kr_rooms r ON r.id = rp.room_id
+                         WHERE rp.discord_id IN ($in) AND rp.last_seen > NOW() - INTERVAL 60 SECOND");
+    $st->execute(array_values($keys));
+    $out = [];
+    foreach ($st->fetchAll() as $r) {
+        $out[(string)$r['discord_id']] = ['code' => (string)$r['code'], 'mode' => (string)($r['mode'] ?? 'points')];
+    }
+    return $out;
 }
 
 // E-Mail an die Empfängerin / den Empfänger, nur wenn sie/er dem ausdrücklich zugestimmt hat
@@ -81,6 +124,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    elseif ($action === 'invite') {
+        // Freund in meinen aktuellen Raum einladen
+        $other = (string)($_POST['other'] ?? '');
+        $row = $other ? friend_row($me, $other) : null;
+        $code = my_room_code($me);
+        if (!$row || $row['status'] !== 'accepted') {
+            $err = 'Du kannst nur Freunde einladen.';
+        } elseif (!$code) {
+            $err = 'Du bist gerade in keinem Raum. Erstelle zuerst einen Raum.';
+        } else {
+            db()->prepare('INSERT IGNORE INTO kr_room_invites (room_code, from_key, to_key) VALUES (?, ?, ?)')
+                ->execute([$code, $me, $other]);
+            $msg = 'Einladung gesendet.';
+        }
+    }
+
     elseif ($action === 'mail_toggle') {
         // Zustimmung zur E-Mail bei Freundschaftsanfragen, nur auf ausdrücklichen Klick
         $on = isset($_POST['mail']) ? 1 : 0;
@@ -124,7 +183,7 @@ foreach ($st->fetchAll() as $r) {
     else $incoming[] = $entry;
 }
 
-function friend_card(array $f, string $buttons): string
+function friend_card(array $f, string $buttons, string $extra = ''): string
 {
     $img = $f['avatar']
         ? '<img src="' . htmlspecialchars($f['avatar']) . '" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">'
@@ -133,8 +192,12 @@ function friend_card(array $f, string $buttons): string
         . '<div>' . ($f['handle'] !== ''
             ? '<a href="/profile/spieler.php?handle=' . urlencode($f['handle']) . '"><strong>' . htmlspecialchars($f['name']) . '</strong></a>'
             : '<strong>' . htmlspecialchars($f['name']) . '</strong>') . ' ' . badge_imgs($f['badges'])
-        . '<div class="muted">@' . htmlspecialchars($f['handle']) . '</div></div></div><div>' . $buttons . '</div></div>';
+        . '<div class="muted">@' . htmlspecialchars($f['handle']) . '</div>' . $extra . '</div></div><div>' . $buttons . '</div></div>';
 }
+
+// Anwesenheit der Freunde und mein aktueller Raum (für Einladungen)
+$presence = friend_presence(array_column($friends, 'key'));
+$myRoom = my_room_code($me);
 
 // Einstellung E-Mail-Benachrichtigung laden
 $st = db()->prepare('SELECT notify_friend_mail FROM kr_profiles WHERE user_key = ?');
@@ -229,8 +292,16 @@ unset($r);
         <section class="card">
             <h2>Deine Freunde</h2>
             <?php if (!$friends): ?><p class="muted">Noch keine Freunde.</p><?php endif; ?>
-            <?php foreach ($friends as $f): ?>
-                <?= friend_card($f, '<form method="post" class="inline" onsubmit="return confirm(\'Freund wirklich entfernen?\');"><input type="hidden" name="action" value="remove"><input type="hidden" name="other" value="' . htmlspecialchars($f['key']) . '"><button class="btn btn-ghost btn-small" type="submit">Entfernen</button></form>') ?>
+            <?php foreach ($friends as $f):
+                $p = $presence[$f['key']] ?? null;
+                $extra = $p
+                    ? '<div class="muted" style="color:#3ddc97;">● spielt gerade ' . htmlspecialchars(mode_label($p['mode'])) . ' · Raum ' . htmlspecialchars($p['code'])
+                      . ' <a href="' . htmlspecialchars(mode_page($p['mode'])) . '?code=' . urlencode($p['code']) . '">Beitreten</a></div>'
+                    : '';
+                $buttons = ($myRoom ? '<form method="post" class="inline"><input type="hidden" name="action" value="invite"><input type="hidden" name="other" value="' . htmlspecialchars($f['key']) . '"><button class="btn btn-pink btn-small" type="submit">Einladen</button></form> ' : '')
+                    . '<form method="post" class="inline" onsubmit="return confirm(\'Freund wirklich entfernen?\');"><input type="hidden" name="action" value="remove"><input type="hidden" name="other" value="' . htmlspecialchars($f['key']) . '"><button class="btn btn-ghost btn-small" type="submit">Entfernen</button></form>';
+            ?>
+                <?= friend_card($f, $buttons, $extra) ?>
             <?php endforeach; ?>
         </section>
 
@@ -246,4 +317,4 @@ unset($r);
 </div>
 </body>
 </html>
-<!-- Version 1.4 -->
+<!-- Version 1.5 -->

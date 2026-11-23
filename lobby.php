@@ -1,5 +1,5 @@
 <?php
-// Version 3.17
+// Version 3.18
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -35,11 +35,25 @@ try {
                          ORDER BY k.id DESC LIMIT 20');
     $st->execute([$me, $me, 'pending', $me]);
     foreach ($st->fetchAll() as $n) {
-        $notes[] = 'Freundschaftsanfrage von ' . ($n['display_name'] ?: 'Spieler')
-            . ($n['handle'] ? ' (@' . $n['handle'] . ')' : '');
+        $notes[] = ['text' => 'Freundschaftsanfrage von ' . ($n['display_name'] ?: 'Spieler')
+            . ($n['handle'] ? ' (@' . $n['handle'] . ')' : ''), 'href' => '/profile/freunde.php'];
+    }
+
+    // Raum-Einladungen von Freunden
+    $st = db()->prepare('SELECT i.room_code, r.mode, p.display_name FROM kr_room_invites i
+                         JOIN kr_rooms r ON r.code = i.room_code
+                         LEFT JOIN kr_profiles p ON p.user_key = i.from_key
+                         WHERE i.to_key = ? ORDER BY i.id DESC LIMIT 10');
+    $st->execute([$me]);
+    $pages = ['points' => '/modes/punkte/board.php', 'hearts' => '/modes/herzen/herzen.php',
+              'eingestuhlt' => '/modes/eingestuhlt/eingestuhlt.php', 'dumm_drauf' => '/modes/hau_drauf/dumm_drauf.php'];
+    foreach ($st->fetchAll() as $inv) {
+        $page = $pages[(string)($inv['mode'] ?? 'points')] ?? '/modes/punkte/board.php';
+        $notes[] = ['text' => ($inv['display_name'] ?: 'Ein Freund') . ' lädt dich in Raum ' . $inv['room_code'] . ' ein',
+                    'href' => $page . '?code=' . urlencode($inv['room_code'])];
     }
 } catch (Throwable $e) {
-    $notes = []; // Tabelle kr_friends fehlt noch, Lobby bleibt trotzdem benutzbar
+    $notes = []; // Tabellen fehlen noch, Lobby bleibt trotzdem benutzbar
 }
 ?>
 
@@ -77,6 +91,7 @@ try {
             <a class="top-icon" href="/ideen.php" title="Ideen" aria-label="Ideen">💡</a>
             <a class="top-icon" href="/scoreboard.php" title="Scoreboard" aria-label="Scoreboard">🏆</a>
             <a class="top-icon" href="/profile/freunde.php" title="Freunde" aria-label="Freunde">👥</a>
+            <a class="top-icon" href="/profile/index.php" title="Mein Profil" aria-label="Mein Profil">👤</a>
             <details class="bell">
                 <summary class="bell-btn" aria-label="Benachrichtigungen">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
@@ -85,7 +100,7 @@ try {
                 <div class="bell-menu">
                     <?php if (!$notes): ?><p class="muted">Keine neuen Benachrichtigungen.</p><?php endif; ?>
                     <?php foreach ($notes as $t): ?>
-                        <a href="/profile/freunde.php"><?= htmlspecialchars($t) ?></a>
+                        <a href="<?= htmlspecialchars($t['href']) ?>"><?= htmlspecialchars($t['text']) ?></a>
                     <?php endforeach; ?>
                 </div>
             </details>
@@ -164,8 +179,12 @@ try {
 
     <h2 class="menu-title">Menü</h2>
     <nav class="nav-grid">
+        <a class="nav-tile" href="/ideen.php"><span class="nav-icon">💡</span>Ideen</a>
         <a class="nav-tile" href="/shared/fragen/fragen.php"><span class="nav-icon">📚</span>Kategorien &amp; Fragen</a>
         <a class="nav-tile" href="verfuegbarkeit.php"><span class="nav-icon">📅</span>Verfügbarkeit planen</a>
+        <a class="nav-tile" href="/scoreboard.php"><span class="nav-icon">🏆</span>Scoreboard</a>
+        <a class="nav-tile" href="/profile/freunde.php"><span class="nav-icon">👥</span>Freunde</a>
+        <a class="nav-tile" href="/profile/index.php"><span class="nav-icon">👤</span>Mein Profil</a>
         <?php if (auth_is_admin()): ?>
             <a class="nav-tile" href="/admin/admin_modes.php"><span class="nav-icon">⚙️</span>Modi verwalten</a>
             <a class="nav-tile" href="/admin/admin_ideen.php"><span class="nav-icon">🗂️</span>Ideen verwalten</a>
@@ -210,4 +229,4 @@ try {
 <?php require_once __DIR__ . '/profile_bubble.php'; ?>
 </body>
 </html>
-<!-- Version 3.17 -->
+<!-- Version 3.18 -->
