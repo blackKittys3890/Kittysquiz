@@ -1,61 +1,50 @@
 <?php
-// Version 1.0
-// Rückkehr vom Vector-Login: anmelden oder (aus dem Profil heraus) ein Konto verknüpfen.
+// Version 1.1
+// Rückkehr vom Vector-Login: der Anbieter liefert einen Firebase-ID-Token, der hier geprüft wird.
+// Anmelden oder (aus dem Profil heraus) ein Konto verknüpfen.
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
 
-$clientId    = defined('VECTOR_CLIENT_ID') ? (string)VECTOR_CLIENT_ID : 'kittysquiz';
-$apiBase     = 'https://europe-west3-jarvis-konto.cloudfunctions.net/api';
-$redirectUri = 'https://kittysquiz.app/vector_callback.php';
+// Öffentlicher Web-API-Schlüssel des Vector-Projekts. Er ist nicht geheim, sollte aber in der
+// Google-Cloud-Konsole auf die Domain kittysquiz.app eingeschränkt sein.
+$apiKey = defined('VECTOR_API_KEY') ? (string)VECTOR_API_KEY : '';
 
-$code = (string)($_GET['code'] ?? '');
-if ($code === '') {
+$idToken = (string)($_GET['id_token'] ?? '');
+if ($idToken === '' || $apiKey === '') {
     http_response_code(400);
-    exit('Kein Code erhalten. Die Anmeldung wurde evtl. abgebrochen.');
+    exit('Kein id_token erhalten oder Vector ist nicht eingerichtet.');
 }
 
-// 1. Code gegen Access Token tauschen
-$ch = curl_init($apiBase . '/token');
+// 1. Token serverseitig prüfen. Nur so ist sicher, dass der Token echt und gültig ist.
+$ch = curl_init('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' . urlencode($apiKey));
 curl_setopt_array($ch, [
     CURLOPT_POST           => true,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-    CURLOPT_POSTFIELDS     => json_encode([
-        'grant_type'   => 'authorization_code',
-        'code'         => $code,
-        'client_id'    => $clientId,
-        'redirect_uri' => $redirectUri,
-    ]),
+    CURLOPT_POSTFIELDS     => json_encode(['idToken' => $idToken]),
     CURLOPT_TIMEOUT        => 15,
 ]);
-$token = json_decode((string)curl_exec($ch), true);
+$response = curl_exec($ch);
+$status   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-if (empty($token['access_token'])) {
+if ($status !== 200) {
     http_response_code(401);
-    exit('Login fehlgeschlagen.');
+    exit('Anmeldung konnte nicht geprüft werden.');
 }
 
-// 2. Profildaten abrufen
-$ch = curl_init($apiBase . '/userinfo');
-curl_setopt_array($ch, [
-    CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $token['access_token']],
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT        => 15,
-]);
-$info = json_decode((string)curl_exec($ch), true);
-curl_close($ch);
-
-if (empty($info['sub'])) {
+$vUser = json_decode((string)$response, true)['users'][0] ?? null;
+if (!$vUser || empty($vUser['localId'])) {
     http_response_code(401);
-    exit('Benutzerdaten konnten nicht geladen werden.');
+    exit('Ungültiger Token.');
 }
 
-// 3. Gleiches Format wie bei Google und Discord
-$name = mb_substr((string)($info['name'] ?? ($info['email'] ?? 'Spieler')), 0, 60);
-$loginKey = 'vector_' . (string)$info['sub'];
-$vectorAvatarUrl = !empty($info['picture']) ? (string)$info['picture'] : null;
+// 2. Gleiches Format wie bei Google und Discord
+$loginKey        = 'vector_' . (string)$vUser['localId'];
+$email           = !empty($vUser['email']) ? (string)$vUser['email'] : '';
+$name            = mb_substr((string)($vUser['displayName'] ?? ($email !== '' ? $email : 'Spieler')), 0, 60);
+$vectorAvatarUrl = !empty($vUser['photoUrl']) ? (string)$vUser['photoUrl'] : null;
 
 // Verknüpfen statt anmelden (aus dem Profil heraus gestartet)
 if (($_SESSION['link_mode'] ?? '') === 'vector' && !empty($_SESSION['discord_user'])) {
@@ -79,7 +68,7 @@ $_SESSION['discord_user'] = auth_apply_profile([
 ]);
 
 // E-Mail von Vector übernehmen (nur wenn bestätigt und frei)
-auth_store_provider_email($main, (string)($info['email'] ?? ''), !empty($info['email_verified']));
+auth_store_provider_email($main, $email, !empty($vUser['emailVerified']));
 
 // Angemeldet bleiben, wenn im Formular gewählt
 if (remember_wanted()) {

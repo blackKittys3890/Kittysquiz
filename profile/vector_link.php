@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Zeigt den Vector-Login, um ein weiteres Konto aus dem Profil heraus zu verbinden.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -11,7 +11,7 @@ if (empty($_SESSION['discord_user'])) { header('Location: /index.php'); exit; }
 $_SESSION['link_mode'] = 'vector';
 
 $clientId  = defined('VECTOR_CLIENT_ID') ? (string)VECTOR_CLIENT_ID : 'kittysquiz';
-$widgetUrl = defined('VECTOR_WIDGET_URL') ? (string)VECTOR_WIDGET_URL : 'https://europe-west3-jarvis-konto.cloudfunctions.net/api/widget.js';
+$widgetUrl = defined('VECTOR_WIDGET_URL') ? (string)VECTOR_WIDGET_URL : '';
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -41,4 +41,4 @@ $widgetUrl = defined('VECTOR_WIDGET_URL') ? (string)VECTOR_WIDGET_URL : 'https:/
 <footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a></footer>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->
