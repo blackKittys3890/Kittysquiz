@@ -1,5 +1,5 @@
 <?php
-// Version 1.2
+// Version 1.3
 // Rückkehr vom Vector-Login: der Anbieter liefert einen Firebase-ID-Token, der hier geprüft wird.
 // Anmelden oder (aus dem Profil heraus) ein Konto verknüpfen.
 require_once __DIR__ . '/config.php';
@@ -57,6 +57,20 @@ unset($_SESSION['link_mode']);
 
 session_regenerate_id(true);
 $main = canonical_key($loginKey);
+
+// Ist die E-Mail schon einem anderen Konto zugeordnet, nicht anmelden und einen Hinweis zeigen.
+// So bleibt das Vector-Konto nicht ohne E-Mail im Formular stecken.
+if ($email !== '' && auth_email_for($main) === null) {
+    $st = db()->prepare('SELECT user_key FROM kr_emails WHERE email = ?');
+    $st->execute([strtolower($email)]);
+    $owner = $st->fetchColumn();
+    if ($owner && (string)$owner !== $main) {
+        $_SESSION['login_error'] = 'Diese E-Mail-Adresse gehört zu einem anderen Konto. Melde dich dort an und verbinde Vector im Profil.';
+        header('Location: /index.php');
+        exit;
+    }
+}
+
 auth_save_provider_avatar($loginKey, $vectorAvatarUrl);
 $_SESSION['discord_user'] = auth_apply_profile([
     'id'         => $main,
