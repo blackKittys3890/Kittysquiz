@@ -1,5 +1,5 @@
 <?php
-// Version 3.15
+// Version 3.16
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -60,7 +60,11 @@ try {
         .bell-menu { position: absolute; right: 0; top: 46px; z-index: 50; min-width: 260px; max-width: 85vw; padding: 10px; border-radius: 14px; background: var(--card-strong, #fff); box-shadow: 0 8px 24px rgba(0, 0, 0, .25); display: flex; flex-direction: column; gap: 4px; }
         .bell-menu a { padding: 8px; border-radius: 8px; color: inherit; text-decoration: none; }
         .bell-menu a:hover { background: rgba(0, 0, 0, .06); }
-    </style>
+        .menu-title { margin: 30px 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+        .nav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+        .nav-tile { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--card); color: inherit; text-decoration: none; font-weight: 600; box-shadow: 0 4px 14px rgba(0, 0, 0, .15); transition: transform .15s ease, box-shadow .15s ease; }
+        .nav-tile:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, .25); }
+        .nav-icon { font-size: 22px; line-height: 1; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255, 255, 255, .08); flex-shrink: 0; }    </style>
 </head>
 <body>
 <div class="page">
@@ -153,18 +157,19 @@ try {
 
     </div>
 
-    <div class="links" style="margin-top:22px;">
-        <a href="/ideen.php">💡 Ideen</a>
-        <a href="/shared/fragen/fragen.php">Kategorien & Fragen</a>
-        <a href="verfuegbarkeit.php">Verfügbarkeit planen</a>
-        <a href="/scoreboard.php">Scoreboard</a>
-        <a href="/profile/freunde.php">Freunde</a>
-        <a href="/profile/index.php">Mein Profil</a>
+    <h2 class="menu-title">Menü</h2>
+    <nav class="nav-grid">
+        <a class="nav-tile" href="/ideen.php"><span class="nav-icon">💡</span>Ideen</a>
+        <a class="nav-tile" href="/shared/fragen/fragen.php"><span class="nav-icon">📚</span>Kategorien &amp; Fragen</a>
+        <a class="nav-tile" href="verfuegbarkeit.php"><span class="nav-icon">📅</span>Verfügbarkeit planen</a>
+        <a class="nav-tile" href="/scoreboard.php"><span class="nav-icon">🏆</span>Scoreboard</a>
+        <a class="nav-tile" href="/profile/freunde.php"><span class="nav-icon">👥</span>Freunde</a>
+        <a class="nav-tile" href="/profile/index.php"><span class="nav-icon">👤</span>Mein Profil</a>
         <?php if (auth_is_admin()): ?>
-            <a href="/admin/admin_modes.php">Modi verwalten</a>
-            <a href="/admin/admin_ideen.php">Ideen verwalten</a>
+            <a class="nav-tile" href="/admin/admin_modes.php"><span class="nav-icon">⚙️</span>Modi verwalten</a>
+            <a class="nav-tile" href="/admin/admin_ideen.php"><span class="nav-icon">🗂️</span>Ideen verwalten</a>
         <?php endif; ?>
-    </div>
+    </nav>
 </div>
 
 <footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a> · <a href="https://whydonate.com/fundraising/kittysquiz" target="_blank" rel="noopener">❤️ Unterstützen</a></footer>
@@ -204,4 +209,4 @@ try {
 <?php require_once __DIR__ . '/profile_bubble.php'; ?>
 </body>
 </html>
-<!-- Version 3.15 -->
+<!-- Version 3.16 -->
