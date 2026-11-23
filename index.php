@@ -1,8 +1,23 @@
 <?php
-// Version 1.22
+// Version 1.24
+// Immer über /index.php aufrufen: das Vector-Widget schickt die Adresse der aktuellen Seite zurück
+if (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) === '/') {
+    $q = $_SERVER['QUERY_STRING'] ?? '';
+    header('Location: /index.php' . ($q !== '' ? '?' . $q : ''));
+    exit;
+}
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
+
+// Vector schickt den Token an diese Seite zurück: weiter zur Prüfung
+if (isset($_GET['id_token'])) {
+    header('Location: /vector_callback.php?' . http_build_query([
+        'id_token' => (string)$_GET['id_token'],
+        'state'    => (string)($_GET['state'] ?? ''),
+    ]));
+    exit;
+}
 
 $user = $_SESSION['discord_user'] ?? null;
 
@@ -115,4 +130,4 @@ document.querySelectorAll('.btn-google, .btn-discord').forEach(function (a) {
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.22 -->
+<!-- Version 1.24 -->
