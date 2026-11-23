@@ -1,5 +1,5 @@
 <?php
-// Version 1.3
+// Version 1.4
 // Freundesystem: Freunde per Benutzername hinzufügen, Anfragen annehmen oder ablehnen, Freunde entfernen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -130,7 +130,9 @@ function friend_card(array $f, string $buttons): string
         ? '<img src="' . htmlspecialchars($f['avatar']) . '" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">'
         : '<span style="display:inline-block;width:40px;height:40px;border-radius:50%;background:var(--card-strong);text-align:center;line-height:40px;font-weight:700;">' . htmlspecialchars(mb_strtoupper(mb_substr($f['name'], 0, 1))) . '</span>';
     return '<div class="room" style="margin-bottom:8px;"><div style="display:flex;gap:10px;align-items:center;">' . $img
-        . '<div><strong>' . htmlspecialchars($f['name']) . '</strong> ' . badge_imgs($f['badges'])
+        . '<div>' . ($f['handle'] !== ''
+            ? '<a href="/profile/spieler.php?handle=' . urlencode($f['handle']) . '"><strong>' . htmlspecialchars($f['name']) . '</strong></a>'
+            : '<strong>' . htmlspecialchars($f['name']) . '</strong>') . ' ' . badge_imgs($f['badges'])
         . '<div class="muted">@' . htmlspecialchars($f['handle']) . '</div></div></div><div>' . $buttons . '</div></div>';
 }
 
@@ -244,4 +246,4 @@ unset($r);
 </div>
 </body>
 </html>
-<!-- Version 1.3 -->
+<!-- Version 1.4 -->
