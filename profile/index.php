@@ -1,5 +1,5 @@
 <?php
-// Version 1.13
+// Version 1.14
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -207,7 +207,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($isLocal) $available[] = 'local';
         foreach ($links as $lk) {
             if (str_starts_with($lk, 'google_')) $available[] = 'google';
-            elseif (!str_starts_with($lk, 'local_') && !str_starts_with($lk, 'vector_')) $available[] = 'discord';
+            elseif (str_starts_with($lk, 'vector_')) $available[] = 'vector';
+            elseif (!str_starts_with($lk, 'local_')) $available[] = 'discord';
         }
         $available = array_values(array_unique($available));
         $valid = array_values(array_intersect($picked, $available));
@@ -316,10 +317,15 @@ $email = auth_email_for($key);
             <?php
             $badgeOptions = [];
             if ($isLocal) $badgeOptions['local'] = 'Lokales Konto';
-            $hasG = false; $hasD = false;
-            foreach ($links as $lk) { if (str_starts_with($lk, 'google_')) $hasG = true; elseif (!str_starts_with($lk, 'local_') && !str_starts_with($lk, 'vector_')) $hasD = true; }
+            $hasG = false; $hasD = false; $hasV = false;
+            foreach ($links as $lk) {
+                if (str_starts_with($lk, 'google_')) $hasG = true;
+                elseif (str_starts_with($lk, 'vector_')) $hasV = true;
+                elseif (!str_starts_with($lk, 'local_')) $hasD = true;
+            }
             if ($hasD) $badgeOptions['discord'] = 'Discord';
             if ($hasG) $badgeOptions['google'] = 'Google';
+            if ($hasV) $badgeOptions['vector'] = 'Vector';
             ?>
             <form method="post" class="invite-form">
                 <input type="hidden" name="action" value="set_badge">
@@ -468,4 +474,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.12 -->
+<!-- Version 1.14 -->

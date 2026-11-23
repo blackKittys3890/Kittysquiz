@@ -213,7 +213,7 @@ function user_badges(string $key): array
     $st = db()->prepare('SELECT badge FROM kr_profiles WHERE user_key = ?');
     $st->execute([$key]);
     $b = (string)($st->fetchColumn() ?: '');
-    return array_values(array_intersect(array_filter(explode(',', $b)), ['discord', 'google']));
+    return array_values(array_intersect(array_filter(explode(',', $b)), ['discord', 'google', 'vector']));
 }
 
 // Badge-Bilder als HTML (neben dem Namen)
@@ -225,4 +225,4 @@ function badge_imgs(array $badges): string
     }
     return $html;
 }
-// Version 1.7
+// Version 1.8
