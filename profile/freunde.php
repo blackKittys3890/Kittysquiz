@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Freundesystem: Freunde per Benutzername hinzufügen, Anfragen annehmen oder ablehnen, Freunde entfernen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -101,6 +101,41 @@ function friend_card(array $f, string $buttons): string
         . '<div><strong>' . htmlspecialchars($f['name']) . '</strong> ' . badge_imgs($f['badges'])
         . '<div class="muted">@' . htmlspecialchars($f['handle']) . '</div></div></div><div>' . $buttons . '</div></div>';
 }
+
+// Spielersuche (mindestens 3 Zeichen, eigenes Konto ausgeschlossen)
+$q = trim((string)($_GET['q'] ?? ''));
+$searched = false;
+$results = [];
+if ($q !== '') {
+    $searched = mb_strlen($q) >= 3;
+    if ($searched) {
+        $like = '%' . addcslashes($q, '%_\\') . '%';
+        $st = db()->prepare('SELECT user_key, display_name, handle, avatar FROM kr_profiles
+                             WHERE (handle LIKE ? OR display_name LIKE ?) AND user_key <> ?
+                             ORDER BY handle LIMIT 10');
+        $st->execute([$like, $like, $me]);
+        foreach ($st->fetchAll() as $p) {
+            $results[] = ['key' => (string)$p['user_key'], 'name' => $p['display_name'] ?: 'Spieler',
+                          'handle' => (string)$p['handle'], 'avatar' => $p['avatar'],
+                          'badges' => user_badges((string)$p['user_key'])];
+        }
+    }
+}
+foreach ($results as &$r) {
+    $row = friend_row($me, $r['key']);
+    if ($row && $row['status'] === 'accepted') {
+        $r['buttons'] = '<span class="muted">Schon befreundet</span>';
+    } elseif ($row && $row['requester'] === $me) {
+        $r['buttons'] = '<span class="muted">Anfrage gesendet</span>';
+    } elseif ($row) {
+        $r['buttons'] = '<form method="post" class="inline"><input type="hidden" name="action" value="accept"><input type="hidden" name="other" value="' . htmlspecialchars($r['key']) . '"><button class="btn btn-small" type="submit">Annehmen</button></form>';
+    } elseif ($r['handle'] !== '') {
+        $r['buttons'] = '<form method="post" class="inline"><input type="hidden" name="action" value="add"><input type="hidden" name="handle" value="' . htmlspecialchars($r['handle']) . '"><button class="btn btn-pink btn-small" type="submit">Anfrage senden</button></form>';
+    } else {
+        $r['buttons'] = '<span class="muted">Kein @-Name</span>';
+    }
+}
+unset($r);
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -132,6 +167,20 @@ function friend_card(array $f, string $buttons): string
             </form>
         </section>
 
+        <section class="card">
+            <h2>Spieler suchen</h2>
+            <p class="muted">Suche nach @-Name oder Anzeigename (mindestens 3 Zeichen).</p>
+            <form method="get" class="join-row">
+                <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" minlength="3" maxlength="40" placeholder="Name oder @benutzername">
+                <button type="submit" class="btn btn-small">Suchen</button>
+            </form>
+            <?php if ($searched && !$results): ?><p class="muted" style="margin-top:12px;">Keine Treffer.</p><?php endif; ?>
+            <?php if ($q !== '' && !$searched): ?><p class="muted" style="margin-top:12px;">Bitte mindestens 3 Zeichen eingeben.</p><?php endif; ?>
+            <?php foreach ($results as $r): ?>
+                <div style="margin-top:12px;"><?= friend_card($r, $r['buttons']) ?></div>
+            <?php endforeach; ?>
+        </section>
+
         <?php if ($incoming): ?>
         <section class="card">
             <h2>Anfragen</h2>
@@ -161,4 +210,4 @@ function friend_card(array $f, string $buttons): string
 </div>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->
