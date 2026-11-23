@@ -1,5 +1,5 @@
 <?php
-// Version 1.11
+// Version 1.12
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -249,7 +249,8 @@
             oder dem Anzeigenamen einer anderen Person. Für andere angemeldete Nutzer sind dabei Anzeigename, @-Name und Profilbild
             sichtbar. Wir speichern Freundschaftsanfragen und bestehende Freundschaften mit den internen Kennungen der beteiligten
             Konten und dem Zeitpunkt. Anfragen können Sie annehmen, ablehnen oder zurückziehen, Freundschaften beenden Sie selbst.
-            Offene Anfragen zeigen wir Ihnen in der Lobby an. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+            Offene Anfragen zeigen wir Ihnen in der Lobby an. Ihr Spielerprofil mit Anzeigename, @-Name, Profilbild und
+            Badges können andere angemeldete Nutzer aufrufen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
         </p>
         <p>
             Auf der Freunde-Seite können Sie einstellen, dass Sie per E-Mail benachrichtigt werden, wenn Ihnen jemand eine
@@ -273,4 +274,4 @@
     </div>
 </body>
 </html>
-<!-- Version 1.11 -->
+<!-- Version 1.12 -->
