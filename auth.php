@@ -221,8 +221,8 @@ function badge_imgs(array $badges): string
 {
     $html = '';
     foreach ($badges as $b) {
-        $html .= '<img class="badge-icon" src="/img/badges/badge-' . htmlspecialchars($b) . '.png" alt="' . htmlspecialchars(ucfirst($b)) . '" title="' . htmlspecialchars(ucfirst($b)) . '">';
+        $html .= '<img class="badge-icon" src="/img/badges/' . htmlspecialchars($b) . '-badge.png" alt="' . htmlspecialchars(ucfirst($b)) . '" title="' . htmlspecialchars(ucfirst($b)) . '">';
     }
     return $html;
 }
-// Version 1.8
+// Version 1.9
