@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 // Rückkehr vom Vector-Login: der Anbieter liefert einen Firebase-ID-Token, der hier geprüft wird.
 // Anmelden oder (aus dem Profil heraus) ein Konto verknüpfen.
 require_once __DIR__ . '/config.php';
@@ -67,8 +67,9 @@ $_SESSION['discord_user'] = auth_apply_profile([
     'decoration' => null,
 ]);
 
-// E-Mail von Vector übernehmen (nur wenn bestätigt und frei)
-auth_store_provider_email($main, $email, !empty($vUser['emailVerified']));
+// E-Mail von Vector übernehmen, auch ohne Bestätigung (ausdrücklich so gewünscht).
+// Die Adresse wird nur gespeichert, wenn sie noch frei ist.
+auth_store_provider_email($main, $email, true);
 
 // Angemeldet bleiben, wenn im Formular gewählt
 if (remember_wanted()) {
