@@ -1,5 +1,5 @@
 <?php
-// Version 1.10
+// Version 1.11
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -60,7 +60,7 @@
 
         <h2>4. Anmeldung</h2>
         <p>
-            Sie können sich auf drei Wegen anmelden. Die Anmeldung ist freiwillig. Ohne Anmeldung können Sie nicht spielen.
+            Sie können sich auf vier Wegen anmelden. Die Anmeldung ist freiwillig. Ohne Anmeldung können Sie nicht spielen.
         </p>
 
         <h3>a) Anmeldung mit Discord</h3>
@@ -93,6 +93,14 @@
             Wir nutzen sie ausschließlich, um Ihnen den Zugang zurückzusetzen und wichtige Hinweise zum Konto zu senden.
             Die Angabe ist Pflicht, um die Seite zu nutzen. Eine Weitergabe an Dritte erfolgt nicht.
             Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+        </p>
+
+        <h3>e) Anmeldung mit Vector</h3>
+        <p>
+            Bei der Anmeldung mit Vector übermittelt der Anbieter des Vector-Logins, [Betreiber von Vector eintragen], an uns
+            Ihre Vector-Kennung, Ihren Namen, Ihr Profilbild und, sofern bestätigt, Ihre E-Mail-Adresse. Die Anmeldung erfolgt
+            über ein Widget, das Sie mit einem QR-Code oder einer Weiterleitung nutzen. Wir speichern diese Angaben, um Ihr
+            Spielerprofil anzuzeigen. Die E-Mail-Adresse behandeln wir wie in Abschnitt 4d. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
         </p>
 
         <p>
@@ -146,8 +154,9 @@
 
         <h2>9. Externe Dienste im Browser</h2>
         <p>
-            Die Seite lädt Profilbilder vom Discord-CDN (cdn.discordapp.com) und eine Bibliothek vom CDN jsDelivr
-            (cdn.jsdelivr.net). Beim Laden dieser Inhalte wird Ihre IP-Adresse an die jeweiligen Anbieter übermittelt.
+            Die Seite lädt Profilbilder vom Discord-CDN (cdn.discordapp.com), eine Bibliothek vom CDN jsDelivr
+            (cdn.jsdelivr.net) und auf der Anmeldeseite das Script des Vector-Logins (europe-west3-jarvis-konto.cloudfunctions.net).
+            Beim Laden dieser Inhalte wird Ihre IP-Adresse an die jeweiligen Anbieter übermittelt.
             Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (Darstellung und Funktion der Seite).
         </p>
 
@@ -202,7 +211,7 @@
         <p>
             Du kannst ein Profilbild wählen: ein eigenes Bild, ein Standardbild oder das Bild deines Discord- bzw.
             Google-Kontos. Eigene Bilder speichern wir auf unserem Server. Die Bild-Adressen deiner Discord- und
-            Google-Konten speichern wir ebenfalls. Discord- und Google-Bilder werden von den Servern dieser Anbieter geladen,
+            Google- und Vector-Konten speichern wir ebenfalls. Discord-, Google- und Vector-Bilder werden von den Servern dieser Anbieter geladen,
             dabei wird deine IP-Adresse an sie übermittelt. Wir speichern außerdem einen Verlauf deiner bisher genutzten Bilder,
             damit du sie wiederverwenden kannst. Du kannst Bilder jederzeit ersetzen und einzelne verknüpfte Konten trennen.
             Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
@@ -234,11 +243,34 @@
             Landesbeauftragte für den Datenschutz und die Informationsfreiheit.
         </p>
 
-        <h2>17. Stand</h2>
+        <h2>17. Freundesystem</h2>
+        <p>
+            Angemeldete Nutzer können sich gegenseitig als Freunde hinzufügen. Dafür suchen Sie nach dem Benutzernamen (@-Name)
+            oder dem Anzeigenamen einer anderen Person. Für andere angemeldete Nutzer sind dabei Anzeigename, @-Name und Profilbild
+            sichtbar. Wir speichern Freundschaftsanfragen und bestehende Freundschaften mit den internen Kennungen der beteiligten
+            Konten und dem Zeitpunkt. Anfragen können Sie annehmen, ablehnen oder zurückziehen, Freundschaften beenden Sie selbst.
+            Offene Anfragen zeigen wir Ihnen in der Lobby an. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+        </p>
+        <p>
+            Auf der Freunde-Seite können Sie einstellen, dass Sie per E-Mail benachrichtigt werden, wenn Ihnen jemand eine
+            Freundschaftsanfrage schickt. Diese Einstellung ist standardmäßig ausgeschaltet. Nur wenn Sie sie einschalten,
+            senden wir die Mail an die bei uns hinterlegte E-Mail-Adresse, Absender noreply@kittysquiz.app. Die Mail enthält den
+            Anzeigenamen der anfragenden Person und einen Link zur Freunde-Seite. Ihre Einwilligung können Sie dort jederzeit
+            widerrufen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. a DSGVO.
+        </p>
+
+        <h2>18. Kontaktformular</h2>
+        <p>
+            Über das Kontaktformular können Sie uns schreiben. Wir verarbeiten dabei Ihren Namen, Ihre E-Mail-Adresse und Ihre
+            Nachricht, um Ihre Anfrage zu beantworten. Die Nachricht wird per E-Mail an uns weitergeleitet. Rechtsgrundlage ist
+            Art. 6 Abs. 1 lit. b DSGVO bzw. lit. f DSGVO (Bearbeitung Ihrer Anfrage).
+        </p>
+
+        <h2>19. Stand</h2>
         <p>
             Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.10 -->
+<!-- Version 1.11 -->
