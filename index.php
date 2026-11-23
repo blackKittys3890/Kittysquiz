@@ -1,5 +1,5 @@
 <?php
-// Version 1.21
+// Version 1.22
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 remember_restore();
@@ -73,6 +73,7 @@ unset($_SESSION['login_error']);
 
         <div class="divider">oder</div>
 
+        <div style="display:flex;flex-direction:column;gap:14px;">
         <a class="btn btn-google btn-block" href="<?= htmlspecialchars($googleUrl) ?>">
             <svg viewBox="0 0 48 48" aria-hidden="true">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -89,6 +90,7 @@ unset($_SESSION['login_error']);
             </svg>
             Mit Discord anmelden
         </a>
+        </div>
 
         <div class="divider">oder mit dem Handy</div>
         <?php if ($showVector): ?>
@@ -113,4 +115,4 @@ document.querySelectorAll('.btn-google, .btn-discord').forEach(function (a) {
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.21 -->
+<!-- Version 1.22 -->
