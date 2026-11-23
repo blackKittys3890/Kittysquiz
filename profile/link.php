@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Startet die Verknüpfung eines weiteren Kontos (Discord oder Google) aus dem Profil heraus.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -35,6 +35,11 @@ if ($provider === 'google') {
     ]));
     exit;
 }
+if ($provider === 'vector') {
+    // Vector hat keinen eigenen Link: die Seite zeigt das Widget und setzt den Verknüpfungsmodus
+    header('Location: /profile/vector_link.php');
+    exit;
+}
 header('Location: /profile/index.php');
 exit;
-// Version 1.0
+// Version 1.1

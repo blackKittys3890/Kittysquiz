@@ -11,7 +11,7 @@ if (!$user) { header('Location: /index.php'); exit; }
 
 $key = (string)$user['id'];
 $isLocal = str_starts_with($key, 'local_');
-$provider = $isLocal ? 'Lokales Konto' : (str_starts_with($key, 'google_') ? 'Google' : 'Discord');
+$provider = $isLocal ? 'Lokales Konto' : (str_starts_with($key, 'google_') ? 'Google' : (str_starts_with($key, 'vector_') ? 'Vector' : 'Discord'));
 $msg = '';
 $err = '';
 
@@ -207,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($isLocal) $available[] = 'local';
         foreach ($links as $lk) {
             if (str_starts_with($lk, 'google_')) $available[] = 'google';
-            elseif (!str_starts_with($lk, 'local_')) $available[] = 'discord';
+            elseif (!str_starts_with($lk, 'local_') && !str_starts_with($lk, 'vector_')) $available[] = 'discord';
         }
         $available = array_values(array_unique($available));
         $valid = array_values(array_intersect($picked, $available));
@@ -303,7 +303,7 @@ $email = auth_email_for($key);
     <div class="stack">
         <section class="card">
             <h2>Konto</h2>
-            <p><strong>Anzeigename:</strong> <?= htmlspecialchars($profile['display_name']) ?> <?= badge_imgs(user_badges($key)) ?></p>
+            <p><strong>Anzeigename:</strong> <?= htmlspecialchars($profile['display_name']) ?></p>
             <p><strong>Benutzername:</strong> @<?= htmlspecialchars($profile['handle']) ?></p>
             <p><strong>Anmeldung:</strong> <?= htmlspecialchars($provider) ?></p>
             <p><strong>E-Mail:</strong> <?= htmlspecialchars($email ?? 'nicht hinterlegt') ?></p>
@@ -317,7 +317,7 @@ $email = auth_email_for($key);
             $badgeOptions = [];
             if ($isLocal) $badgeOptions['local'] = 'Lokales Konto';
             $hasG = false; $hasD = false;
-            foreach ($links as $lk) { if (str_starts_with($lk, 'google_')) $hasG = true; elseif (!str_starts_with($lk, 'local_')) $hasD = true; }
+            foreach ($links as $lk) { if (str_starts_with($lk, 'google_')) $hasG = true; elseif (!str_starts_with($lk, 'local_') && !str_starts_with($lk, 'vector_')) $hasD = true; }
             if ($hasD) $badgeOptions['discord'] = 'Discord';
             if ($hasG) $badgeOptions['google'] = 'Google';
             ?>
@@ -338,12 +338,12 @@ $email = auth_email_for($key);
             <h2>Verbundene Konten</h2>
             <p class="muted">Mehrere Anmeldungen teilen sich ein Profil. Mit jedem verbundenen Konto kannst du dich anmelden und dasselbe Profil nutzen.</p>
             <?php foreach (linked_logins($key) as $lk):
-                $lp = str_starts_with($lk, 'google_') ? 'Google' : (str_starts_with($lk, 'local_') ? 'Lokales Konto' : 'Discord');
+                $lp = str_starts_with($lk, 'google_') ? 'Google' : (str_starts_with($lk, 'local_') ? 'Lokales Konto' : (str_starts_with($lk, 'vector_') ? 'Vector' : 'Discord'));
             ?>
                 <div class="room" style="margin-bottom:8px;">
                     <div><strong><?= htmlspecialchars($lp) ?></strong><?= $lk === $key ? ' <span class="muted">(Hauptkonto)</span>' : '' ?></div>
                     <?php if (!str_starts_with($lk, 'local_')): ?>
-                        <a class="btn btn-ghost btn-small" href="/profile/link.php?provider=<?= str_starts_with($lk, 'google_') ? 'google' : 'discord' ?>">Bild aktualisieren</a>
+                        <a class="btn btn-ghost btn-small" href="/profile/link.php?provider=<?= str_starts_with($lk, 'google_') ? 'google' : (str_starts_with($lk, 'vector_') ? 'vector' : 'discord') ?>">Bild aktualisieren</a>
                     <?php endif; ?>
                     <?php if ($lk !== $key): ?>
                         <form method="post" class="inline" onsubmit="return confirm('Dieses Konto wirklich trennen?');">
@@ -356,11 +356,16 @@ $email = auth_email_for($key);
             <?php endforeach; ?>
             <div class="links" style="margin-top:10px;">
                 <?php
-                $hasDiscord = false; $hasGoogle = false;
-                foreach ($links as $lk) { if (str_starts_with($lk, 'google_')) $hasGoogle = true; elseif (!str_starts_with($lk, 'local_')) $hasDiscord = true; }
+                $hasDiscord = false; $hasGoogle = false; $hasVector = false;
+                foreach ($links as $lk) {
+                    if (str_starts_with($lk, 'google_')) $hasGoogle = true;
+                    elseif (str_starts_with($lk, 'vector_')) $hasVector = true;
+                    elseif (!str_starts_with($lk, 'local_')) $hasDiscord = true;
+                }
                 ?>
                 <?php if (!$hasDiscord): ?><a class="btn btn-small" href="/profile/link.php?provider=discord">Discord verbinden</a><?php endif; ?>
                 <?php if (!$hasGoogle): ?><a class="btn btn-small" href="/profile/link.php?provider=google">Google verbinden</a><?php endif; ?>
+                <?php if (!$hasVector): ?><a class="btn btn-small" href="/profile/link.php?provider=vector">Vector verbinden</a><?php endif; ?>
             </div>
         </section>
 
@@ -463,4 +468,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.13 -->
+<!-- Version 1.12 -->
