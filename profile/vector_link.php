@@ -1,11 +1,21 @@
 <?php
-// Version 1.1
+// Version 1.2
 // Zeigt den Vector-Login, um ein weiteres Konto aus dem Profil heraus zu verbinden.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
 require_once dirname(__DIR__) . '/auth.php';
 
 if (empty($_SESSION['discord_user'])) { header('Location: /index.php'); exit; }
+
+// Vector schickt den Token nach dem Klick auf diese Seite zurück: weiter zur Prüfung.
+// Der Verknüpfungsmodus steht noch in der Sitzung von der ersten Anfrage.
+if (isset($_GET['id_token'])) {
+    header('Location: /vector_callback.php?' . http_build_query([
+        'id_token' => (string)$_GET['id_token'],
+        'state'    => (string)($_GET['state'] ?? ''),
+    ]));
+    exit;
+}
 
 // Der Callback erkennt daran, dass ein Konto verknüpft werden soll
 $_SESSION['link_mode'] = 'vector';
@@ -41,4 +51,4 @@ $widgetUrl = defined('VECTOR_WIDGET_URL') ? (string)VECTOR_WIDGET_URL : '';
 <footer class="site-footer"><a href="/impressum.php">Impressum</a> · <a href="/datenschutz.php">Datenschutz</a></footer>
 </body>
 </html>
-<!-- Version 1.1 -->
+<!-- Version 1.2 -->
