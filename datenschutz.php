@@ -97,7 +97,7 @@
 
         <h3>e) Anmeldung mit Vector</h3>
         <p>
-            Bei der Anmeldung mit Vector übermittelt der Anbieter des Vector-Logins, [Betreiber von Vector eintragen], an uns
+            Bei der Anmeldung mit Vector übermittelt der Anbieter des Vector-Logins, Skyler Rothenbächer, an uns
             Ihre Vector-Kennung, Ihren Namen, Ihr Profilbild und, sofern bestätigt, Ihre E-Mail-Adresse. Die Anmeldung erfolgt
             über ein Widget, das Sie mit einem QR-Code oder einer Weiterleitung nutzen. Wir speichern diese Angaben, um Ihr
             Spielerprofil anzuzeigen. Die E-Mail-Adresse behandeln wir wie in Abschnitt 4d. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
