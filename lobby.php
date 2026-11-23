@@ -1,5 +1,5 @@
 <?php
-// Version 3.14
+// Version 3.15
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -25,6 +25,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 $stmt = db()->prepare('SELECT code, created_at FROM kr_rooms WHERE host_id = ? ORDER BY created_at DESC');
 $stmt->execute([$me]);
 $myRooms = $stmt->fetchAll();
+
+// Benachrichtigungen (Glocke): offene Freundschaftsanfragen, weitere Arten können hier ergänzt werden
+$notes = [];
+try {
+    $st = db()->prepare('SELECT k.requester, p.display_name, p.handle FROM kr_friends k
+                         LEFT JOIN kr_profiles p ON p.user_key = k.requester
+                         WHERE (k.user_a = ? OR k.user_b = ?) AND k.status = ? AND k.requester <> ?
+                         ORDER BY k.id DESC LIMIT 20');
+    $st->execute([$me, $me, 'pending', $me]);
+    foreach ($st->fetchAll() as $n) {
+        $notes[] = 'Freundschaftsanfrage von ' . ($n['display_name'] ?: 'Spieler')
+            . ($n['handle'] ? ' (@' . $n['handle'] . ')' : '');
+    }
+} catch (Throwable $e) {
+    $notes = []; // Tabelle kr_friends fehlt noch, Lobby bleibt trotzdem benutzbar
+}
 ?>
 
 <!DOCTYPE html>
@@ -35,6 +51,16 @@ $myRooms = $stmt->fetchAll();
     <title>Lobby – <?= APP_NAME ?></title>
     <link rel="stylesheet" href="/css/base.css?v=1.4">
     <link rel="stylesheet" href="/css/lobby.css?v=1.1">
+    <style>
+        .bell { position: relative; display: inline-block; margin-right: 8px; }
+        .bell summary { list-style: none; cursor: pointer; }
+        .bell summary::-webkit-details-marker { display: none; }
+        .bell-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: var(--card); color: inherit; }
+        .bell-count { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--pink); color: #fff; font-size: 12px; font-weight: 700; line-height: 18px; text-align: center; }
+        .bell-menu { position: absolute; right: 0; top: 46px; z-index: 50; min-width: 260px; max-width: 85vw; padding: 10px; border-radius: 14px; background: var(--card-strong, #fff); box-shadow: 0 8px 24px rgba(0, 0, 0, .25); display: flex; flex-direction: column; gap: 4px; }
+        .bell-menu a { padding: 8px; border-radius: 8px; color: inherit; text-decoration: none; }
+        .bell-menu a:hover { background: rgba(0, 0, 0, .06); }
+    </style>
 </head>
 <body>
 <div class="page">
@@ -42,6 +68,18 @@ $myRooms = $stmt->fetchAll();
     <header class="topbar">
         <div class="brand"><?php if (file_exists(__DIR__ . '/img/logo.png')): ?><img src="/img/logo.png" alt="" class="logo-img logo-img-small"><?php endif; ?><span><?= APP_NAME ?></span></div>
         <div class="who">
+            <details class="bell">
+                <summary class="bell-btn" aria-label="Benachrichtigungen">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                    <?php if ($notes): ?><span class="bell-count"><?= count($notes) ?></span><?php endif; ?>
+                </summary>
+                <div class="bell-menu">
+                    <?php if (!$notes): ?><p class="muted">Keine neuen Benachrichtigungen.</p><?php endif; ?>
+                    <?php foreach ($notes as $t): ?>
+                        <a href="/profile/freunde.php"><?= htmlspecialchars($t) ?></a>
+                    <?php endforeach; ?>
+                </div>
+            </details>
             <span class="name"><?= htmlspecialchars($user['name'] ?? $user['username'] ?? '') ?></span>
             <a class="btn btn-ghost btn-small" href="logout.php">Abmelden</a>
         </div>
@@ -166,4 +204,4 @@ $myRooms = $stmt->fetchAll();
 <?php require_once __DIR__ . '/profile_bubble.php'; ?>
 </body>
 </html>
-<!-- Version 3.14 -->
+<!-- Version 3.15 -->
