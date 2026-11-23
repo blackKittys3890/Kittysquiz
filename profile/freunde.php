@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.3
 // Freundesystem: Freunde per Benutzername hinzufügen, Anfragen annehmen oder ablehnen, Freunde entfernen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -23,6 +23,28 @@ function friend_row(string $a, string $b): ?array
     $st = db()->prepare('SELECT * FROM kr_friends WHERE user_a = ? AND user_b = ?');
     $st->execute([$x, $y]);
     return $st->fetch() ?: null;
+}
+
+// E-Mail an die Empfängerin / den Empfänger, nur wenn sie/er dem ausdrücklich zugestimmt hat
+function friend_mail_notify(string $toKey, string $fromName): void
+{
+    $st = db()->prepare('SELECT notify_friend_mail FROM kr_profiles WHERE user_key = ?');
+    $st->execute([$toKey]);
+    if ((int)$st->fetchColumn() !== 1) return;
+
+    $to = function_exists('auth_email_for') ? auth_email_for($toKey) : null;
+    if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) return;
+
+    $app = defined('APP_NAME') ? APP_NAME : 'KittysRätsel';
+    $name = trim((string)preg_replace('/[\r\n]+/', ' ', $fromName));
+    $subject = '=?UTF-8?B?' . base64_encode($app . ': Neue Freundschaftsanfrage') . '?=';
+    $body = "Hallo,\n\n" . $name . " hat dir eine Freundschaftsanfrage geschickt.\n\n"
+        . "Du kannst sie hier annehmen oder ablehnen:\nhttps://kittysquiz.app/profile/freunde.php\n\n"
+        . "Diese Benachrichtigungen kannst du auf der Freunde-Seite jederzeit abschalten.\n";
+    $headers = "From: " . $app . " <noreply@kittysquiz.app>\r\n"
+        . "Content-Type: text/plain; charset=UTF-8\r\n"
+        . "Content-Transfer-Encoding: 8bit";
+    @mail($to, $subject, $body, $headers);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -52,8 +74,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 db()->prepare('INSERT INTO kr_friends (user_a, user_b, requester, status) VALUES (?, ?, ?, ?)')
                     ->execute([$x, $y, $me, 'pending']);
                 $msg = 'Freundschaftsanfrage gesendet.';
+                $st = db()->prepare('SELECT display_name FROM kr_profiles WHERE user_key = ?');
+                $st->execute([$me]);
+                friend_mail_notify((string)$other, (string)($st->fetchColumn() ?: 'Ein Spieler'));
             }
         }
+    }
+
+    elseif ($action === 'mail_toggle') {
+        // Zustimmung zur E-Mail bei Freundschaftsanfragen, nur auf ausdrücklichen Klick
+        $on = isset($_POST['mail']) ? 1 : 0;
+        db()->prepare('UPDATE kr_profiles SET notify_friend_mail = ? WHERE user_key = ?')->execute([$on, $me]);
+        $msg = $on ? 'E-Mail-Benachrichtigung ist an.' : 'E-Mail-Benachrichtigung ist aus.';
     }
 
     elseif ($action === 'accept' || $action === 'decline' || $action === 'remove') {
@@ -101,6 +133,12 @@ function friend_card(array $f, string $buttons): string
         . '<div><strong>' . htmlspecialchars($f['name']) . '</strong> ' . badge_imgs($f['badges'])
         . '<div class="muted">@' . htmlspecialchars($f['handle']) . '</div></div></div><div>' . $buttons . '</div></div>';
 }
+
+// Einstellung E-Mail-Benachrichtigung laden
+$st = db()->prepare('SELECT notify_friend_mail FROM kr_profiles WHERE user_key = ?');
+$st->execute([$me]);
+$mailOn = (int)$st->fetchColumn() === 1;
+$hasMail = function_exists('auth_email_for') && (bool)auth_email_for($me);
 
 // Spielersuche (mindestens 3 Zeichen, eigenes Konto ausgeschlossen)
 $q = trim((string)($_GET['q'] ?? ''));
@@ -158,18 +196,14 @@ unset($r);
 
     <div class="stack">
         <section class="card">
-            <h2>Freund hinzufügen</h2>
-            <p class="muted">Gib den Benutzernamen (@-Name) der Person ein.</p>
-            <form method="post" class="join-row">
-                <input type="hidden" name="action" value="add">
-                <input type="text" name="handle" required minlength="3" maxlength="20" placeholder="@benutzername">
-                <button type="submit" class="btn btn-pink">Anfrage senden</button>
+            <h2>Freunde finden</h2>
+            <p class="muted">Suche nach @-Name oder Anzeigename (mindestens 3 Zeichen) und sende direkt eine Anfrage.</p>
+            <form method="post" style="margin-bottom:14px;">
+                <input type="hidden" name="action" value="mail_toggle">
+                <label><input type="checkbox" name="mail" value="1" <?= $mailOn ? 'checked' : '' ?>> Mir per E-Mail Bescheid geben, wenn mir jemand eine Freundschaftsanfrage schickt</label>
+                <button type="submit" class="btn btn-ghost btn-small">Speichern</button>
+                <?php if (!$hasMail): ?><p class="muted" style="margin-top:6px;">Dafür brauchst du eine E-Mail-Adresse im Profil.</p><?php endif; ?>
             </form>
-        </section>
-
-        <section class="card">
-            <h2>Spieler suchen</h2>
-            <p class="muted">Suche nach @-Name oder Anzeigename (mindestens 3 Zeichen).</p>
             <form method="get" class="join-row">
                 <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" minlength="3" maxlength="40" placeholder="Name oder @benutzername">
                 <button type="submit" class="btn btn-small">Suchen</button>
@@ -210,4 +244,4 @@ unset($r);
 </div>
 </body>
 </html>
-<!-- Version 1.1 -->
+<!-- Version 1.3 -->
