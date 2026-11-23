@@ -1,5 +1,5 @@
 <?php
-// Version 3.13
+// Version 3.14
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -120,6 +120,7 @@ $myRooms = $stmt->fetchAll();
         <a href="/shared/fragen/fragen.php">Kategorien & Fragen</a>
         <a href="verfuegbarkeit.php">Verfügbarkeit planen</a>
         <a href="/scoreboard.php">Scoreboard</a>
+        <a href="/profile/freunde.php">Freunde</a>
         <a href="/profile/index.php">Mein Profil</a>
         <?php if (auth_is_admin()): ?>
             <a href="/admin/admin_modes.php">Modi verwalten</a>
@@ -165,4 +166,4 @@ $myRooms = $stmt->fetchAll();
 <?php require_once __DIR__ . '/profile_bubble.php'; ?>
 </body>
 </html>
-<!-- Version 3.13 -->
+<!-- Version 3.14 -->
