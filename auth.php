@@ -210,10 +210,14 @@ function auth_link_login(string $loginKey, ?string $avatarUrl): string
 // Badges eines Profils (Liste wie ['discord', 'google'])
 function user_badges(string $key): array
 {
-    $st = db()->prepare('SELECT badge FROM kr_profiles WHERE user_key = ?');
+    $st = db()->prepare('SELECT badge, is_teacher FROM kr_profiles WHERE user_key = ?');
     $st->execute([$key]);
-    $b = (string)($st->fetchColumn() ?: '');
-    return array_values(array_intersect(array_filter(explode(',', $b)), ['discord', 'google', 'vector']));
+    $row = $st->fetch() ?: [];
+    $b = (string)($row['badge'] ?? '');
+    $list = array_values(array_intersect(array_filter(explode(',', $b)), ['discord', 'google', 'vector']));
+    // Lehrer-Badge: nur vom Admin vergeben, nicht selbst wählbar
+    if (!empty($row['is_teacher'])) array_unshift($list, 'teacher');
+    return $list;
 }
 
 // Badge-Bilder als HTML (neben dem Namen)
@@ -225,4 +229,4 @@ function badge_imgs(array $badges): string
     }
     return $html;
 }
-// Version 1.9
+// Version 1.10

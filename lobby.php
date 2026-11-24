@@ -1,5 +1,5 @@
 <?php
-// Version 3.18
+// Version 3.20
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -75,7 +75,20 @@ try {
         .bell-menu a { padding: 8px; border-radius: 8px; color: inherit; text-decoration: none; }
         .bell-menu a:hover { background: rgba(0, 0, 0, .06); }
         .top-icon { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: var(--card); color: inherit; text-decoration: none; font-size: 18px; margin-right: 8px; transition: transform .15s ease; }
-        .top-icon:hover { transform: translateY(-2px); }
+        .top-icon { position: relative; transition: transform .2s ease, box-shadow .2s ease; }
+        .top-icon span { display: inline-block; }
+        .top-icon:hover, .top-icon:focus-visible { transform: translateY(-3px) scale(1.12); box-shadow: 0 0 0 3px rgba(61, 220, 151, .45), 0 8px 20px rgba(0, 0, 0, .3); }
+        .top-icon:hover span, .top-icon:focus-visible span { animation: wiggle .5s ease; }
+        .top-icon::after { content: attr(data-label); position: absolute; top: 46px; left: 50%; transform: translateX(-50%) translateY(-6px) scale(.85); opacity: 0; pointer-events: none; white-space: nowrap; padding: 6px 10px; border-radius: 10px; background: #1b1530; color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 6px 16px rgba(0, 0, 0, .35); transition: opacity .2s ease, transform .2s ease; z-index: 60; }
+        .top-icon:hover::after, .top-icon:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        @keyframes wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+        @media (max-width: 600px) {
+            .top-icon { width: 34px; height: 34px; font-size: 16px; margin-right: 4px; }
+            .top-icon::after { top: 40px; font-size: 12px; }
+            .nav-grid { grid-template-columns: 1fr 1fr; }
+            .nav-tile { padding: 12px; font-size: 14px; }
+            .bell-menu { min-width: 220px; right: -40px; }
+        }
         .menu-title { margin: 30px 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
         .nav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
         .nav-tile { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--card); color: inherit; text-decoration: none; font-weight: 600; box-shadow: 0 4px 14px rgba(0, 0, 0, .15); transition: transform .15s ease, box-shadow .15s ease; }
@@ -88,10 +101,9 @@ try {
     <header class="topbar">
         <div class="brand"><?php if (file_exists(__DIR__ . '/img/logo.png')): ?><img src="/img/logo.png" alt="" class="logo-img logo-img-small"><?php endif; ?><span><?= APP_NAME ?></span></div>
         <div class="who">
-            <a class="top-icon" href="/ideen.php" title="Ideen" aria-label="Ideen">💡</a>
-            <a class="top-icon" href="/scoreboard.php" title="Scoreboard" aria-label="Scoreboard">🏆</a>
-            <a class="top-icon" href="/profile/freunde.php" title="Freunde" aria-label="Freunde">👥</a>
-            <a class="top-icon" href="/profile/index.php" title="Mein Profil" aria-label="Mein Profil">👤</a>
+            <a class="top-icon" href="/ideen.php" data-label="Ideen" aria-label="Ideen"><span>💡</span></a>
+            <a class="top-icon" href="/scoreboard.php" data-label="Scoreboard" aria-label="Scoreboard"><span>🏆</span></a>
+            <a class="top-icon" href="/profile/freunde.php" data-label="Freunde" aria-label="Freunde"><span>👥</span></a>
             <details class="bell">
                 <summary class="bell-btn" aria-label="Benachrichtigungen">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
@@ -179,14 +191,11 @@ try {
 
     <h2 class="menu-title">Menü</h2>
     <nav class="nav-grid">
-        <a class="nav-tile" href="/ideen.php"><span class="nav-icon">💡</span>Ideen</a>
         <a class="nav-tile" href="/shared/fragen/fragen.php"><span class="nav-icon">📚</span>Kategorien &amp; Fragen</a>
         <a class="nav-tile" href="verfuegbarkeit.php"><span class="nav-icon">📅</span>Verfügbarkeit planen</a>
-        <a class="nav-tile" href="/scoreboard.php"><span class="nav-icon">🏆</span>Scoreboard</a>
-        <a class="nav-tile" href="/profile/freunde.php"><span class="nav-icon">👥</span>Freunde</a>
-        <a class="nav-tile" href="/profile/index.php"><span class="nav-icon">👤</span>Mein Profil</a>
         <?php if (auth_is_admin()): ?>
             <a class="nav-tile" href="/admin/admin_modes.php"><span class="nav-icon">⚙️</span>Modi verwalten</a>
+            <a class="nav-tile" href="/admin/admin_users.php"><span class="nav-icon">🎓</span>Benutzer &amp; Lehrer</a>
             <a class="nav-tile" href="/admin/admin_ideen.php"><span class="nav-icon">🗂️</span>Ideen verwalten</a>
         <?php endif; ?>
     </nav>
@@ -227,6 +236,36 @@ try {
 <script src="/js/cookie-hinweis.js"></script>
 <script src="/js/bigtext.js"></script>
 <?php require_once __DIR__ . '/profile_bubble.php'; ?>
+<script>
+// Kurzer Ton beim Drüberfahren (und Antippen) eines Icons. Schaltbar über die Sound-Einstellung (kr_sound).
+(function () {
+    var ctx = null;
+    function blip() {
+        if (localStorage.getItem('kr_sound') === '0') return;
+        try {
+            ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+            if (ctx.state === 'suspended') ctx.resume();
+            var t = ctx.currentTime;
+            var o = ctx.createOscillator();
+            var g = ctx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(660, t);
+            o.frequency.exponentialRampToValueAtTime(990, t + 0.08);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(0.12, t + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+            o.connect(g);
+            g.connect(ctx.destination);
+            o.start(t);
+            o.stop(t + 0.13);
+        } catch (e) { /* Ton blockiert: ignorieren */ }
+    }
+    document.querySelectorAll('.top-icon').forEach(function (el) {
+        el.addEventListener('pointerenter', blip);
+        el.addEventListener('focus', blip);
+    });
+})();
+</script>
 </body>
 </html>
-<!-- Version 3.18 -->
+<!-- Version 3.20 -->
