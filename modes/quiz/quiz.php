@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
@@ -231,7 +231,65 @@ function quiz_payload(int $rid, string $me, bool $isHost, string $hostId): array
 // ---------- Session & Rolle ----------
 $user = $_SESSION['discord_user'] ?? null;
 if (!$user) {
-    header('Location: /index.php');
+    // Ohne Anmeldung: Schüler können über den Raum-Code als Gast beitreten (Name, kein Konto)
+    $gcode = strtoupper(trim((string)($_GET['code'] ?? $_POST['code'] ?? '')));
+    if (isset($_GET['api']) || isset($_POST['act'])) {
+        json_out(['ok' => false, 'error' => 'Bitte die Seite neu laden und mit Namen beitreten.'], 401);
+    }
+    if ($gcode === '' || !qq('SELECT 1 FROM kr_rooms WHERE code = ?', [$gcode])->fetchColumn()) {
+        header('Location: /index.php');
+        exit;
+    }
+    $gerr = '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guest_name'])) {
+        $gname = trim((string)$_POST['guest_name']);
+        $glen = mb_strlen($gname);
+        if ($glen >= 2 && $glen <= 20) {
+            $_SESSION['discord_user'] = [
+                'id' => 'guest_' . bin2hex(random_bytes(8)),
+                'name' => $gname,
+                'username' => $gname,
+                'avatar' => null,
+                'premium' => 0,
+                'decoration' => null,
+                'guest' => true,
+            ];
+            header('Location: /modes/quiz/quiz.php?code=' . urlencode($gcode));
+            exit;
+        }
+        $gerr = 'Bitte 2 bis 20 Zeichen eingeben.';
+    }
+    ?>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz-Duell beitreten</title>
+<style>
+body { margin:0; font-family: system-ui, sans-serif; background:#1d1030; color:#fff; }
+.wrap { max-width:420px; margin:0 auto; padding:24px 16px; text-align:center; }
+.card { background:rgba(255,255,255,.08); border-radius:16px; padding:18px; }
+input { padding:12px; border-radius:10px; border:none; font-size:16px; width:100%; box-sizing:border-box; margin:10px 0; }
+.btn { background:#ff6fb5; color:#fff; border:none; border-radius:12px; padding:12px 18px; font-weight:700; font-size:16px; cursor:pointer; width:100%; }
+.err { color:#ffd166; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Quiz-Duell</h1>
+    <div class="card">
+        <p>Raum <strong><?= h($gcode) ?></strong> · Gib deinen Namen ein, um mitzuspielen. Du brauchst kein Konto.</p>
+        <?php if ($gerr !== ''): ?><p class="err"><?= h($gerr) ?></p><?php endif; ?>
+        <form method="post" action="/modes/quiz/quiz.php?code=<?= h(urlencode($gcode)) ?>">
+            <input name="guest_name" maxlength="20" placeholder="Dein Name" required>
+            <button class="btn" type="submit">Beitreten</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
+    <?php
     exit;
 }
 $me = (string)$user['id'];
@@ -646,4 +704,4 @@ poll();
 </body>
 </html>
 
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->
