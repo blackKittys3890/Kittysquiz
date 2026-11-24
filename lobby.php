@@ -1,5 +1,5 @@
 <?php
-// Version 3.21
+// Version 3.22
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -208,6 +208,7 @@ try {
         <a class="nav-tile" href="verfuegbarkeit.php"><span class="nav-icon">📅</span>Verfügbarkeit planen</a>
         <?php if ($isTeacher): ?>
             <a class="nav-tile" href="/gast_link.php"><span class="nav-icon">🔗</span>Gast-Link</a>
+            <a class="nav-tile" href="/modes/quiz/quiz.php"><span class="nav-icon">🎯</span>Quiz-Duell (Lehrer)</a>
         <?php endif; ?>
         <?php if (auth_is_admin()): ?>
             <a class="nav-tile" href="/admin/admin_modes.php"><span class="nav-icon">⚙️</span>Modi verwalten</a>
@@ -284,4 +285,4 @@ try {
 </script>
 </body>
 </html>
-<!-- Version 3.20 -->
+<!-- Version 3.22 -->
