@@ -220,6 +220,12 @@ function user_badges(string $key): array
     return $list;
 }
 
+// Gast über den Lehrer-Link (kein Konto, nur Name für die Runde)
+function is_guest(): bool
+{
+    return !empty($_SESSION['discord_user']['guest']);
+}
+
 // Badge-Bilder als HTML (neben dem Namen)
 function badge_imgs(array $badges): string
 {
@@ -229,4 +235,4 @@ function badge_imgs(array $badges): string
     }
     return $html;
 }
-// Version 1.10
+// Version 1.11
