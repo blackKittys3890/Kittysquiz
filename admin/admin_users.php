@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 // Admin-Seite: Benutzer suchen und die Rolle „Lehrer“ vergeben oder entziehen.
 // Lehrer bekommen automatisch das Lehrer-Badge (nicht selbst wählbar).
 require_once dirname(__DIR__) . '/config.php';
@@ -30,12 +30,23 @@ unset($_SESSION['admin_users_msg']);
 
 // Suche nach Anzeigename oder @-Name
 $q = trim((string)($_GET['q'] ?? ''));
-$sql = 'SELECT user_key, display_name, handle, is_teacher FROM kr_profiles';
+// Filter: nur Benutzer, die seit X Tagen nicht in der Lobby waren (oder nie)
+$inactive = (int)($_GET['inaktiv'] ?? 0);
+
+$sql = 'SELECT user_key, display_name, handle, is_teacher, last_seen_at FROM kr_profiles';
 $params = [];
+$where = [];
 if ($q !== '') {
     $like = '%' . addcslashes($q, '%_\\') . '%';
-    $sql .= ' WHERE display_name LIKE ? OR handle LIKE ?';
-    $params = [$like, $like];
+    $where[] = '(display_name LIKE ? OR handle LIKE ?)';
+    $params[] = $like;
+    $params[] = $like;
+}
+if ($inactive > 0) {
+    $where[] = '(last_seen_at IS NULL OR last_seen_at < NOW() - INTERVAL ' . $inactive . ' DAY)';
+}
+if ($where) {
+    $sql .= ' WHERE ' . implode(' AND ', $where);
 }
 $sql .= ' ORDER BY display_name LIMIT 100';
 $st = db()->prepare($sql);
@@ -62,6 +73,11 @@ $rows = $st->fetchAll();
         <h2>Suchen</h2>
         <form method="get" class="join-row">
             <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Name oder @benutzername">
+            <select name="inaktiv">
+                <option value="0" <?= $inactive === 0 ? 'selected' : '' ?>>alle</option>
+                <option value="30" <?= $inactive === 30 ? 'selected' : '' ?>>seit 30 Tagen inaktiv</option>
+                <option value="90" <?= $inactive === 90 ? 'selected' : '' ?>>seit 90 Tagen inaktiv</option>
+            </select>
             <button type="submit" class="btn btn-small">Suchen</button>
         </form>
         <?php if ($msg): ?><p class="muted" style="margin-top:10px;"><?= htmlspecialchars($msg) ?></p><?php endif; ?>
@@ -79,6 +95,7 @@ $rows = $st->fetchAll();
                 <div>
                     <strong><?= htmlspecialchars($r['display_name'] ?: 'Spieler') ?></strong>
                     <?php if (!empty($r['handle'])): ?><span class="muted">@<?= htmlspecialchars((string)$r['handle']) ?></span><?php endif; ?>
+                    <div class="muted" style="font-size:13px;">zuletzt in der Lobby: <?= !empty($r['last_seen_at']) ? htmlspecialchars(date('d.m.Y H:i', strtotime((string)$r['last_seen_at']))) : 'nie' ?></div>
                 </div>
                 <div style="display:flex;gap:10px;align-items:center;">
                     <label><input type="checkbox" name="teacher" value="1" <?= !empty($r['is_teacher']) ? 'checked' : '' ?>> Lehrer</label>
@@ -90,4 +107,4 @@ $rows = $st->fetchAll();
 </div>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->

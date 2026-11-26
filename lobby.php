@@ -1,5 +1,5 @@
 <?php
-// Version 3.23
+// Version 3.27
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -25,6 +25,14 @@ $me = $user['id'];
 $st = db()->prepare('SELECT is_teacher FROM kr_profiles WHERE user_key = ?');
 $st->execute([$me]);
 $isTeacher = (int)$st->fetchColumn() === 1;
+
+// Letzter Lobby-Besuch merken (für die Admin-Suche)
+if (!empty($me) && !is_guest()) {
+    db()->prepare('UPDATE kr_profiles SET last_seen_at = NOW() WHERE user_key = ?')->execute([$me]);
+}
+
+// Gastdaten aufräumen: Gäste ohne Aktivität seit 6 Stunden werden aus den Räumen entfernt
+db()->prepare("DELETE FROM kr_room_players WHERE LEFT(discord_id, 6) = 'guest_' AND last_seen < NOW() - INTERVAL 6 HOUR")->execute();
 
 // Raum erstellen
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create') {
@@ -206,10 +214,15 @@ try {
     <nav class="nav-grid">
         <a class="nav-tile" href="/shared/fragen/fragen.php"><span class="nav-icon">📚</span>Kategorien &amp; Fragen</a>
         <a class="nav-tile" href="verfuegbarkeit.php"><span class="nav-icon">📅</span>Verfügbarkeit planen</a>
+        <?php if (str_starts_with((string)$me, 'local_')): ?>
+            <a class="nav-tile" href="/2fa_setup.php"><span class="nav-icon">🔐</span>2FA einrichten</a>
+        <?php endif; ?>
         <?php if ($isTeacher): ?>
             <a class="nav-tile" href="/gast_link.php"><span class="nav-icon">🔗</span>Gast-Link</a>
             <a class="nav-tile" href="/modes/quiz/quiz.php"><span class="nav-icon">🎯</span>Quiz-Duell (Lehrer)</a>
             <a class="nav-tile" href="/modes/mathe_fussball/mathe_fussball.php"><span class="nav-icon">⚽</span>Mathe-Fußball (Lehrer)</a>
+            <a class="nav-tile" href="/modes/bibel_fussball/bibel_fussball.php"><span class="nav-icon">📖</span>Bibelfußball (Lehrer)</a>
+            <a class="nav-tile" href="/modes/rueckblick/rueckblick.php"><span class="nav-icon">📊</span>Lehrer-Rückblick</a>
         <?php endif; ?>
         <?php if (auth_is_admin()): ?>
             <a class="nav-tile" href="/admin/admin_modes.php"><span class="nav-icon">⚙️</span>Modi verwalten</a>
@@ -286,4 +299,4 @@ try {
 </script>
 </body>
 </html>
-<!-- Version 3.23 -->
+<!-- Version 3.27 -->

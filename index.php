@@ -1,5 +1,5 @@
 <?php
-// Version 1.24
+// Version 1.25
 // Immer über /index.php aufrufen: das Vector-Widget schickt die Adresse der aktuellen Seite zurück
 if (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) === '/') {
     $q = $_SERVER['QUERY_STRING'] ?? '';
@@ -85,6 +85,7 @@ unset($_SESSION['login_error']);
             <button class="btn btn-pink btn-block" type="submit">Anmelden</button>
         </form>
         <a class="register" href="local_register.php">Neues Konto erstellen</a>
+        <a class="register" href="/passwort/passwort_vergessen.php">Passwort vergessen?</a>
 
         <div class="divider">oder</div>
 
@@ -130,4 +131,4 @@ document.querySelectorAll('.btn-google, .btn-discord').forEach(function (a) {
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.24 -->
+<!-- Version 1.25 -->

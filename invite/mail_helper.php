@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 // Gemeinsame Mail-Hilfe für Einladungen und Erinnerungen.
 
 const MAIL_DAILY_LIMIT = 20;
@@ -35,4 +35,33 @@ function parse_emails(string $raw): array
     }
     return array_values(array_unique($ok));
 }
-// Version 1.1
+// Version 1.2
+
+// Abmelde-Link für Einladungs- und Erinnerungsmails (nicht für Konto-Mails).
+// Voraussetzung: MAIL_SECRET in config.php, z. B. define('MAIL_SECRET', 'langer-zufaelliger-text');
+function mail_optout_key(string $email): string
+{
+    return hash_hmac('sha256', strtolower($email), MAIL_SECRET);
+}
+
+function mail_optout_url(string $email): ?string
+{
+    if (!defined('MAIL_SECRET') || MAIL_SECRET === '') return null;
+    return 'https://kittysquiz.app/abmelden.php?e=' . rawurlencode(strtolower($email)) . '&k=' . mail_optout_key($email);
+}
+
+// Wie send_app_mail, aber: Abgemeldete bekommen nichts, alle anderen bekommen den Abmelde-Link
+function send_invite_mail(string $to, string $subject, string $text): bool
+{
+    $to = strtolower($to);
+    $st = db()->prepare('SELECT 1 FROM kr_mail_optout WHERE email = ?');
+    $st->execute([$to]);
+    if ($st->fetchColumn()) return false;
+    $url = mail_optout_url($to);
+    if ($url !== null) {
+        $text .= "\n---\nKeine weiteren Einladungen per E-Mail: $url\n";
+    }
+    return send_app_mail($to, $subject, $text);
+}
+
+// Version 1.2

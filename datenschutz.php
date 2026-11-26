@@ -1,5 +1,5 @@
 <?php
-// Version 1.12
+// Version 1.16
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -187,7 +187,8 @@
         </p>
         <p>
             Wenn Sie als Empfänger keine Einladung mehr möchten, antworten Sie auf die Mail oder schreiben Sie an die
-            oben genannte Kontaktadresse. Wir entfernen die Adresse dann aus unseren Daten.
+            oben genannte Kontaktadresse. Wir entfernen die Adresse dann aus unseren Daten. Über den Link „Keine weiteren
+            Einladungen per E-Mail“ in jeder Einladungs- und Erinnerungsmail können Sie sich direkt abmelden.
         </p>
 
         <h2>12. Ideen</h2>
@@ -253,6 +254,11 @@
             Badges können andere angemeldete Nutzer aufrufen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
         </p>
         <p>
+            Außerdem sehen Sie auf der Freunde-Seite, welche Ihrer Freundinnen und Freunde gerade in einem Raum spielen. Dafür
+            wird der Zeitpunkt der letzten Aktivität im Raum (ca. 60 Sekunden) genutzt. Einladungen in Ihren Raum werden gespeichert,
+            bis sie beantwortet werden oder der Raum endet.
+        </p>
+        <p>
             Auf der Freunde-Seite können Sie einstellen, dass Sie per E-Mail benachrichtigt werden, wenn Ihnen jemand eine
             Freundschaftsanfrage schickt. Diese Einstellung ist standardmäßig ausgeschaltet. Nur wenn Sie sie einschalten,
             senden wir die Mail an die bei uns hinterlegte E-Mail-Adresse, Absender noreply@kittysquiz.app. Die Mail enthält den
@@ -267,11 +273,57 @@
             Art. 6 Abs. 1 lit. b DSGVO bzw. lit. f DSGVO (Bearbeitung Ihrer Anfrage).
         </p>
 
-        <h2>19. Stand</h2>
+        <h2>19. Schulnutzung und Gäste</h2>
+        <p>
+            Lehrkräfte können Räume für den Unterricht anlegen und einen Gast-Link an ihre Schülerinnen und Schüler weitergeben.
+            Gäste geben nur einen Namen ein und brauchen kein Konto. Dieser Name wird ausschließlich für die laufende Runde
+            verwendet. Gäste werden nicht in der Spielhistorie gespeichert. Inaktive Gäste werden nach 6 Stunden aus den Räumen
+            entfernt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (Durchführung des Unterrichts).
+        </p>
+        <p>
+            Die Verantwortung für den Einsatz im Unterricht, insbesondere für die Information der Schülerinnen und Schüler und
+            ihrer Eltern, liegt bei der jeweiligen Schule bzw. Lehrkraft.
+        </p>
+        <p>
+            Lehrkräfte können Ergebnisse ihrer eigenen Räume (Teamnamen, Punkte und Mitglieder) einsehen und als CSV-Datei
+            herunterladen. Diese Daten dienen der Auswertung im Unterricht.
+        </p>
+
+        <h2>20. Passwort zurücksetzen und Erfolge</h2>
+        <p>
+            Wer ein lokales Konto hat und das Passwort vergessen hat, kann einen Link zum Zurücksetzen anfordern. Dafür verarbeiten
+            wir die bei uns hinterlegte E-Mail-Adresse und einen zeitlich begrenzten, nur gespeicherten Prüfwert des Links (1 Stunde
+            gültig, einmal verwendbar). Das Passwort wird nur als Hash gespeichert. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+        </p>
+        <p>
+            Im Spielerprofil zeigen wir angemeldeten Nutzern Erfolge, die sich aus der Anzahl gespielter Runden, Siege und
+            Punkte in der Spielhistorie ergeben. Es werden keine zusätzlichen Daten dafür gespeichert. Rechtsgrundlage ist
+            Art. 6 Abs. 1 lit. b DSGVO.
+        </p>
+
+        <h2>21. Zwei-Faktor-Anmeldung und Abmeldung von E-Mails</h2>
+        <p>
+            Wer ein lokales Konto hat, kann die Zwei-Faktor-Anmeldung (TOTP) freiwillig einrichten. Dafür speichern wir einen
+            geheimen Schlüssel, der in Ihrer Authenticator-App hinterlegt wird. Zusätzlich erzeugen wir acht Backup-Codes, die
+            nur einmal angezeigt werden. Wir speichern davon ausschließlich Prüfwerte (Hashes), keine Klartext-Codes. Rechtsgrundlage
+            ist Art. 6 Abs. 1 lit. b DSGVO sowie Art. 6 Abs. 1 lit. f DSGVO (Schutz des Kontos).
+        </p>
+        <p>
+            Wenn Sie den Schlüssel oder die Backup-Codes verlieren, können Sie sich nur mit dem Passwort anmelden, sofern die
+            Zwei-Faktor-Anmeldung nicht zurückgesetzt wurde. Die Einrichtung können Sie in der Lobby jederzeit neu vornehmen.
+        </p>
+        <p>
+            Wer keine Einladungen oder Erinnerungen per E-Mail mehr erhalten möchte, kann sich über den Abmelde-Link in der Mail
+            abmelden. Dafür speichern wir die E-Mail-Adresse in einer Abmeldeliste, damit wir keine weiteren Mails an diese
+            Adresse versenden. Die Abmeldung betrifft keine Bestätigungs- oder Passwortmails. Rechtsgrundlage ist Art. 6 Abs. 1
+            lit. f DSGVO (Wunsch der Empfänger, keine weiteren Mails zu erhalten).
+        </p>
+
+        <h2>22. Stand</h2>
         <p>
             Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.12 -->
+<!-- Version 1.16 -->

@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 // Admin-Seite: Spielmodi ein- und ausschalten (z. B. für die Testphase).
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -17,6 +17,7 @@ $modes = [
     'hearts' => 'Der Dümmste Fliegt',
     'eingestuhlt' => 'Eingeschult',
     'dumm_drauf' => 'Hau drauf',
+    'schnellmodus' => 'Schnellmodus (Punkte-Board)',
 ];
 
 $msg = '';
@@ -68,4 +69,4 @@ foreach ($modes as $key => $label) {
 </div>
 </body>
 </html>
-<!-- Version 1.1 -->
+<!-- Version 1.2 -->

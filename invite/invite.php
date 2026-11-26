@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 // Einladung und Erinnerung per E-Mail. Nur der Host eines Raums darf das.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -60,10 +60,10 @@ $text = "Hallo,\n\n$hostName lädt dich zu einem Spiel auf KittysRätsel ein.\n\
 
 $sent = 0;
 foreach ($emails as $e) {
-    if (send_app_mail($e, $subject, $text)) {
+    if (send_invite_mail($e, $subject, $text)) {
         db()->prepare('INSERT INTO kr_invites (host_key, room_code, email) VALUES (?, ?, ?)')->execute([$me, $code, $e]);
         $sent++;
     }
 }
 back("Einladung an $sent von " . count($emails) . " Adresse(n) verschickt.");
-// Version 1.1
+// Version 1.2

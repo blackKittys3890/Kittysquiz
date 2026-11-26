@@ -19,12 +19,12 @@ if (str_contains($login, '@')) {
     $st->execute([strtolower($login)]);
     $key = (string)$st->fetchColumn();
     if (str_starts_with($key, 'local_')) {
-        $st = db()->prepare('SELECT id, username, avatar, password_hash FROM kr_users WHERE id = ?');
+        $st = db()->prepare('SELECT id, username, avatar, password_hash, totp_secret FROM kr_users WHERE id = ?');
         $st->execute([(int)substr($key, 6)]);
         $row = $st->fetch();
     }
 } else {
-    $st = db()->prepare('SELECT id, username, avatar, password_hash FROM kr_users WHERE username = ?');
+    $st = db()->prepare('SELECT id, username, avatar, password_hash, totp_secret FROM kr_users WHERE username = ?');
     $st->execute([$login]);
     $row = $st->fetch();
 }
@@ -32,6 +32,13 @@ if (str_contains($login, '@')) {
 if (!$row || !password_verify($password, $row['password_hash'])) {
     $_SESSION['login_error'] = 'Benutzername/E-Mail oder Passwort ist falsch.';
     header('Location: index.php');
+    exit;
+}
+
+// 2FA aktiv: erst den Code abfragen
+if (!empty($row['totp_secret'])) {
+    $_SESSION['pending_2fa'] = ['id' => (int)$row['id'], 'remember' => !empty($_POST['remember']), 'tries' => 0];
+    header('Location: 2fa_login.php');
     exit;
 }
 
@@ -45,9 +52,6 @@ $user = [
     'decoration' => null,
 ];
 $_SESSION['discord_user'] = $user;
-
-$_SESSION['discord_user'] = auth_apply_profile($_SESSION['discord_user']);
-$user = $_SESSION['discord_user'];
 
 if (!empty($_POST['remember'])) {
     remember_set($user);
