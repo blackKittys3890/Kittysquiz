@@ -1,10 +1,17 @@
 <?php
-// Version 1.0
+// Version 1.2
 // Öffentliche Profilseite eines Spielers (nur für angemeldete Nutzer): Name, @-Name, Profilbild, Badges.
 // Erfolge folgen später.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
 require_once dirname(__DIR__) . '/auth.php';
+
+// Gäste haben keine Profilseiten: zurück in den Raum
+if (is_guest()) {
+    $back = (string)($_SESSION['guest_room_page'] ?? '');
+    header('Location: ' . ($back !== '' ? $back : '/index.php'));
+    exit;
+}
 
 $me = $_SESSION['discord_user'] ?? null;
 if (!$me) { header('Location: /index.php'); exit; }
@@ -20,6 +27,42 @@ if ($handle !== '') {
 $isMe   = $p && (string)$p['user_key'] === (string)$me['id'];
 $badges = $p ? user_badges((string)$p['user_key']) : [];
 $name   = $p ? ($p['display_name'] ?: 'Spieler') : '';
+
+// Erfolge aus der Spielhistorie: Runden, Siege und Gesamtpunkte
+$achievements = [];
+if ($p) {
+    $rounds = 0; $wins = 0; $total = 0;
+    $hs = db()->prepare('SELECT results FROM kr_history WHERE results LIKE ?');
+    $hs->execute(['%"id":"' . addcslashes((string)$p['user_key'], '%_\\') . '"%']);
+    foreach ($hs->fetchAll() as $row) {
+        $teams = json_decode((string)$row['results'], true) ?: [];
+        $max = null;
+        foreach ($teams as $t) {
+            $max = max($max ?? PHP_INT_MIN, (int)($t['points'] ?? 0));
+        }
+        foreach ($teams as $t) {
+            $inTeam = false;
+            foreach (($t['members'] ?? []) as $m) {
+                if ((string)($m['id'] ?? '') === (string)$p['user_key']) { $inTeam = true; break; }
+            }
+            if (!$inTeam) continue;
+            $rounds++;
+            $pts = (int)($t['points'] ?? 0);
+            $total += $pts;
+            if ($pts === $max) $wins++;
+            break;
+        }
+    }
+    $achievements = [
+        ['Erste Runde gespielt', $rounds >= 1],
+        ['5 Runden gespielt', $rounds >= 5],
+        ['20 Runden gespielt', $rounds >= 20],
+        ['Erster Sieg', $wins >= 1],
+        ['5 Siege', $wins >= 5],
+        ['1.000 Punkte gesammelt', $total >= 1000],
+        ['10.000 Punkte gesammelt', $total >= 10000],
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -63,11 +106,17 @@ $name   = $p ? ($p['display_name'] ?: 'Spieler') : '';
 
             <section class="card">
                 <h2>Erfolge</h2>
-                <p class="muted">Erfolge kommen bald.</p>
+                <ul style="list-style:none;padding:0;margin:0;">
+                    <?php foreach ($achievements as [$label, $done]): ?>
+                        <li style="padding:6px 0;<?= $done ? '' : 'opacity:.45;' ?>">
+                            <?= $done ? '🏆' : '🔒' ?> <?= htmlspecialchars($label) ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             </section>
         <?php endif; ?>
     </div>
 </div>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.2 -->

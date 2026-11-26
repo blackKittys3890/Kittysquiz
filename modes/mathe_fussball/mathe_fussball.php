@@ -1,5 +1,5 @@
 <?php
-// Version 1.0
+// Version 1.1
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
@@ -72,7 +72,15 @@ function mf_fresh(string $level, string $nameA, string $nameB): array
         'score' => ['A' => 0, 'B' => 0],
         'q' => mf_question($level),
         'msg' => 'Los geht’s! ' . $nameA . ' ist am Zug.',
+        'reveal' => false,
     ];
+}
+
+// Publikum sieht die Lösung nur, wenn die Lehrkraft sie für alle freigegeben hat
+function mf_public(array $s): array
+{
+    if (empty($s['reveal'])) unset($s['q']['answer']);
+    return $s;
 }
 
 // ---------- Zugriff: nur Lehrkräfte ----------
@@ -89,6 +97,11 @@ if ((int)$stT->fetchColumn() !== 1) {
     exit('Mathe-Fußball ist nur für Lehrkräfte.');
 }
 
+// Zustand für das Publikum-Fenster (ohne Lösung, solange nicht freigegeben)
+if (isset($_GET['state'])) {
+    mf_json(['ok' => true, 'state' => mf_public($_SESSION['mf'] ?? mf_fresh('Team A', 'Team B'))]);
+}
+
 // ---------- Aktionen ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['act'])) {
     $act = (string)$_POST['act'];
@@ -99,7 +112,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['act'])) {
         $nA = trim((string)($_POST['nameA'] ?? '')) ?: 'Team A';
         $nB = trim((string)($_POST['nameB'] ?? '')) ?: 'Team B';
         $s = mf_fresh($level, mb_substr($nA, 0, 20), mb_substr($nB, 0, 20));
+    } elseif ($act === 'reveal') {
+        $s['reveal'] = empty($s['reveal']);
     } elseif ($act === 'answer') {
+        $s['reveal'] = false;
         $right = ($_POST['result'] ?? '') === 'right';
         $names = $s['names'];
         $team = $s['stage'] === 'main' ? $s['turn'] : ($s['turn'] === 'A' ? 'B' : 'A');
@@ -141,6 +157,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['act'])) {
 }
 
 $state = $_SESSION['mf'] ?? mf_fresh('leicht', 'Team A', 'Team B');
+$pub = isset($_GET['publikum']);
+if ($pub) {
+    $state = mf_public($state);
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -170,7 +190,7 @@ input, select { padding:8px; border-radius:10px; border:none; font-size:15px; ma
 </head>
 <body>
 <div class="wrap">
-    <p><a href="/lobby.php">← Lobby</a></p>
+    <p><a href="/lobby.php">← Lobby</a> · <a href="/modes/mathe_fussball/mathe_fussball.php?publikum=1" target="_blank">Publikum-Fenster öffnen</a></p>
     <h1>Mathe-Fußball</h1>
 
     <div class="card">
@@ -191,6 +211,8 @@ input, select { padding:8px; border-radius:10px; border:none; font-size:15px; ma
 <script>
 const URL_MF = '/modes/mathe_fussball/mathe_fussball.php';
 let S = <?= json_encode($state, JSON_UNESCAPED_UNICODE) ?>;
+const PUB = <?= $pub ? 'true' : 'false' ?>;
+let localShow = false;   // Lösung nur auf diesem Gerät
 const game = document.getElementById('game');
 
 function esc(s) { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; }
@@ -212,9 +234,13 @@ function render() {
         <div class="field">${cells.join('')}</div>
         <p>${who}</p>
         <div class="question">${esc(S.q.text)} = ?</div>
-        <p class="solution">Lösung: ${S.q.answer}</p>
-        <button class="btn ok" data-result="right">✅ Richtig</button>
-        <button class="btn bad" data-result="wrong">❌ Falsch</button>
+        ${PUB
+            ? (S.reveal ? `<p class="solution big">Lösung: ${esc(S.q.answer)}</p>` : '')
+            : `<p class="solution">${localShow ? 'Lösung: ' + esc(S.q.answer) : ''}
+               <button class="btn btn-ghost" data-local="1">${localShow ? 'Lösung hier ausblenden' : 'Lösung nur hier zeigen'}</button>
+               <button class="btn btn-ghost" data-reveal="1">${S.reveal ? 'Lösung für alle ausblenden' : 'Lösung für alle zeigen'}</button></p>`}
+        ${PUB ? '' : `<button class="btn ok" data-result="right">✅ Richtig</button>
+        <button class="btn bad" data-result="wrong">❌ Falsch</button>`}
         <p class="msg">${esc(S.msg)}</p>`;
 }
 
@@ -225,8 +251,11 @@ async function send(params) {
 }
 
 game.addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-result]');
-    if (b) send({ act: 'answer', result: b.dataset.result });
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.result) send({ act: 'answer', result: b.dataset.result });
+    else if (b.dataset.reveal) send({ act: 'reveal' });
+    else if (b.dataset.local) { localShow = !localShow; render(); }
 });
 
 document.getElementById('newForm').addEventListener('submit', (e) => {
@@ -236,7 +265,16 @@ document.getElementById('newForm').addEventListener('submit', (e) => {
 });
 
 render();
+if (PUB) {
+    // Publikum-Fenster: keine Steuerung, aktualisiert sich selbst
+    document.getElementById('newForm').parentElement.style.display = 'none';
+    setInterval(async () => {
+        const r = await fetch(URL_MF + '?state=1', { cache: 'no-store' });
+        const j = await r.json();
+        if (j.ok) { S = j.state; render(); }
+    }, 1000);
+}
 </script>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->
