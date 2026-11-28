@@ -1,5 +1,5 @@
 <?php
-// Version 1.2
+// Version 1.4
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/api_keys_lib.php';
 require_once dirname(__DIR__, 2) . '/db.php';
@@ -10,6 +10,7 @@ if (!$user) { header('Location: /index.php'); exit; }
 $me = $user['id'];
 
 $msg = '';
+$katPrefill = trim((string)($_GET['kategorie'] ?? ''));
 $draft = $_SESSION['ki_draft'] ?? null;   // { kategorie, fragen: [ {punkte, frage, antwort} ] }
 
 // Anfrage an den gewählten KI-Anbieter mit dem Key des Kontos. Gibt eine Liste von Fragen zurück oder wirft eine Exception.
@@ -19,9 +20,14 @@ function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil
         throw new RuntimeException('Kein gültiger KI-Schlüssel gewählt. Trage deinen Key unter Profil → API-Schlüssel ein.');
     }
     $pkt = implode(', ', $punkte);
+    $auto = trim($kategorie) === '';
     $system = 'Du schreibst Quizfragen auf Deutsch. Antworte ausschließlich mit gültigem JSON, ohne Erklärtext, ohne Markdown. '
-        . 'Format: [{"punkte": 100, "frage": "...", "antwort": "..."}, ...]. Antworten kurz und eindeutig.';
-    $user = "Kategorie: $kategorie\nAnzahl Fragen: $anzahl\nPunktwerte (verteilen): $pkt\n"
+        . ($auto
+            ? 'Format: [{"kategorie": "...", "punkte": 100, "frage": "...", "antwort": "..."}, ...]. Wähle selbst passende, abwechslungsreiche Kategorien mit kurzen Namen (höchstens 40 Zeichen), das Feld "kategorie" ist Pflicht. '
+            : 'Format: [{"punkte": 100, "frage": "...", "antwort": "..."}, ...]. ')
+        . 'Antworten kurz und eindeutig.';
+    $user = ($auto ? "Kategorie: frei wählen (passend zum Stil)\n" : "Kategorie: $kategorie\n")
+        . "Anzahl Fragen: $anzahl\nPunktwerte (verteilen): $pkt\n"
         . ($stil !== '' ? "Stil/Hinweise: $stil\n" : '')
         . 'Die Fragen müssen faktisch korrekt sein. Keine Fragen mit mehreren richtigen Antworten.';
 
@@ -42,6 +48,7 @@ function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil
     foreach ($list as $item) {
         if (!isset($item['frage'], $item['antwort'])) continue;
         $out[] = [
+            'kategorie' => mb_substr(trim((string)($item['kategorie'] ?? '')) ?: $kategorie, 0, 100),
             'punkte' => (int)($item['punkte'] ?? 100),
             'frage'  => trim((string)$item['frage']),
             'antwort' => trim((string)$item['antwort']),
@@ -58,8 +65,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $anzahl = max(1, min(20, (int)($_POST['anzahl'] ?? 5)));
         $punkte = array_values(array_filter(array_map('intval', $_POST['punkte'] ?? []), fn($p) => $p >= 1 && $p <= 1000));
         $stil = trim($_POST['stil'] ?? '');
-        if ($kat === '' || mb_strlen($kat) > 100) {
-            $msg = 'Bitte eine Kategorie angeben (1 bis 100 Zeichen).';
+        $auto = isset($_POST['auto_kategorie']);
+        if ($auto) $kat = '';
+        if (!$auto && ($kat === '' || mb_strlen($kat) > 100)) {
+            $msg = 'Bitte eine Kategorie angeben (1 bis 100 Zeichen) oder die KI Kategorien vorschlagen lassen.';
         } elseif (!$punkte) {
             $msg = 'Bitte mindestens einen Punktwert wählen.';
         } else {
@@ -67,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $prov = (string)($_POST['provider'] ?? '');
                 $key = ak_is_ki_provider($prov) ? ak_get($me, $prov) : null;
                 $fragen = ki_generate($kat, $anzahl, $punkte, $stil, $prov, (string)$key);
-                $_SESSION['ki_draft'] = ['kategorie' => $kat, 'fragen' => $fragen];
+                $_SESSION['ki_draft'] = ['kategorie' => $kat !== '' ? $kat : 'Von der KI vorgeschlagen', 'fragen' => $fragen];
                 $draft = $_SESSION['ki_draft'];
                 $msg = count($fragen) ? '' : 'Die KI hat keine brauchbaren Fragen geliefert. Bitte nochmal versuchen.';
             } catch (Throwable $e) {
@@ -82,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($draft['fragen'] as $i => $f) {
             if (!in_array($i, $auswahl, true)) continue;
             $records[] = [
-                'kategorie' => $draft['kategorie'],
+                'kategorie' => $f['kategorie'] ?? $draft['kategorie'],
                 'punkte' => $f['punkte'],
                 'frage' => $f['frage'],
                 'antwort' => $f['antwort'],
@@ -152,7 +161,11 @@ try {
                 </select>
             </label>
             <label>Kategorie (Name)
-                <input type="text" name="kategorie" maxlength="100" required placeholder="z. B. Geografie, Harry Potter, Tiere">
+                <input type="text" name="kategorie" maxlength="100" value="<?= htmlspecialchars(mb_substr($katPrefill, 0, 100)) ?>" placeholder="z. B. Geografie, Harry Potter, Tiere">
+            </label>
+            <label style="display:flex;align-items:center;gap:8px">
+                <input type="checkbox" name="auto_kategorie" value="1" style="width:auto;margin:0">
+                Die KI soll passende Kategorien selbst vorschlagen (Kategorie-Feld dann leer lassen)
             </label>
             <label>Anzahl Fragen (1 bis 20)
                 <input type="number" name="anzahl" min="1" max="20" value="5">
@@ -179,10 +192,11 @@ try {
             <form method="post">
                 <input type="hidden" name="action" value="save">
                 <table>
-                    <tr><th></th><th>Punkte</th><th>Frage</th><th>Antwort</th></tr>
+                    <tr><th></th><th>Kategorie</th><th>Punkte</th><th>Frage</th><th>Antwort</th></tr>
                     <?php foreach ($draft['fragen'] as $i => $f): ?>
                         <tr>
                             <td><input type="checkbox" name="ja[]" value="<?= $i ?>" checked></td>
+                            <td><?= htmlspecialchars($f['kategorie'] ?? $draft['kategorie']) ?></td>
                             <td><?= (int)$f['punkte'] ?></td>
                             <td><?= htmlspecialchars($f['frage']) ?></td>
                             <td><?= htmlspecialchars($f['antwort']) ?></td>
@@ -199,4 +213,4 @@ try {
     <?php endif; ?>
 </body>
 </html>
-<!-- Version 1.2 -->
+<!-- Version 1.4 -->

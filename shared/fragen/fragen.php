@@ -1,5 +1,5 @@
 <?php
-// Version 1.5
+// Version 1.6
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 
@@ -199,6 +199,9 @@ $isOwner = $selected && $selected['owner_id'] === $me;
         .inline { display: inline; }
         .thumb { max-width: 80px; max-height: 80px; border-radius: 8px; display: block; margin-top: 5px; }
         .actions { display: flex; gap: 6px; }
+        .ki-btn { display: inline-block; padding: 10px 16px; border-radius: 8px; background: #ff6fb5; color: #fff; font-weight: bold; text-decoration: none; margin-top: 8px; }
+        .ki-btn:hover { text-decoration: none; filter: brightness(1.1); }
+        #katSearch { margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -216,14 +219,17 @@ $isOwner = $selected && $selected['owner_id'] === $me;
             </label>
             <button type="submit">Kategorie anlegen</button>
         </form>
+        <p class="muted">Oder die Fragen gleich mit KI erstellen lassen:</p>
+        <a class="ki-btn" href="fragen_ki.php">Mit KI erstellen</a>
     </div>
 
     <div class="panel">
         <h2>Alle Kategorien</h2>
-        <table>
+        <input type="search" id="katSearch" placeholder="Kategorie suchen …" autocomplete="off">
+        <table id="katTable">
             <tr><th>Name</th><th>Fragen</th><th></th></tr>
             <?php foreach ($categories as $c): ?>
-                <tr>
+                <tr data-name="<?= htmlspecialchars(mb_strtolower($c['name'])) ?>">
                     <td>
                         <a href="?cat=<?= (int)$c['id'] ?>"><?= htmlspecialchars($c['name']) ?></a>
                         <?php if ($c['owner_id'] === $me): ?><span class="muted">(deine)</span><?php endif; ?>
@@ -255,6 +261,9 @@ $isOwner = $selected && $selected['owner_id'] === $me;
     <?php if ($selected): ?>
         <div class="panel">
             <h2>Fragen: <?= htmlspecialchars($selected['name']) ?></h2>
+            <?php if ($isOwner): ?>
+                <a class="ki-btn" href="fragen_ki.php?kategorie=<?= urlencode($selected['name']) ?>">KI-Fragen für „<?= htmlspecialchars($selected['name']) ?>“ generieren</a>
+            <?php endif; ?>
             <p class="muted">Teil-Link (wer den Link öffnet, kann die Kategorie kopieren):</p>
             <input type="text" readonly onclick="this.select()" value="<?= htmlspecialchars('https://' . $_SERVER['HTTP_HOST'] . strtok($_SERVER['REQUEST_URI'], '?') . '?cat=' . (int)$selected['id']) ?>">
 
@@ -353,6 +362,20 @@ $isOwner = $selected && $selected['owner_id'] === $me;
             </table>
         </div>
     <?php endif; ?>
+<script>
+// Kategorie-Suche: filtert die Liste beim Tippen (ohne Groß-/Kleinschreibung)
+(function () {
+    const input = document.getElementById('katSearch');
+    const rows = document.querySelectorAll('#katTable tr[data-name]');
+    if (!input) return;
+    input.addEventListener('input', function () {
+        const q = input.value.trim().toLowerCase();
+        rows.forEach(function (r) {
+            r.style.display = (q === '' || r.dataset.name.includes(q)) ? '' : 'none';
+        });
+    });
+})();
+</script>
 </body>
 </html>
-<!-- Version 1.5 -->
+<!-- Version 1.6 -->
