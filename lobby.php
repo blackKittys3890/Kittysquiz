@@ -3,7 +3,7 @@ ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
 
-// Version 3.27
+// Version 3.28
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
@@ -129,6 +129,7 @@ try {
             <a class="top-icon" href="/ideen.php" data-label="Ideen" aria-label="Ideen"><span>💡</span></a>
             <a class="top-icon" href="/scoreboard.php" data-label="Scoreboard" aria-label="Scoreboard"><span>🏆</span></a>
             <a class="top-icon" href="/profile/freunde.php" data-label="Freunde" aria-label="Freunde"><span>👥</span></a>
+            <a class="top-icon" href="/updates/updates.php" data-label="Blog" aria-label="Blog"><span>📖</span></a>
             <details class="bell">
                 <summary class="bell-btn" aria-label="Benachrichtigungen">
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
@@ -303,4 +304,4 @@ try {
 </script>
 </body>
 </html>
-<!-- Version 3.27 -->
+<!-- Version 3.28 -->
