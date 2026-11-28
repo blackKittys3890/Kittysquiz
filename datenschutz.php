@@ -1,5 +1,5 @@
 <?php
-// Version 1.17
+// Version 1.18
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -321,7 +321,7 @@
 
         <h2>22. API-Schlüssel für KI-Anbieter</h2>
         <p>
-            Angemeldete Konten können eigene Schlüssel von KI-Anbietern (z. B. xAI, Groq, Google Gemini, Anthropic Claude,
+            Angemeldete Konten können eigene Schlüssel von KI-Anbietern (z. B. Groq, Google Gemini, Anthropic Claude,
             OpenAI ChatGPT oder DeepSeek) in ihrem Profil hinterlegen. Der Schlüssel wird verschlüsselt gespeichert, der
             Klartext wird nach dem Speichern nicht mehr angezeigt. Wir nutzen den Schlüssel ausschließlich, um Anfragen
             in deinem Auftrag an den jeweiligen Anbieter zu senden, zum Beispiel zum Erstellen von Quizfragen. Dabei
@@ -332,9 +332,12 @@
 
         <h2>23. Stand</h2>
         <p>
-            Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern. - Letztes Update: 28. November 2026  um 15:00 Uhr
+            Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
+        </p>
+        <p>
+            <strong>Letztes Update:</strong> 28. November 2026 um 15:05 Uhr
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.17 -->
+<!-- Version 1.18 -->

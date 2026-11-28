@@ -1,5 +1,5 @@
 <?php
-// Version 1.1
+// Version 1.2
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/api_keys_lib.php';
 require_once dirname(__DIR__, 2) . '/db.php';
@@ -12,11 +12,11 @@ $me = $user['id'];
 $msg = '';
 $draft = $_SESSION['ki_draft'] ?? null;   // { kategorie, fragen: [ {punkte, frage, antwort} ] }
 
-// Anfrage an die KI (xAI / Grok). Gibt eine Liste von Fragen zurück oder wirft eine Exception.
-function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil, string $apiKey): array
+// Anfrage an den gewählten KI-Anbieter mit dem Key des Kontos. Gibt eine Liste von Fragen zurück oder wirft eine Exception.
+function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil, string $provider, string $apiKey): array
 {
-    if ($apiKey === '') {
-        throw new RuntimeException('Kein xAI-Schlüssel hinterlegt. Trage deinen Key unter Profil → API-Schlüssel ein.');
+    if ($apiKey === '' || !ak_is_ki_provider($provider)) {
+        throw new RuntimeException('Kein gültiger KI-Schlüssel gewählt. Trage deinen Key unter Profil → API-Schlüssel ein.');
     }
     $pkt = implode(', ', $punkte);
     $system = 'Du schreibst Quizfragen auf Deutsch. Antworte ausschließlich mit gültigem JSON, ohne Erklärtext, ohne Markdown. '
@@ -25,31 +25,7 @@ function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil
         . ($stil !== '' ? "Stil/Hinweise: $stil\n" : '')
         . 'Die Fragen müssen faktisch korrekt sein. Keine Fragen mit mehreren richtigen Antworten.';
 
-    $body = json_encode([
-        'model' => defined('XAI_MODEL') ? XAI_MODEL : 'grok-4.7',
-        'messages' => [
-            ['role' => 'system', 'content' => $system],
-            ['role' => 'user', 'content' => $user],
-        ],
-        'temperature' => 0.7,
-    ], JSON_UNESCAPED_UNICODE);
-
-    $ch = curl_init('https://api.x.ai/v1/chat/completions');
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => $body,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . $apiKey],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 60,
-    ]);
-    $raw = curl_exec($ch);
-    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    if ($raw === false || $code >= 400) {
-        throw new RuntimeException('Die KI-Anfrage ist fehlgeschlagen (HTTP ' . $code . ').');
-    }
-    $resp = json_decode($raw, true);
-    $text = $resp['choices'][0]['message']['content'] ?? '';
+    $text = ak_chat($provider, $apiKey, $system, $user);
 
     // JSON aus der Antwort herausziehen
     $start = strpos($text, '[');
@@ -88,7 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = 'Bitte mindestens einen Punktwert wählen.';
         } else {
             try {
-                $fragen = ki_generate($kat, $anzahl, $punkte, $stil, (string)ak_get($me, 'xai'));
+                $prov = (string)($_POST['provider'] ?? '');
+                $key = ak_is_ki_provider($prov) ? ak_get($me, $prov) : null;
+                $fragen = ki_generate($kat, $anzahl, $punkte, $stil, $prov, (string)$key);
                 $_SESSION['ki_draft'] = ['kategorie' => $kat, 'fragen' => $fragen];
                 $draft = $_SESSION['ki_draft'];
                 $msg = count($fragen) ? '' : 'Die KI hat keine brauchbaren Fragen geliefert. Bitte nochmal versuchen.';
@@ -123,8 +101,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $draft = null;
     }
 }
-$hasOwnKey = false;
-try { $hasOwnKey = ak_get($me, 'xai') !== null; } catch (Throwable $e) { $hasOwnKey = false; }
+$kiProviders = [];
+try {
+    foreach (ak_overview($me) as $pid => $info) {
+        if (ak_is_ki_provider($pid)) $kiProviders[$pid] = $info['hint'];
+    }
+} catch (Throwable $e) {
+    $kiProviders = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -150,9 +134,9 @@ try { $hasOwnKey = ak_get($me, 'xai') !== null; } catch (Throwable $e) { $hasOwn
 </head>
 <body>
     <p><a href="/lobby.php">← Lobby</a> · <a href="fragen_import.php">Datei hochladen</a> · <a href="fragen.php">Fragen verwalten</a></p>
-    <h1>Fragen mit KI erstellen (Grok)</h1>
-    <?php if (!$hasOwnKey): ?>
-        <p class="err">Du hast noch keinen xAI-Key hinterlegt. <a href="/profile/api_keys.php">Jetzt unter Profil → API-Schlüssel eintragen</a>.</p>
+    <h1>Fragen mit KI erstellen</h1>
+    <?php if (!$kiProviders): ?>
+        <p class="err">Du hast noch keinen KI-Schlüssel hinterlegt. <a href="/profile/api_keys.php">Jetzt unter Profil → API-Schlüssel eintragen</a>.</p>
     <?php endif; ?>
 
     <?php if ($msg): ?><p class="msg"><?= htmlspecialchars($msg) ?></p><?php endif; ?>
@@ -160,6 +144,13 @@ try { $hasOwnKey = ak_get($me, 'xai') !== null; } catch (Throwable $e) { $hasOwn
     <div class="panel">
         <form method="post">
             <input type="hidden" name="action" value="generate">
+            <label>KI-Anbieter
+                <select name="provider" <?= $kiProviders ? '' : 'disabled' ?> style="width:100%;padding:10px;margin-top:6px;border:none;border-radius:8px;background:#3b2a6b;color:#fff;font:inherit">
+                    <?php foreach ($kiProviders as $pid => $hint): ?>
+                        <option value="<?= htmlspecialchars($pid) ?>"><?= htmlspecialchars(AK_PROVIDERS[$pid]['label']) ?> (•••• <?= htmlspecialchars($hint) ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
             <label>Kategorie (Name)
                 <input type="text" name="kategorie" maxlength="100" required placeholder="z. B. Geografie, Harry Potter, Tiere">
             </label>
@@ -208,4 +199,4 @@ try { $hasOwnKey = ak_get($me, 'xai') !== null; } catch (Throwable $e) { $hasOwn
     <?php endif; ?>
 </body>
 </html>
-<!-- Version 1.1 -->
+<!-- Version 1.2 -->

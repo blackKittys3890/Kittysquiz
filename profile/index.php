@@ -342,7 +342,7 @@ $email = auth_email_for($key);
 
         <section class="card">
             <h2>API-Schlüssel</h2>
-            <p class="muted">Eigene Schlüssel für KI-Anbieter (xAI/Grok, Groq, Gemini, Claude, ChatGPT, DeepSeek) verschlüsselt hinterlegen.</p>
+            <p class="muted">Eigene Schlüssel für KI-Anbieter (Groq, Gemini, Claude, ChatGPT, DeepSeek) verschlüsselt hinterlegen.</p>
             <a class="btn btn-small" href="/profile/api_keys.php">API-Schlüssel verwalten</a>
         </section>
 
