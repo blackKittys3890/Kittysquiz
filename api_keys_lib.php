@@ -1,8 +1,8 @@
 <?php
-// Version 1.1
+// Version 1.3
 // API-Schlüssel pro Konto: verschlüsselt speichern (AES-256-GCM), nur serverseitig verwenden.
 // Benötigt in config.php: define('API_KEY_SECRET', 'langer-zufälliger-text-mindestens-32-zeichen');
-// Modelle (Standard, im Code änderbar): Groq llama-3.3-70b-versatile, Gemini gemini-3.5-flash,
+// Modelle (Standard, im Code änderbar): Groq openai/gpt-oss-120b, Gemini gemini-3.5-flash,
 // Claude claude-haiku-5-5, OpenAI gpt-5.4-mini, DeepSeek deepseek-chat.
 
 const AK_PROVIDERS = [
@@ -127,7 +127,7 @@ function ak_delete(string $userKey, string $provider): void
 
 // Modelle für die KI-Funktionen
 const AK_MODELS = [
-    'groq' => 'llama-3.3-70b-versatile',
+    'groq' => 'openai/gpt-oss-120b',
     'gemini' => 'gemini-3.5-flash',
     'claude' => 'claude-haiku-5-5',
     'openai' => 'gpt-5.4-mini',
@@ -151,9 +151,18 @@ function ak_post(string $url, array $headers, array $body): string
     ]);
     $raw = curl_exec($ch);
     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err = curl_error($ch);
     curl_close($ch);
-    if ($raw === false || $code >= 400) {
-        throw new RuntimeException('Die KI-Anfrage ist fehlgeschlagen (HTTP ' . $code . ').');
+    if ($raw === false) {
+        throw new RuntimeException('Die KI-Anfrage ist fehlgeschlagen: ' . ($err ?: 'keine Verbindung.'));
+    }
+    if ($code >= 400) {
+        // Fehlertext des Anbieters mit anzeigen, damit man die Ursache sieht
+        $j = json_decode((string)$raw, true);
+        $m = $j['error']['message'] ?? $j['error'] ?? $j['message'] ?? '';
+        if (is_array($m)) $m = json_encode($m, JSON_UNESCAPED_UNICODE);
+        $m = mb_substr(trim((string)$m) ?: strip_tags((string)$raw), 0, 300);
+        throw new RuntimeException('Die KI-Anfrage ist fehlgeschlagen (HTTP ' . $code . ')' . ($m !== '' ? ': ' . $m : '.'));
     }
     return (string)$raw;
 }
