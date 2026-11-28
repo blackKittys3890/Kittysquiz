@@ -1,5 +1,5 @@
 <?php
-// Version 1.14
+// Version 1.15
 // Profil: Konto-Übersicht, E-Mail ändern (mit Bestätigung), Passwort ändern (nur lokal), Konto löschen.
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/db.php';
@@ -341,6 +341,12 @@ $email = auth_email_for($key);
         </section>
 
         <section class="card">
+            <h2>API-Schlüssel</h2>
+            <p class="muted">Eigene Schlüssel für KI-Anbieter (xAI/Grok, Groq, Gemini, Claude, ChatGPT, DeepSeek) verschlüsselt hinterlegen.</p>
+            <a class="btn btn-small" href="/profile/api_keys.php">API-Schlüssel verwalten</a>
+        </section>
+
+        <section class="card">
             <h2>Verbundene Konten</h2>
             <p class="muted">Mehrere Anmeldungen teilen sich ein Profil. Mit jedem verbundenen Konto kannst du dich anmelden und dasselbe Profil nutzen.</p>
             <?php foreach (linked_logins($key) as $lk):
@@ -474,4 +480,4 @@ $email = auth_email_for($key);
 <script src="/js/bigtext.js"></script>
 </body>
 </html>
-<!-- Version 1.14 -->
+<!-- Version 1.15 -->

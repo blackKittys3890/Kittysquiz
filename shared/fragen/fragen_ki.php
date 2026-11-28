@@ -1,6 +1,7 @@
 <?php
-// Version 1.0
+// Version 1.1
 require_once dirname(__DIR__, 2) . '/config.php';
+require_once dirname(__DIR__, 2) . '/api_keys_lib.php';
 require_once dirname(__DIR__, 2) . '/db.php';
 require_once __DIR__ . '/fragen_tools.php';
 
@@ -12,10 +13,10 @@ $msg = '';
 $draft = $_SESSION['ki_draft'] ?? null;   // { kategorie, fragen: [ {punkte, frage, antwort} ] }
 
 // Anfrage an die KI (xAI / Grok). Gibt eine Liste von Fragen zurück oder wirft eine Exception.
-function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil): array
+function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil, string $apiKey): array
 {
-    if (!defined('XAI_API_KEY') || XAI_API_KEY === '' || XAI_API_KEY === 'DEIN_XAI_KEY') {
-        throw new RuntimeException('Kein xAI-Schlüssel in config.php hinterlegt.');
+    if ($apiKey === '') {
+        throw new RuntimeException('Kein xAI-Schlüssel hinterlegt. Trage deinen Key unter Profil → API-Schlüssel ein.');
     }
     $pkt = implode(', ', $punkte);
     $system = 'Du schreibst Quizfragen auf Deutsch. Antworte ausschließlich mit gültigem JSON, ohne Erklärtext, ohne Markdown. '
@@ -25,7 +26,7 @@ function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil
         . 'Die Fragen müssen faktisch korrekt sein. Keine Fragen mit mehreren richtigen Antworten.';
 
     $body = json_encode([
-        'model' => XAI_MODEL,
+        'model' => defined('XAI_MODEL') ? XAI_MODEL : 'grok-4.7',
         'messages' => [
             ['role' => 'system', 'content' => $system],
             ['role' => 'user', 'content' => $user],
@@ -37,7 +38,7 @@ function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $body,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . XAI_API_KEY],
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . $apiKey],
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 60,
     ]);
@@ -87,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = 'Bitte mindestens einen Punktwert wählen.';
         } else {
             try {
-                $fragen = ki_generate($kat, $anzahl, $punkte, $stil);
+                $fragen = ki_generate($kat, $anzahl, $punkte, $stil, (string)ak_get($me, 'xai'));
                 $_SESSION['ki_draft'] = ['kategorie' => $kat, 'fragen' => $fragen];
                 $draft = $_SESSION['ki_draft'];
                 $msg = count($fragen) ? '' : 'Die KI hat keine brauchbaren Fragen geliefert. Bitte nochmal versuchen.';
@@ -122,6 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $draft = null;
     }
 }
+$hasOwnKey = false;
+try { $hasOwnKey = ak_get($me, 'xai') !== null; } catch (Throwable $e) { $hasOwnKey = false; }
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -148,6 +151,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <p><a href="/lobby.php">← Lobby</a> · <a href="fragen_import.php">Datei hochladen</a> · <a href="fragen.php">Fragen verwalten</a></p>
     <h1>Fragen mit KI erstellen (Grok)</h1>
+    <?php if (!$hasOwnKey): ?>
+        <p class="err">Du hast noch keinen xAI-Key hinterlegt. <a href="/profile/api_keys.php">Jetzt unter Profil → API-Schlüssel eintragen</a>.</p>
+    <?php endif; ?>
 
     <?php if ($msg): ?><p class="msg"><?= htmlspecialchars($msg) ?></p><?php endif; ?>
 
@@ -202,4 +208,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 </body>
 </html>
-<!-- Version 1.0 -->
+<!-- Version 1.1 -->

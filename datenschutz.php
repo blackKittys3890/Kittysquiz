@@ -1,5 +1,5 @@
 <?php
-// Version 1.16
+// Version 1.17
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -319,11 +319,22 @@
             lit. f DSGVO (Wunsch der Empfänger, keine weiteren Mails zu erhalten).
         </p>
 
-        <h2>22. Stand</h2>
+        <h2>22. API-Schlüssel für KI-Anbieter</h2>
+        <p>
+            Angemeldete Konten können eigene Schlüssel von KI-Anbietern (z. B. xAI, Groq, Google Gemini, Anthropic Claude,
+            OpenAI ChatGPT oder DeepSeek) in ihrem Profil hinterlegen. Der Schlüssel wird verschlüsselt gespeichert, der
+            Klartext wird nach dem Speichern nicht mehr angezeigt. Wir nutzen den Schlüssel ausschließlich, um Anfragen
+            in deinem Auftrag an den jeweiligen Anbieter zu senden, zum Beispiel zum Erstellen von Quizfragen. Dabei
+            können Inhalte deiner Anfrage an den Anbieter übermittelt werden. Dessen Datenschutzhinweise gelten dafür.
+            Die Abrechnung erfolgt über dein Konto beim Anbieter. Du kannst den Schlüssel jederzeit in deinem Profil löschen.
+            Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+        </p>
+
+        <h2>23. Stand</h2>
         <p>
             Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
         </p>
     </div>
 </body>
 </html>
-<!-- Version 1.16 -->
+<!-- Version 1.17 -->
