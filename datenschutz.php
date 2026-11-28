@@ -332,7 +332,7 @@
 
         <h2>23. Stand</h2>
         <p>
-            Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern.
+            Diese Datenschutzerklärung ist aktuell gültig. Wir passen sie an, sobald sich Funktionen oder Dienste ändern. - Letztes Update: 28. November 2026  um 15:00 Uhr
         </p>
     </div>
 </body>
