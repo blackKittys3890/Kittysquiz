@@ -1,5 +1,5 @@
 <?php
-// Version 1.4
+// Version 1.5
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/api_keys_lib.php';
 require_once dirname(__DIR__, 2) . '/db.php';
@@ -14,6 +14,8 @@ $katPrefill = trim((string)($_GET['kategorie'] ?? ''));
 $draft = $_SESSION['ki_draft'] ?? null;   // { kategorie, fragen: [ {punkte, frage, antwort} ] }
 
 // Anfrage an den gewählten KI-Anbieter mit dem Key des Kontos. Gibt eine Liste von Fragen zurück oder wirft eine Exception.
+const KI_MIN_FRAGEN_PRO_KATEGORIE = 3;
+
 function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil, string $provider, string $apiKey): array
 {
     if ($apiKey === '' || !ak_is_ki_provider($provider)) {
@@ -29,7 +31,11 @@ function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil
     $user = ($auto ? "Kategorie: frei wählen (passend zum Stil)\n" : "Kategorie: $kategorie\n")
         . "Anzahl Fragen: $anzahl\nPunktwerte (verteilen): $pkt\n"
         . ($stil !== '' ? "Stil/Hinweise: $stil\n" : '')
-        . 'Die Fragen müssen faktisch korrekt sein. Keine Fragen mit mehreren richtigen Antworten.';
+        . 'Die Fragen müssen faktisch korrekt sein. Keine Fragen mit mehreren richtigen Antworten.'
+        . ($auto
+            ? "\nJede Kategorie braucht mindestens " . KI_MIN_FRAGEN_PRO_KATEGORIE . " Fragen. Verteile die $anzahl Fragen daher auf höchstens "
+              . intdiv($anzahl, KI_MIN_FRAGEN_PRO_KATEGORIE) . " Kategorien, lieber weniger Kategorien mit genug Fragen."
+            : '');
 
     $text = ak_chat($provider, $apiKey, $system, $user);
 
@@ -54,6 +60,14 @@ function ki_generate(string $kategorie, int $anzahl, array $punkte, string $stil
             'antwort' => trim((string)$item['antwort']),
         ];
     }
+    if ($auto) {
+        // Kategorien mit zu wenigen Fragen entfernen
+        $zaehl = array_count_values(array_column($out, 'kategorie'));
+        $out = array_values(array_filter($out, fn($f) => $zaehl[$f['kategorie']] >= KI_MIN_FRAGEN_PRO_KATEGORIE));
+        if (!$out) {
+            throw new RuntimeException('Die KI hat keine Kategorie mit mindestens ' . KI_MIN_FRAGEN_PRO_KATEGORIE . ' Fragen geliefert. Bitte nochmal versuchen oder eine Kategorie angeben.');
+        }
+    }
     return $out;
 }
 
@@ -67,7 +81,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stil = trim($_POST['stil'] ?? '');
         $auto = isset($_POST['auto_kategorie']);
         if ($auto) $kat = '';
-        if (!$auto && ($kat === '' || mb_strlen($kat) > 100)) {
+        if ($auto && $anzahl < KI_MIN_FRAGEN_PRO_KATEGORIE) {
+            $msg = 'Mit KI-Kategorien brauchst du mindestens ' . KI_MIN_FRAGEN_PRO_KATEGORIE . ' Fragen.';
+        } elseif (!$auto && ($kat === '' || mb_strlen($kat) > 100)) {
             $msg = 'Bitte eine Kategorie angeben (1 bis 100 Zeichen) oder die KI Kategorien vorschlagen lassen.';
         } elseif (!$punkte) {
             $msg = 'Bitte mindestens einen Punktwert wählen.';
@@ -213,4 +229,4 @@ try {
     <?php endif; ?>
 </body>
 </html>
-<!-- Version 1.4 -->
+<!-- Version 1.5 -->
